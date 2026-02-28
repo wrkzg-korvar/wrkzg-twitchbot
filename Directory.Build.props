@@ -1,0 +1,81 @@
+<Project>
+
+  <!--
+    ============================================================
+    Directory.Build.props
+    Gilt automatisch für ALLE .csproj-Dateien unterhalb dieses
+    Ordners. Hier werden gemeinsame Metadaten und Build-Settings
+    zentral definiert, damit kein Projekt sie wiederholen muss.
+    ============================================================
+  -->
+
+  <PropertyGroup Label="Product Identity">
+    <Authors>korvar_</Authors>
+    <Company>Wrkzg.io</Company>
+    <Copyright>Copyright © $([System.DateTime]::Now.Year) Wrkzg.io</Copyright>
+
+    <!-- Produktname – wird in Installer und Tray sichtbar -->
+    <Product>Wrkzg</Product>
+
+    <!--
+      Versionierung via SemVer.
+      Im lokalen Build greift diese Fallback-Version.
+      Im CI/CD-Release-Build wird Version über MSBuild-Property überschrieben:
+        dotnet build -p:Version=1.2.0
+    -->
+    <Version>0.1.0</Version>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <FileVersion>0.1.0.0</FileVersion>
+    <InformationalVersion>$(Version)</InformationalVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Target Framework">
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Build Behavior">
+    <!-- Warnungen als Fehler behandeln – erzwingt sauberen Code -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!--
+      Ausnahmen: Diese Warnungen werden nicht als Fehler behandelt.
+      CS1591 = fehlende XML-Dokumentation (nur in Release erzwingen, siehe unten)
+    -->
+    <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
+
+    <!-- Deterministische Builds: gleiche Eingaben → gleiche .dll (wichtig für Release-Verifikation) -->
+    <Deterministic>true</Deterministic>
+
+    <!-- Embedded Debug Symbols in der DLL (kein separates .pdb nötig) -->
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Label="XML Documentation" Condition="'$(Configuration)' == 'Release'">
+    <!-- Im Release-Build XML-Doku erzwingen – hilft Contributors -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- CS1591 im Release doch als Fehler: undokumentierte public Members -->
+    <WarningsNotAsErrors></WarningsNotAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Source Link (GitHub)">
+    <!--
+      Source Link ermöglicht es, beim Debuggen direkt in den GitHub-Quellcode
+      zu springen – sehr nützlich für Contributors und Nutzer mit Debugger.
+      Setzt voraus, dass das Repo auf GitHub liegt.
+    -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <RepositoryUrl>https://github.com/wrkzg-korvar/wrkzg-twitchbot</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Package (für eventuelle NuGet-Veröffentlichung von Core)">
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/wrkzg-korvar/wrkzg-twitchbot</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+</Project>

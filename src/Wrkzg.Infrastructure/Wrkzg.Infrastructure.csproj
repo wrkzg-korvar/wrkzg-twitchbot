@@ -1,0 +1,77 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      ============================================================
+      Wrkzg.Infrastructure
+      ============================================================
+      Typ      : Class Library (Standard-SDK)
+      Aufgabe  : Konkrete Implementierungen aller Core-Interfaces:
+                 - Datenbankzugriff (EF Core + SQLite)
+                 - Twitch IRC Client (TwitchLib)
+                 - Twitch Helix HTTP Client
+                 - Twitch EventSub WebSocket Client
+                 - Sichere Token-Speicherung (DPAPI / Keychain)
+                 - Repository-Implementierungen
+      Regel    : Infrastructure implementiert Core-Interfaces.
+                 Infrastructure kennt Core, aber nicht Api oder Host.
+      ============================================================
+    -->
+
+    <PropertyGroup Label="Output">
+        <AssemblyName>Wrkzg.Infrastructure</AssemblyName>
+        <RootNamespace>Wrkzg.Infrastructure</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup Label="Project References">
+        <ProjectReference Include="..\Wrkzg.Core\Wrkzg.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Label="Entity Framework Core">
+        <PackageReference Include="Microsoft.EntityFrameworkCore" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+        <!--
+          Design-Package nur für Entwicklung (EF Migrations CLI).
+          PrivateAssets=all → wird NICHT an abhängige Projekte weitergegeben
+          und landet NICHT im Publish-Artefakt.
+        -->
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup Label="Twitch">
+        <PackageReference Include="TwitchLib.Client" />
+        <PackageReference Include="TwitchLib.Api" />
+    </ItemGroup>
+
+    <ItemGroup Label="HTTP / Resilience">
+        <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
+        <PackageReference Include="Polly" />
+    </ItemGroup>
+
+    <ItemGroup Label="Source Link">
+        <PackageReference Include="Microsoft.SourceLink.GitHub">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <!--
+      Windows-spezifische APIs für DPAPI (Token-Verschlüsselung).
+      Diese API ist nur auf Windows verfügbar – die Infrastructure-Schicht
+      wählt zur Laufzeit über OperatingSystem.IsWindows() die richtige
+      ISecureStorage-Implementierung.
+      Kein Compile-Fehler auf macOS, da der Code hinter OS-Guards liegt.
+    -->
+    <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+        <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.0" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <Folder Include="Data\" />
+      <Folder Include="Repositories\" />
+      <Folder Include="Twitch\" />
+    </ItemGroup>
+
+</Project>

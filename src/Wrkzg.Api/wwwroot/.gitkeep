@@ -1,0 +1,3 @@
+# Dieser Ordner wird vom React-Build (npm run build) befüllt.
+# Im Repository ist er leer – der Inhalt wird im .gitignore ausgeschlossen.
+# Diese Datei stellt sicher, dass der Ordner nach git clone existiert.

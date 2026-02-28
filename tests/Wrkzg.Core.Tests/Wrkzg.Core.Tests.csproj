@@ -1,0 +1,51 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      ============================================================
+      Wrkzg.Core.Tests
+      ============================================================
+      Typ      : Test Project (xUnit)
+      Aufgabe  : Unit-Tests für die gesamte Business Logic in Core.
+                 Mocking via NSubstitute, Assertions via FluentAssertions.
+      Regel    : Kein Test darf externe Ressourcen benötigen
+                 (keine DB, kein Netzwerk) – alles wird gemockt.
+      ============================================================
+    -->
+
+    <PropertyGroup Label="Output">
+        <AssemblyName>Wrkzg.Core.Tests</AssemblyName>
+        <RootNamespace>Wrkzg.Core.Tests</RootNamespace>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+    </PropertyGroup>
+
+    <PropertyGroup Label="Test Settings">
+        <!--
+          Parallele Test-Ausführung aktivieren – Unit-Tests haben
+          keinen geteilten State und können parallel laufen.
+        -->
+        <ParallelizeTestCollections>true</ParallelizeTestCollections>
+    </PropertyGroup>
+
+    <ItemGroup Label="Project Under Test">
+        <ProjectReference Include="..\..\src\Wrkzg.Core\Wrkzg.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Label="Test Frameworks">
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="xunit" />
+        <PackageReference Include="xunit.runner.visualstudio">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup Label="Test Utilities">
+        <!-- NSubstitute: Interface-Mocking ohne manuelle Mock-Klassen -->
+        <PackageReference Include="NSubstitute" />
+
+        <!-- FluentAssertions: lesbare Assertions (should.Be, should.Contain, etc.) -->
+        <PackageReference Include="FluentAssertions" />
+    </ItemGroup>
+
+</Project>

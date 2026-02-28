@@ -1,0 +1,72 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <!--
+      ============================================================
+      Wrkzg.Host
+      ============================================================
+      Typ      : Executable (Entry Point der gesamten Anwendung)
+      Aufgabe  : Startet Kestrel + Photino-Fenster, bootstrapt DI,
+                 verwaltet Systemtray und Application-Lifecycle.
+      Plattform: Windows (win-x64) und macOS (osx-x64, osx-arm64)
+      ============================================================
+    -->
+
+    <PropertyGroup Label="Output">
+        <!--
+          WinExe  → kein Konsolenfenster auf Windows.
+          Auf macOS hat diese Einstellung keinen Effekt –
+          dort verhält sich Exe und WinExe identisch.
+        -->
+        <OutputType>WinExe</OutputType>
+        <AssemblyName>Wrkzg</AssemblyName>
+        <RootNamespace>Wrkzg.Host</RootNamespace>
+    </PropertyGroup>
+
+    <PropertyGroup Label="Publish Targets">
+      <RuntimeIdentifiers>win-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
+    </PropertyGroup>
+
+    <PropertyGroup Label="Application Metadata">
+        <!-- Angezeigt im Windows Task-Manager und macOS Activity Monitor -->
+        <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
+        <Description>Wrkzg – Local Twitch Community Bot</Description>
+    </PropertyGroup>
+
+    <PropertyGroup Label="Windows Manifest">
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+    </PropertyGroup>
+
+    <ItemGroup Label="Project References">
+        <!-- Host kennt nur die API-Schicht – niemals direkt Core oder Infrastructure -->
+        <ProjectReference Include="..\Wrkzg.Api\Wrkzg.Api.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Label="NuGet Packages">
+        <PackageReference Include="Photino.NET" />
+        <PackageReference Include="Serilog.AspNetCore" />
+        <PackageReference Include="Serilog.Sinks.File" />
+        <PackageReference Include="Serilog.Sinks.Console" />
+        <PackageReference Include="Microsoft.SourceLink.GitHub">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup Label="Assets">
+        <!-- Icon und Manifest werden mit dem Publish-Artefakt kopiert -->
+        <None Update="Assets\icon.ico" CopyToOutputDirectory="PreserveNewest" />
+        <None Update="version.json"    CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+    <!--
+      Beim Release-Build: Frontend automatisch bauen und in wwwroot kopieren.
+      Im Debug-Build läuft Vite separat auf Port 5173.
+    -->
+    <Target Name="BuildFrontend"
+            BeforeTargets="Build"
+            Condition="'$(Configuration)' == 'Release'">
+        <Exec Command="npm run build"
+              WorkingDirectory="$(MSBuildThisFileDirectory)..\..\src\Wrkzg.Frontend" />
+    </Target>
+
+</Project>

@@ -1,0 +1,58 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wrkzg.Host", "src\Wrkzg.Host\Wrkzg.Host.csproj", "{D8F90695-8C3B-42CB-95A7-A70305248283}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wrkzg.Api", "src\Wrkzg.Api\Wrkzg.Api.csproj", "{CE3B3334-0A27-4AF1-BB69-92F2FF763BE6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wrkzg.Core", "src\Wrkzg.Core\Wrkzg.Core.csproj", "{735161F2-C6C6-4A67-9BC7-A61D56636152}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wrkzg.Infrastructure", "src\Wrkzg.Infrastructure\Wrkzg.Infrastructure.csproj", "{C38CAAED-DCE5-40F7-B170-094D35B3B582}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{2DD86490-6140-45E3-9287-F4A1FD249398}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wrkzg.Core.Tests", "tests\Wrkzg.Core.Tests\Wrkzg.Core.Tests.csproj", "{AD70C53C-A59F-43FC-83C0-21BCD1737EB5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wrkzg.Api.Tests", "tests\Wrkzg.Api.Tests\Wrkzg.Api.Tests.csproj", "{043BA97F-1D62-4300-B236-042B03020068}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wrkzg.Updater", "src\Wrkzg.Updater\Wrkzg.Updater.csproj", "{9F70D411-1D0B-4D06-8F7E-FA574CECA7E1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D8F90695-8C3B-42CB-95A7-A70305248283}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D8F90695-8C3B-42CB-95A7-A70305248283}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D8F90695-8C3B-42CB-95A7-A70305248283}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D8F90695-8C3B-42CB-95A7-A70305248283}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CE3B3334-0A27-4AF1-BB69-92F2FF763BE6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE3B3334-0A27-4AF1-BB69-92F2FF763BE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE3B3334-0A27-4AF1-BB69-92F2FF763BE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE3B3334-0A27-4AF1-BB69-92F2FF763BE6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{735161F2-C6C6-4A67-9BC7-A61D56636152}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{735161F2-C6C6-4A67-9BC7-A61D56636152}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{735161F2-C6C6-4A67-9BC7-A61D56636152}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{735161F2-C6C6-4A67-9BC7-A61D56636152}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C38CAAED-DCE5-40F7-B170-094D35B3B582}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C38CAAED-DCE5-40F7-B170-094D35B3B582}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C38CAAED-DCE5-40F7-B170-094D35B3B582}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C38CAAED-DCE5-40F7-B170-094D35B3B582}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD70C53C-A59F-43FC-83C0-21BCD1737EB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD70C53C-A59F-43FC-83C0-21BCD1737EB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD70C53C-A59F-43FC-83C0-21BCD1737EB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD70C53C-A59F-43FC-83C0-21BCD1737EB5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{043BA97F-1D62-4300-B236-042B03020068}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{043BA97F-1D62-4300-B236-042B03020068}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{043BA97F-1D62-4300-B236-042B03020068}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{043BA97F-1D62-4300-B236-042B03020068}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F70D411-1D0B-4D06-8F7E-FA574CECA7E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F70D411-1D0B-4D06-8F7E-FA574CECA7E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F70D411-1D0B-4D06-8F7E-FA574CECA7E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F70D411-1D0B-4D06-8F7E-FA574CECA7E1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{AD70C53C-A59F-43FC-83C0-21BCD1737EB5} = {2DD86490-6140-45E3-9287-F4A1FD249398}
+		{043BA97F-1D62-4300-B236-042B03020068} = {2DD86490-6140-45E3-9287-F4A1FD249398}
+	EndGlobalSection
+EndGlobal

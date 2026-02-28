@@ -1,0 +1,16 @@
+<Project>
+
+  <!--
+    ============================================================
+    Directory.Build.targets
+    Wird nach den individuellen .csproj-Dateien ausgewertet.
+    Hier stehen Build-Targets, die NACH dem Projekt-Setup laufen.
+    ============================================================
+  -->
+
+  <Target Name="PrintBuildInfo" BeforeTargets="Build">
+    <Message Importance="high"
+             Text="▶ Building $(AssemblyName) v$(Version) [$(Configuration)|$(RuntimeIdentifier)]" />
+  </Target>
+
+</Project>

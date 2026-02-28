@@ -1,0 +1,52 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      ============================================================
+      Wrkzg.Updater
+      ============================================================
+      Typ      : Executable – VOLLSTÄNDIG EIGENSTÄNDIG
+      Aufgabe  : Wird als separater Prozess gestartet, wenn ein Update
+                 heruntergeladen wurde. Wartet auf Beendigung des
+                 Hauptprozesses, ersetzt die Anwendungsdateien und
+                 startet die Anwendung neu.
+      Wichtig  : KEINE Referenz zu Core, Api oder Infrastructure.
+                 Der Updater muss auch dann funktionieren, wenn die
+                 Hauptanwendung defekt ist.
+      ============================================================
+    -->
+
+    <PropertyGroup Label="Output">
+        <OutputType>Exe</OutputType>
+        <!--
+          Konsolenfenster ist hier bewusst erlaubt (kein WinExe).
+          Der Updater soll sichtbar sein und dem Nutzer Status anzeigen.
+        -->
+        <AssemblyName>Wrkzg.Updater</AssemblyName>
+        <RootNamespace>Wrkzg.Updater</RootNamespace>
+        <Description>Wrkzg Auto-Updater – replaces application files during update</Description>
+    </PropertyGroup>
+
+    <PropertyGroup Label="Publish Targets">
+      <RuntimeIdentifiers>win-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
+    </PropertyGroup>
+
+    <ItemGroup Label="Project References">
+        <!-- Absichtlich leer – keine Abhängigkeiten zur Hauptanwendung -->
+    </ItemGroup>
+
+    <ItemGroup Label="NuGet Packages">
+        <PackageReference Include="Microsoft.SourceLink.GitHub">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <!--
+      Der Updater nutzt ausschließlich BCL (Base Class Library):
+        - System.IO.Compression (ZipFile) → im .NET SDK enthalten
+        - System.Diagnostics.Process      → im .NET SDK enthalten
+        - System.Security.Cryptography    → im .NET SDK enthalten
+      Keine weiteren NuGet-Pakete nötig.
+    -->
+
+</Project>

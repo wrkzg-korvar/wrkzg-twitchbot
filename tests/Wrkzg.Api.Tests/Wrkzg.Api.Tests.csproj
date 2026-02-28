@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      ============================================================
+      Wrkzg.Api.Tests
+      ============================================================
+      Typ      : Test Project (xUnit)
+      Aufgabe  : Integrations- und Unit-Tests für API-Endpunkte
+                 und SignalR Hubs. Verwendet WebApplicationFactory
+                 für In-Process-HTTP-Tests ohne echten Server.
+      ============================================================
+    -->
+
+    <PropertyGroup Label="Output">
+        <AssemblyName>Wrkzg.Api.Tests</AssemblyName>
+        <RootNamespace>Wrkzg.Api.Tests</RootNamespace>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+    </PropertyGroup>
+
+    <ItemGroup Label="Projects Under Test">
+        <ProjectReference Include="..\..\src\Wrkzg.Api\Wrkzg.Api.csproj" />
+        <ProjectReference Include="..\..\src\Wrkzg.Core\Wrkzg.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Label="Test Frameworks">
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="xunit" />
+        <PackageReference Include="xunit.runner.visualstudio">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup Label="Test Utilities">
+        <PackageReference Include="NSubstitute" />
+        <PackageReference Include="FluentAssertions" />
+
+        <!--
+          WebApplicationFactory: Startet die gesamte ASP.NET Core Pipeline
+          in-memory für realistische HTTP-Tests ohne echten Server.
+          Keine Netzwerkports werden geöffnet.
+        -->
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,83 @@
+root = true
+
+# --- Allgemein ---
+[*]
+charset                  = utf-8
+end_of_line              = lf
+insert_final_newline     = true
+trim_trailing_whitespace = true
+indent_style             = space
+indent_size              = 4
+
+# --- C# ---
+[*.cs]
+indent_size = 4
+
+# Namespace-Stil: file-scoped (moderner, weniger Einrückung)
+csharp_style_namespace_declarations                        = file_scoped:warning
+
+# using-Direktiven: System-Namespaces zuerst
+dotnet_sort_system_directives_first                        = true
+dotnet_separate_import_directive_groups                    = false
+
+# var: nur bei offensichtlichem Typ
+csharp_style_var_for_built_in_types                        = false:suggestion
+csharp_style_var_when_type_is_apparent                     = true:suggestion
+csharp_style_var_elsewhere                                 = false:suggestion
+
+# Pattern matching bevorzugen
+csharp_style_pattern_matching_over_is_with_cast_check      = true:suggestion
+csharp_style_pattern_matching_over_as_with_null_check      = true:suggestion
+
+# Null-Operatoren bevorzugen
+dotnet_style_null_propagation                              = true:suggestion
+dotnet_style_coalesce_expression                           = true:suggestion
+
+# Geschweifte Klammern immer (verhindert Bugs)
+csharp_prefer_braces                                       = true:warning
+
+# Allman-Stil (öffnende Klammer auf neuer Zeile)
+csharp_new_line_before_open_brace                          = all
+csharp_new_line_before_else                                = true
+csharp_new_line_before_catch                               = true
+csharp_new_line_before_finally                             = true
+
+# Private Felder mit _ prefix
+dotnet_naming_rule.private_fields_underscore.symbols       = private_fields
+dotnet_naming_rule.private_fields_underscore.style         = underscore_prefix
+dotnet_naming_rule.private_fields_underscore.severity      = warning
+
+dotnet_naming_symbols.private_fields.applicable_kinds           = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+
+dotnet_naming_style.underscore_prefix.capitalization  = camel_case
+dotnet_naming_style.underscore_prefix.required_prefix = _
+
+# Konstanten: PascalCase
+dotnet_naming_rule.constants_pascal.symbols            = constants
+dotnet_naming_rule.constants_pascal.style              = pascal_case_style
+dotnet_naming_rule.constants_pascal.severity           = warning
+
+dotnet_naming_symbols.constants.applicable_kinds       = field
+dotnet_naming_symbols.constants.required_modifiers     = const
+dotnet_naming_style.pascal_case_style.capitalization   = pascal_case
+
+# --- JSON ---
+[*.json]
+indent_size = 2
+
+# --- YAML / GitHub Actions ---
+[*.{yml,yaml}]
+indent_size = 2
+
+# --- XML / csproj ---
+[*.{xml,csproj,props,targets,manifest}]
+indent_size = 2
+
+# --- Markdown ---
+[*.md]
+trim_trailing_whitespace = false
+
+# --- Frontend (Prettier übernimmt, hier Fallback) ---
+[*.{ts,tsx,js,jsx,css}]
+indent_size = 2

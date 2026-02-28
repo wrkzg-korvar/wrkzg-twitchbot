@@ -1,0 +1,66 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      ============================================================
+      Wrkzg.Core
+      ============================================================
+      Typ      : Class Library (Standard-SDK)
+      Aufgabe  : Business Logic, Domain Models, Interfaces,
+                 Chat Games, Services – KEIN Framework-Coupling.
+      Regel    : Dieses Projekt darf NUR folgende Abhängigkeiten haben:
+                 - Microsoft.Extensions.* (Abstractions, kein konkretes Framework)
+                 - Kein EF Core, kein ASP.NET Core, kein Photino
+                 Alles andere gehört in Infrastructure oder Api.
+      ============================================================
+    -->
+
+    <PropertyGroup Label="Output">
+        <AssemblyName>Wrkzg.Core</AssemblyName>
+        <RootNamespace>Wrkzg.Core</RootNamespace>
+
+        <!-- Core soll die öffentlichste und stabilste API haben → strenge Doku-Pflicht -->
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    </PropertyGroup>
+
+    <PropertyGroup Label="Analyzer Strictness">
+        <!--
+          Nullable auf dem strengsten Level – Core ist das Herzstück,
+          hier darf kein NullReferenceException-Risiko schlummern.
+        -->
+        <Nullable>enable</Nullable>
+
+        <!--
+          Code-Analyse mit dem .NET-Analyzer-Ruleset aktivieren.
+          Empfehlung: Ruleset auf "Recommended" oder eigenes .editorconfig.
+        -->
+        <AnalysisLevel>latest-recommended</AnalysisLevel>
+    </PropertyGroup>
+
+    <ItemGroup Label="Project References"><!-- Core hat KEINE Projekt-Referenzen → keine Abhängigkeiten nach außen -->
+    
+      <Folder Include="ChatGames\" />
+      <Folder Include="Interfaces\" />
+      <Folder Include="Models\" />
+      <Folder Include="Services\" />
+    </ItemGroup>
+
+    <ItemGroup Label="NuGet Packages">
+        <!--
+          Nur Abstractions – keine konkreten Implementierungen.
+          Die konkreten Implementierungen (z.B. ServiceProvider) kommen von Infrastructure/Host.
+        -->
+        <PackageReference Include="Microsoft.SourceLink.GitHub">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <!--
+      Implizit verfügbar durch .NET 10 SDK (keine explizite PackageReference nötig):
+        - Microsoft.Extensions.DependencyInjection.Abstractions
+        - Microsoft.Extensions.Logging.Abstractions
+        - Microsoft.Extensions.Options
+        - Microsoft.Extensions.Hosting.Abstractions
+    -->
+
+</Project>

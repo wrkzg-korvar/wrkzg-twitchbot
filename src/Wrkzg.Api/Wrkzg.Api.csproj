@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <!--
+      ============================================================
+      Wrkzg.Api
+      ============================================================
+      Typ      : Class Library mit Web-SDK
+      Aufgabe  : REST-Endpunkte (Minimal API), SignalR Hubs,
+                 statische Dateiauslieferung (React SPA aus wwwroot).
+                 Kein eigener Entry Point – wird von Host eingebettet.
+      SDK      : Microsoft.NET.Sdk.Web bringt ASP.NET Core, Kestrel
+                 und alle Web-Middleware mit.
+      ============================================================
+    -->
+
+    <PropertyGroup Label="Output">
+        <!--
+          Kein <OutputType> → beim Web-SDK defaultet dies zu einer Library.
+          Der Host referenziert dieses Projekt und stellt den Entry Point.
+        -->
+        <AssemblyName>Wrkzg.Api</AssemblyName>
+        <RootNamespace>Wrkzg.Api</RootNamespace>
+        <!-- Explizit als Library deklarieren – kein Entry Point -->
+        <OutputType>Library</OutputType>
+    </PropertyGroup>
+
+    <PropertyGroup Label="Dev Proxy">
+        <!--
+          Im Debug-Modus: Kestrel-Port fest auf 5000 setzen,
+          damit der Vite-Proxy (vite.config.ts) immer die richtige
+          Zieladresse hat.
+        -->
+        <SpaProxyLaunchCommand Condition="'$(Configuration)' == 'Debug'">npm run dev</SpaProxyLaunchCommand>
+        <SpaProxyServerUrl Condition="'$(Configuration)' == 'Debug'">http://localhost:5173</SpaProxyServerUrl>
+    </PropertyGroup>
+
+    <ItemGroup Label="Project References">
+        <ProjectReference Include="..\Wrkzg.Core\Wrkzg.Core.csproj" />
+        <ProjectReference Include="..\Wrkzg.Infrastructure\Wrkzg.Infrastructure.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Label="NuGet Packages">
+        <PackageReference Include="FluentValidation.AspNetCore" />
+        <PackageReference Include="Microsoft.SourceLink.GitHub">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup Label="wwwroot">
+        <!--
+          wwwroot wird vom Web-SDK automatisch als Static Files Root behandelt.
+          Die React-Build-Artefakte landen hier via vite.config.ts (outDir).
+          Im Repository ist dieser Ordner leer / gitignored.
+        -->
+        <Content Update="wwwroot\**" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Controllers\" />
+      <Folder Include="Hubs\" />
+      <Folder Include="wwwroot\" />
+    </ItemGroup>
+
+</Project>
