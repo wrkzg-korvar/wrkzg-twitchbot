@@ -16,6 +16,23 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wrkzg.Api.Tests", "tests\Wr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wrkzg.Updater", "src\Wrkzg.Updater\Wrkzg.Updater.csproj", "{9F70D411-1D0B-4D06-8F7E-FA574CECA7E1}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_docs", "_docs", "{3BAD9235-F379-454D-88C0-2ED05D7744F3}"
+	ProjectSection(SolutionItems) = preProject
+		_docs\API.md = _docs\API.md
+		_docs\ARCHITECTURE.md = _docs\ARCHITECTURE.md
+		_docs\CONTRIBUTING.md = _docs\CONTRIBUTING.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_github", "_github", "{22F94070-00AD-481C-9455-E5E0E758C61D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{DF5D933A-192C-45EA-B436-8013DE718517}"
+	ProjectSection(SolutionItems) = preProject
+		_github\workflows\ci.yml = _github\workflows\ci.yml
+		_github\workflows\release.yml = _github\workflows\release.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISSUE_TEMPLATE", "ISSUE_TEMPLATE", "{183B5610-8EEA-4B69-8880-6D6541B5A56F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,5 +71,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{AD70C53C-A59F-43FC-83C0-21BCD1737EB5} = {2DD86490-6140-45E3-9287-F4A1FD249398}
 		{043BA97F-1D62-4300-B236-042B03020068} = {2DD86490-6140-45E3-9287-F4A1FD249398}
+		{DF5D933A-192C-45EA-B436-8013DE718517} = {22F94070-00AD-481C-9455-E5E0E758C61D}
+		{183B5610-8EEA-4B69-8880-6D6541B5A56F} = {22F94070-00AD-481C-9455-E5E0E758C61D}
 	EndGlobalSection
 EndGlobal
