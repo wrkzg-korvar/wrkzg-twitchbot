@@ -65,9 +65,9 @@
       Kein Compile-Fehler auf macOS, da der Code hinter OS-Guards liegt.
     -->
     <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
-        <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.0" />
+        <PackageReference Include="System.Security.Cryptography.ProtectedData" />
     </ItemGroup>
-    
+
     <ItemGroup>
       <Folder Include="Data\" />
       <Folder Include="Repositories\" />
