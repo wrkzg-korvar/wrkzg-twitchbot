@@ -63,3 +63,6 @@ WrkzgUpdate.zip
 # --- IDE specific Files ---
 .idea
 .juni
+
+# --- AI Specific Files ---
+CLAUDE.md
