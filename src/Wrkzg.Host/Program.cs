@@ -92,10 +92,8 @@ PhotinoHosting.Start(app, windowController);
 // development (source tree) and published (alongside DLL) scenarios.
 static string? ResolveWwwrootPath()
 {
-    // 1. Next to the Wrkzg.Api assembly (published/bin output)
-    string apiAssemblyDir = Path.GetDirectoryName(
-        typeof(Wrkzg.Api.DependencyInjection).Assembly.Location)!;
-    string binPath = Path.Combine(apiAssemblyDir, "wwwroot");
+    // 1. Next to the executable (published/bin output)
+    string binPath = Path.Combine(AppContext.BaseDirectory, "wwwroot");
     if (Directory.Exists(binPath) && File.Exists(Path.Combine(binPath, "index.html")))
     {
         return binPath;

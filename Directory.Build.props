@@ -42,9 +42,10 @@
 
     <!--
       Ausnahmen: Diese Warnungen werden nicht als Fehler behandelt.
-      CS1591 = fehlende XML-Dokumentation (nur in Release erzwingen, siehe unten)
+      CS1591 = fehlende XML-Dokumentation
+      IL3000 = Assembly.Location returns empty in SingleFile publish
     -->
-    <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
+    <WarningsNotAsErrors>CS1591;IL3000</WarningsNotAsErrors>
 
     <!-- Deterministische Builds: gleiche Eingaben → gleiche .dll (wichtig für Release-Verifikation) -->
     <Deterministic>true</Deterministic>
