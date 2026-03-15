@@ -15,6 +15,9 @@ This document describes the technical architecture of Wrkzg. It is intended for 
 - [Frontend Integration](#frontend-integration)
 - [Real-Time Communication](#real-time-communication)
 - [Security](#security)
+- [System Commands](#system-commands)
+- [Custom Title Bar](#custom-title-bar)
+- [Design System](#design-system)
 - [Auto-Updater](#auto-updater)
 
 ---
@@ -400,6 +403,47 @@ The dashboard receives live updates via **SignalR**. The hub is hosted at `/hubs
 - CSRF protection: cryptographically random state parameter with 10-minute TTL
 - No telemetry, no analytics, no external calls except Twitch API and GitHub Releases API
 - All outbound HTTP calls use resilience pipelines (retry + timeout)
+
+---
+
+## System Commands
+
+Built-in commands that live in code, not in the database. They cannot be deleted or disabled.
+
+| Command | Aliases | Description |
+|---|---|---|
+| `!commands` | `!help` | Lists all available commands (system + custom) |
+| `!points` | — | Shows the user's current point balance |
+| `!watchtime` | — | Shows the user's total watch time |
+| `!followage` | — | Shows how long the user has been following |
+
+System commands are implemented via the `ISystemCommand` interface in Core and auto-registered in DI. They are checked before custom (DB) commands in the `CommandProcessor` pipeline. The API exposes them at `GET /api/commands/system`.
+
+---
+
+## Custom Title Bar
+
+Photino runs in chromeless mode (`.SetChromeless(true)`) — no native OS title bar. The React frontend renders a custom title bar that adapts to the current OS:
+
+- **macOS:** Traffic light buttons (close/minimize/maximize) on the left, centered app title
+- **Windows:** Standard buttons (minimize/maximize/close) on the right, left-aligned title
+
+Window controls communicate with the backend via REST endpoints (`POST /api/window/minimize|maximize|close|drag-start|drag-move`). The `IWindowController` interface in Core is implemented by `PhotinoWindowController` in Host.
+
+OS detection: The server reports the platform via `GET /api/status` (`platform` field), since Photino's WKWebView user agent does not contain OS information.
+
+---
+
+## Design System
+
+The color scheme is derived from the Wrkzg logo gradient (green → orange → red):
+
+- **Brand Green `#8BBF4C`** — primary accent color for general UI
+- **Twitch Purple `#A855F7`** — reserved for Twitch-specific UI elements only
+
+Theming is implemented via CSS custom properties in `index.css`. Users can toggle between Dark (default) and Light themes via a button in the sidebar. The preference is persisted in localStorage.
+
+All components use `var(--color-*)` properties instead of hardcoded Tailwind color classes, enabling seamless theme switching without component changes.
 
 ---
 

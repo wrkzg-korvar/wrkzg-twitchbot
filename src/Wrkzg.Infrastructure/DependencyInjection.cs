@@ -53,6 +53,15 @@ public static class DependencyInjection
         // Twitch Auth Handler (DelegatingHandler for Helix API requests)
         services.AddTransient<TwitchAuthHandler>();
 
+        // Twitch Helix API Client (with TwitchAuthHandler for auto Bearer token + Client-Id)
+        services.AddHttpClient<ITwitchHelixClient, TwitchHelixClient>(client =>
+        {
+            client.BaseAddress = new Uri("https://api.twitch.tv/helix/");
+            client.Timeout = TimeSpan.FromSeconds(10);
+        })
+        .AddHttpMessageHandler<TwitchAuthHandler>()
+        .AddStandardResilienceHandler();
+
         // Twitch Chat Client (Singleton — one IRC connection per app)
         services.AddSingleton<ITwitchChatClient, TwitchChatClient>();
 

@@ -26,6 +26,7 @@ public class TwitchChatClient : ITwitchChatClient
 
     private TwitchClient? _client;
     private string? _joinedChannel;
+    private string? _botUsername;
 
     public event Func<ChatMessage, Task>? OnMessageReceived;
     public event Func<string, Task>? OnUserJoined;
@@ -63,6 +64,7 @@ public class TwitchChatClient : ITwitchChatClient
 
         tokens = await EnsureValidTokenAsync(tokens, ct);
         string botUsername = await GetBotUsernameAsync(tokens.AccessToken, ct);
+        _botUsername = botUsername;
 
         _logger.LogInformation("Connecting to Twitch IRC as {BotUsername} in channel #{Channel}",
             botUsername, channel);
@@ -170,6 +172,13 @@ public class TwitchChatClient : ITwitchChatClient
     private async void HandleMessageReceived(object? sender, OnMessageReceivedArgs e)
     {
         if (OnMessageReceived is null) { return; }
+
+        // Skip messages from the bot itself to prevent loops
+        if (_botUsername is not null
+            && string.Equals(e.ChatMessage.Username, _botUsername, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
 
         try
         {

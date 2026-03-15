@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Wrkzg.Core.Interfaces;
 using Wrkzg.Core.Services;
+using Wrkzg.Core.SystemCommands;
 
 namespace Wrkzg.Core;
 
@@ -12,18 +13,23 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddCoreServices(this IServiceCollection services)
     {
+        // System Commands (Singleton — stateless, use IServiceScopeFactory internally)
+        services.AddSingleton<ISystemCommand, CommandsListCommand>();
+        services.AddSingleton<ISystemCommand, PointsCommand>();
+        services.AddSingleton<ISystemCommand, WatchtimeCommand>();
+        services.AddSingleton<ISystemCommand, FollowageCommand>();
+
         // Command Processor (Singleton — maintains cooldown state in-memory)
         services.AddSingleton<ICommandProcessor, CommandProcessor>();
 
         // Chat Message Pipeline (Singleton — orchestrates message processing)
         services.AddSingleton<ChatMessagePipeline>();
 
-        // TODO: Future services (registered in later steps):
-        // services.AddSingleton<IChatGameManager, ChatGameManager>();
-        // services.AddSingleton<IUserTrackingService, UserTrackingService>();
-        // services.AddSingleton<IRaffleService, RaffleService>();
-        // services.AddSingleton<IPollService, PollService>();
-        // services.AddSingleton<IPointsService, PointsService>();
+        // UserTrackingService (Singleton + IHostedService)
+        // Triple registration: same instance as IUserTrackingService, IHostedService, and concrete type
+        services.AddSingleton<UserTrackingService>();
+        services.AddSingleton<IUserTrackingService>(sp => sp.GetRequiredService<UserTrackingService>());
+        services.AddHostedService(sp => sp.GetRequiredService<UserTrackingService>());
 
         return services;
     }

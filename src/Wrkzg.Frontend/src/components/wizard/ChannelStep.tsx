@@ -42,8 +42,8 @@ export function ChannelStep({ onBack, onFinish }: ChannelStepProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-white">Set Your Channel</h2>
-        <p className="mt-2 text-sm text-gray-400">
+        <h2 className="text-2xl font-bold text-[var(--color-text)]">Set Your Channel</h2>
+        <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
           Almost done! Enter your Twitch channel name so the bot knows which
           chat to join.
         </p>
@@ -51,11 +51,11 @@ export function ChannelStep({ onBack, onFinish }: ChannelStepProps) {
 
       <div className="space-y-4">
         <div>
-          <label htmlFor="channel" className="block text-sm font-medium text-gray-300">
+          <label htmlFor="channel" className="block text-sm font-medium text-[var(--color-text)]">
             Channel Name
           </label>
           <div className="mt-1 flex items-center gap-2">
-            <span className="text-gray-500 text-sm">#</span>
+            <span className="text-[var(--color-text-muted)] text-sm">#</span>
             <input
               id="channel"
               type="text"
@@ -63,10 +63,10 @@ export function ChannelStep({ onBack, onFinish }: ChannelStepProps) {
               onChange={(e) => setChannel(e.target.value.replace(/\s/g, ""))}
               placeholder="your_channel_name"
               autoComplete="off"
-              className="block w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+              className="block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-sm text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-brand)] focus:outline-none focus:ring-1 focus:ring-[var(--color-brand)]"
             />
           </div>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-[var(--color-text-muted)]">
             This is your Twitch username, all lowercase. No spaces, no # prefix.
           </p>
         </div>
@@ -79,9 +79,9 @@ export function ChannelStep({ onBack, onFinish }: ChannelStepProps) {
       )}
 
       {/* ─── Success Preview ────────────────────────────────── */}
-      <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-5">
-        <h3 className="text-sm font-semibold text-gray-200 mb-3">Setup Summary</h3>
-        <div className="space-y-2 text-sm text-gray-400">
+      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+        <h3 className="text-sm font-semibold text-[var(--color-text)] mb-3">Setup Summary</h3>
+        <div className="space-y-2 text-sm text-[var(--color-text-secondary)]">
           <div className="flex items-center gap-2">
             <span className="text-green-400">✓</span>
             <span>Twitch App credentials saved</span>
@@ -95,10 +95,10 @@ export function ChannelStep({ onBack, onFinish }: ChannelStepProps) {
             <span>Broadcaster account connected</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className={isValid ? "text-green-400" : "text-gray-600"}>
+            <span className={isValid ? "text-green-400" : "text-[var(--color-text-muted)]"}>
               {isValid ? "✓" : "○"}
             </span>
-            <span className={isValid ? "text-gray-300" : ""}>
+            <span className={isValid ? "text-[var(--color-text)]" : ""}>
               Channel: {isValid ? `#${channel.trim().toLowerCase()}` : "not set"}
             </span>
           </div>
@@ -108,7 +108,7 @@ export function ChannelStep({ onBack, onFinish }: ChannelStepProps) {
       <div className="flex items-center justify-between pt-2">
         <button
           onClick={onBack}
-          className="rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 hover:text-gray-200 transition-colors"
+          className="rounded-lg px-4 py-2.5 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text)] transition-colors"
         >
           ← Back
         </button>

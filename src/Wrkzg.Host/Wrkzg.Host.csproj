@@ -20,6 +20,8 @@
         <OutputType>WinExe</OutputType>
         <AssemblyName>Wrkzg</AssemblyName>
         <RootNamespace>Wrkzg.Host</RootNamespace>
+        <!-- Makes the auto-generated Program class visible to test projects -->
+        <InternalsVisibleTo>Wrkzg.Api.Tests</InternalsVisibleTo>
     </PropertyGroup>
 
     <PropertyGroup Label="Publish Targets">

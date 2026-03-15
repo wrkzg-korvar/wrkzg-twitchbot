@@ -9,11 +9,15 @@ using Wrkzg.Api;
 using Wrkzg.Api.Endpoints;
 using Wrkzg.Api.Hubs;
 using Wrkzg.Core;
+using Wrkzg.Core.Interfaces;
 using Wrkzg.Host;
 using Wrkzg.Infrastructure;
 using Wrkzg.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
+
+PhotinoWindowController windowController = new();
+builder.Services.AddSingleton<IWindowController>(windowController);
 
 builder.Services.AddCoreServices();
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -56,6 +60,8 @@ if (wwwrootPath is not null && Directory.Exists(wwwrootPath))
     app.MapCommandEndpoints();
     app.MapSettingsEndpoints();
     app.MapUserEndpoints();
+    app.MapStatusEndpoints();
+    app.MapWindowEndpoints();
 
     // SPA fallback: unmatched routes serve index.html for React Router
     app.MapFallbackToFile("index.html", new StaticFileOptions
@@ -73,9 +79,11 @@ else
     app.MapCommandEndpoints();
     app.MapSettingsEndpoints();
     app.MapUserEndpoints();
+    app.MapStatusEndpoints();
+    app.MapWindowEndpoints();
 }
 
-PhotinoHosting.Start(app);
+PhotinoHosting.Start(app, windowController);
 
 // ─── Helper ───────────────────────────────────────────────────────────
 

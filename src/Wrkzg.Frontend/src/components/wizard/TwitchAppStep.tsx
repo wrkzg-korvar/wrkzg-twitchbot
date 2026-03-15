@@ -47,20 +47,20 @@ export function TwitchAppStep({ onNext, onBack }: TwitchAppStepProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-white">Create a Twitch App</h2>
-        <p className="mt-2 text-sm text-gray-400">
+        <h2 className="text-2xl font-bold text-[var(--color-text)]">Create a Twitch App</h2>
+        <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
           Wrkzg needs a Twitch Developer Application to authenticate with
           Twitch. This is free and takes about 2 minutes.
         </p>
       </div>
 
       {/* ─── Step-by-step instructions ──────────────────────── */}
-      <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-900/50 p-5">
-        <h3 className="text-sm font-semibold text-gray-200">Instructions</h3>
+      <div className="space-y-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+        <h3 className="text-sm font-semibold text-[var(--color-text)]">Instructions</h3>
 
-        <ol className="space-y-4 text-sm text-gray-400">
+        <ol className="space-y-4 text-sm text-[var(--color-text-secondary)]">
           <li className="flex items-start gap-3">
-            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-800 text-xs font-bold text-gray-400">
+            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--color-elevated)] text-xs font-bold text-[var(--color-text-secondary)]">
               1
             </span>
             <span>
@@ -69,7 +69,7 @@ export function TwitchAppStep({ onNext, onBack }: TwitchAppStepProps) {
                 href="https://dev.twitch.tv/console/apps/create"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-purple-400 underline hover:text-purple-300"
+                className="text-[var(--color-twitch)] underline hover:text-[var(--color-twitch-hover)]"
               >
                 Twitch Developer Console → Create App
               </a>{" "}
@@ -77,7 +77,7 @@ export function TwitchAppStep({ onNext, onBack }: TwitchAppStepProps) {
             </span>
           </li>
           <li className="flex items-start gap-3">
-            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-800 text-xs font-bold text-gray-400">
+            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--color-elevated)] text-xs font-bold text-[var(--color-text-secondary)]">
               2
             </span>
             <div className="space-y-2">
@@ -85,29 +85,29 @@ export function TwitchAppStep({ onNext, onBack }: TwitchAppStepProps) {
               <div className="space-y-1.5">
                 <CopyField label="Name" value="Wrkzg" />
                 <CopyField label="OAuth Redirect URL" value={redirectUri} />
-                <div className="text-xs text-gray-500">
-                  Category: <strong className="text-gray-400">Chat Bot</strong> · Client Type:{" "}
-                  <strong className="text-gray-400">Confidential</strong>
+                <div className="text-xs text-[var(--color-text-muted)]">
+                  Category: <strong className="text-[var(--color-text-secondary)]">Chat Bot</strong> · Client Type:{" "}
+                  <strong className="text-[var(--color-text-secondary)]">Confidential</strong>
                 </div>
               </div>
             </div>
           </li>
           <li className="flex items-start gap-3">
-            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-800 text-xs font-bold text-gray-400">
+            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--color-elevated)] text-xs font-bold text-[var(--color-text-secondary)]">
               3
             </span>
             <span>
-              Click <strong className="text-gray-200">"Create"</strong>, then click{" "}
-              <strong className="text-gray-200">"New Secret"</strong> to generate your
+              Click <strong className="text-[var(--color-text)]">"Create"</strong>, then click{" "}
+              <strong className="text-[var(--color-text)]">"New Secret"</strong> to generate your
               Client Secret.
             </span>
           </li>
           <li className="flex items-start gap-3">
-            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-800 text-xs font-bold text-gray-400">
+            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--color-elevated)] text-xs font-bold text-[var(--color-text-secondary)]">
               4
             </span>
-            <span>Copy the <strong className="text-gray-200">Client ID</strong> and{" "}
-              <strong className="text-gray-200">Client Secret</strong> into the fields below.
+            <span>Copy the <strong className="text-[var(--color-text)]">Client ID</strong> and{" "}
+              <strong className="text-[var(--color-text)]">Client Secret</strong> into the fields below.
             </span>
           </li>
         </ol>
@@ -116,7 +116,7 @@ export function TwitchAppStep({ onNext, onBack }: TwitchAppStepProps) {
       {/* ─── Input Fields ───────────────────────────────────── */}
       <div className="space-y-4">
         <div>
-          <label htmlFor="clientId" className="block text-sm font-medium text-gray-300">
+          <label htmlFor="clientId" className="block text-sm font-medium text-[var(--color-text)]">
             Client ID
           </label>
           <input
@@ -126,12 +126,12 @@ export function TwitchAppStep({ onNext, onBack }: TwitchAppStepProps) {
             onChange={(e) => setClientId(e.target.value)}
             placeholder="Paste your Client ID here"
             autoComplete="off"
-            className="mt-1 block w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+            className="mt-1 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-sm text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-brand)] focus:outline-none focus:ring-1 focus:ring-[var(--color-brand)]"
           />
         </div>
 
         <div>
-          <label htmlFor="clientSecret" className="block text-sm font-medium text-gray-300">
+          <label htmlFor="clientSecret" className="block text-sm font-medium text-[var(--color-text)]">
             Client Secret
           </label>
           <input
@@ -141,9 +141,9 @@ export function TwitchAppStep({ onNext, onBack }: TwitchAppStepProps) {
             onChange={(e) => setClientSecret(e.target.value)}
             placeholder="Paste your Client Secret here"
             autoComplete="off"
-            className="mt-1 block w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+            className="mt-1 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-sm text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-brand)] focus:outline-none focus:ring-1 focus:ring-[var(--color-brand)]"
           />
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-[var(--color-text-muted)]">
             🔒 Encrypted and stored in your OS keychain. Never leaves your machine.
           </p>
         </div>
@@ -159,14 +159,14 @@ export function TwitchAppStep({ onNext, onBack }: TwitchAppStepProps) {
       <div className="flex items-center justify-between pt-2">
         <button
           onClick={onBack}
-          className="rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 hover:text-gray-200 transition-colors"
+          className="rounded-lg px-4 py-2.5 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text)] transition-colors"
         >
           ← Back
         </button>
         <button
           onClick={handleSave}
           disabled={!canContinue || isSaving}
-          className="rounded-lg bg-purple-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="rounded-lg bg-[var(--color-brand)] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           {isSaving ? "Saving…" : "Save & Continue →"}
         </button>
@@ -185,12 +185,12 @@ function CopyField({ label, value }: { label: string; value: string }) {
   };
 
   return (
-    <div className="flex items-center gap-2 rounded-md bg-gray-800/70 px-3 py-1.5">
-      <span className="text-xs text-gray-500 shrink-0">{label}:</span>
-      <code className="flex-1 text-xs text-gray-300 truncate">{value}</code>
+    <div className="flex items-center gap-2 rounded-md bg-[var(--color-elevated)]/70 px-3 py-1.5">
+      <span className="text-xs text-[var(--color-text-muted)] shrink-0">{label}:</span>
+      <code className="flex-1 text-xs text-[var(--color-text)] truncate">{value}</code>
       <button
         onClick={handleCopy}
-        className="shrink-0 rounded px-2 py-0.5 text-xs text-purple-400 hover:bg-gray-700 transition-colors"
+        className="shrink-0 rounded px-2 py-0.5 text-xs text-[var(--color-brand-text)] hover:bg-[var(--color-elevated)] transition-colors"
       >
         {copied ? "Copied!" : "Copy"}
       </button>

@@ -28,6 +28,7 @@ public class User
 
     public bool IsBanned { get; set; }
     public bool IsMod { get; set; }
+    public bool IsBroadcaster { get; set; }
     public DateTimeOffset FirstSeenAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset LastSeenAt { get; set; } = DateTimeOffset.UtcNow;
 

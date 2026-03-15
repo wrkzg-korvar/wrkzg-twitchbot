@@ -41,6 +41,9 @@
     </ItemGroup>
 
     <ItemGroup Label="Test Utilities">
+        <!-- DI Container (concrete) needed for IServiceScopeFactory in tests -->
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+
         <!-- NSubstitute: Interface-Mocking ohne manuelle Mock-Klassen -->
         <PackageReference Include="NSubstitute" />
 

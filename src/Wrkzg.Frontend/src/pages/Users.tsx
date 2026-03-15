@@ -11,6 +11,7 @@ interface User {
   isSubscriber: boolean;
   subscriberTier: number;
   isMod: boolean;
+  isBroadcaster: boolean;
   isBanned: boolean;
   lastSeenAt: string;
 }
@@ -27,58 +28,58 @@ export function Users() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Users</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-[var(--color-text)]">Users</h1>
+        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
           Tracked viewers, their points, watch time, and activity.
         </p>
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-gray-500">Loading users…</p>
+        <p className="text-sm text-[var(--color-text-muted)]">Loading users…</p>
       ) : !users || users.length === 0 ? (
-        <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-8 text-center">
-          <p className="text-gray-400">No users tracked yet.</p>
-          <p className="mt-1 text-sm text-gray-500">
+        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-8 text-center">
+          <p className="text-[var(--color-text-secondary)]">No users tracked yet.</p>
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
             Users appear here when they send messages in your chat.
           </p>
         </div>
       ) : (
-        <div className="rounded-lg border border-gray-800 overflow-hidden">
+        <div className="rounded-lg border border-[var(--color-border)] overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-800 bg-gray-900/80">
-                <th className="px-4 py-3 text-left font-medium text-gray-400">User</th>
-                <th className="px-4 py-3 text-right font-medium text-gray-400">Points</th>
-                <th className="px-4 py-3 text-right font-medium text-gray-400">Watch Time</th>
-                <th className="px-4 py-3 text-right font-medium text-gray-400">Messages</th>
-                <th className="px-4 py-3 text-center font-medium text-gray-400">Role</th>
-                <th className="px-4 py-3 text-right font-medium text-gray-400">Last Seen</th>
+              <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+                <th className="px-4 py-3 text-left font-medium text-[var(--color-text-secondary)]">User</th>
+                <th className="px-4 py-3 text-right font-medium text-[var(--color-text-secondary)]">Points</th>
+                <th className="px-4 py-3 text-right font-medium text-[var(--color-text-secondary)]">Watch Time</th>
+                <th className="px-4 py-3 text-right font-medium text-[var(--color-text-secondary)]">Messages</th>
+                <th className="px-4 py-3 text-center font-medium text-[var(--color-text-secondary)]">Role</th>
+                <th className="px-4 py-3 text-right font-medium text-[var(--color-text-secondary)]">Last Seen</th>
               </tr>
             </thead>
             <tbody>
               {users.map((user) => (
-                <tr key={user.id} className="border-b border-gray-800/50 hover:bg-gray-900/40">
+                <tr key={user.id} className="border-b border-[var(--color-border)] hover:bg-[var(--color-elevated)]">
                   <td className="px-4 py-3">
-                    <span className="font-medium text-gray-200">{user.displayName}</span>
+                    <span className="font-medium text-[var(--color-text)]">{user.displayName}</span>
                     {user.isBanned && (
                       <span className="ml-2 rounded bg-red-900/30 px-1.5 py-0.5 text-[10px] text-red-400">
                         BANNED
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-300 font-mono">
+                  <td className="px-4 py-3 text-right text-[var(--color-text)] font-mono">
                     {user.points.toLocaleString()}
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-400">
+                  <td className="px-4 py-3 text-right text-[var(--color-text-secondary)]">
                     {formatWatchTime(user.watchedMinutes)}
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-400">
+                  <td className="px-4 py-3 text-right text-[var(--color-text-secondary)]">
                     {user.messageCount.toLocaleString()}
                   </td>
                   <td className="px-4 py-3 text-center">
                     <RoleBadge user={user} />
                   </td>
-                  <td className="px-4 py-3 text-right text-xs text-gray-500">
+                  <td className="px-4 py-3 text-right text-xs text-[var(--color-text-muted)]">
                     {formatRelativeTime(user.lastSeenAt)}
                   </td>
                 </tr>
@@ -92,6 +93,9 @@ export function Users() {
 }
 
 function RoleBadge({ user }: { user: User }) {
+  if (user.isBroadcaster) {
+    return <span className="rounded bg-red-500/20 px-2 py-0.5 text-xs text-red-400">Broadcaster</span>;
+  }
   if (user.isMod) {
     return <span className="rounded bg-green-500/20 px-2 py-0.5 text-xs text-green-400">Mod</span>;
   }
@@ -99,7 +103,7 @@ function RoleBadge({ user }: { user: User }) {
     const tierLabel = user.subscriberTier > 0 ? ` T${user.subscriberTier}` : "";
     return <span className="rounded bg-purple-500/20 px-2 py-0.5 text-xs text-purple-400">Sub{tierLabel}</span>;
   }
-  return <span className="text-xs text-gray-600">Viewer</span>;
+  return <span className="text-xs text-[var(--color-text-muted)]">Viewer</span>;
 }
 
 function formatWatchTime(minutes: number): string {

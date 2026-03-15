@@ -25,15 +25,18 @@ namespace Wrkzg.Core.Services;
 public class ChatMessagePipeline
 {
     private readonly ICommandProcessor _commandProcessor;
+    private readonly IUserTrackingService _tracking;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ChatMessagePipeline> _logger;
 
     public ChatMessagePipeline(
         ICommandProcessor commandProcessor,
+        IUserTrackingService tracking,
         IServiceScopeFactory scopeFactory,
         ILogger<ChatMessagePipeline> logger)
     {
         _commandProcessor = commandProcessor;
+        _tracking = tracking;
         _scopeFactory = scopeFactory;
         _logger = logger;
     }
@@ -47,6 +50,9 @@ public class ChatMessagePipeline
         {
             // 1. Update user stats (scoped — needs DB access)
             await UpdateUserStatsAsync(message, ct);
+
+            // Mark user active for watch time tracking
+            _tracking.MarkUserActive(message.UserId);
 
             // 2. Try custom commands
             bool handled = await _commandProcessor.HandleMessageAsync(message, ct);
@@ -85,6 +91,7 @@ public class ChatMessagePipeline
             user.DisplayName = message.DisplayName; // Keep display name in sync
             user.IsMod = message.IsModerator;
             user.IsSubscriber = message.IsSubscriber;
+            user.IsBroadcaster = message.IsBroadcaster;
 
             await users.UpdateAsync(user, ct);
         }

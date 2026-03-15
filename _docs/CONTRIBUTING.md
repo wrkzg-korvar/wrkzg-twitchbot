@@ -105,6 +105,14 @@ dotnet run --project src/Wrkzg.Host
 
 Photino opens the built SPA from `Wrkzg.Api/wwwroot/`. The console shows `[Photino] Using Kestrel at http://localhost:5000`.
 
+### Theme Development
+
+The app supports Light and Dark themes. When working on UI components, test both themes:
+1. Toggle via the Sun/Moon button in the sidebar
+2. All colors must use CSS custom properties (`var(--color-*)`)
+3. Never use hardcoded Tailwind color classes for themed elements
+4. Twitch-specific UI uses `var(--color-twitch)` instead of `var(--color-brand)`
+
 ---
 
 ## Project Structure

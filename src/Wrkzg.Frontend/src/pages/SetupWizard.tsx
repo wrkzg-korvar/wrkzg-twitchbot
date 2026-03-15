@@ -6,6 +6,7 @@ import { TwitchAppStep } from "../components/wizard/TwitchAppStep";
 import { BotConnectStep } from "../components/wizard/BotConnectStep";
 import { BroadcasterConnectStep } from "../components/wizard/BroadcasterConnectStep";
 import { ChannelStep } from "../components/wizard/ChannelStep";
+import { TitleBar } from "../components/layout/TitleBar";
 
 const STEPS = [
   { id: "welcome", label: "Welcome" },
@@ -39,26 +40,28 @@ export function SetupWizard() {
   }, [queryClient, navigate]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-950">
+    <div className="flex min-h-screen flex-col bg-[var(--color-bg)]">
+      <TitleBar />
+
       {/* ─── Progress Bar ───────────────────────────────────── */}
-      <div className="border-b border-gray-800 bg-gray-950/80 backdrop-blur">
+      <div className="border-b border-[var(--color-border)] bg-[var(--color-bg)]/80 backdrop-blur">
         <div className="mx-auto flex max-w-2xl items-center gap-1 px-6 py-4">
           {STEPS.map((step, i) => (
             <div key={step.id} className="flex items-center gap-1">
               <div
                 className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-colors ${
                   i < currentStep
-                    ? "bg-purple-500 text-white"
+                    ? "bg-[var(--color-brand)] text-white"
                     : i === currentStep
-                      ? "bg-purple-500/20 text-purple-400 ring-2 ring-purple-500"
-                      : "bg-gray-800 text-gray-500"
+                      ? "bg-[var(--color-brand)]/20 text-[var(--color-brand-text)] ring-2 ring-[var(--color-brand)]"
+                      : "bg-[var(--color-elevated)] text-[var(--color-text-muted)]"
                 }`}
               >
                 {i < currentStep ? "✓" : i + 1}
               </div>
               <span
                 className={`hidden text-xs sm:inline ${
-                  i === currentStep ? "text-purple-400 font-medium" : "text-gray-500"
+                  i === currentStep ? "text-[var(--color-brand-text)] font-medium" : "text-[var(--color-text-muted)]"
                 }`}
               >
                 {step.label}
@@ -66,7 +69,7 @@ export function SetupWizard() {
               {i < STEPS.length - 1 && (
                 <div
                   className={`mx-1 h-px w-6 ${
-                    i < currentStep ? "bg-purple-500" : "bg-gray-800"
+                    i < currentStep ? "bg-[var(--color-brand)]" : "bg-[var(--color-elevated)]"
                   }`}
                 />
               )}

@@ -61,6 +61,13 @@ public class TwitchAuthHandler : DelegatingHandler
         request.Headers.Authorization =
             new AuthenticationHeaderValue("Bearer", tokens.AccessToken);
 
+        // Set Client-Id header required by Helix API
+        string? clientId = await _storage.LoadClientIdAsync(ct);
+        if (clientId is not null)
+        {
+            request.Headers.TryAddWithoutValidation("Client-Id", clientId);
+        }
+
         HttpResponseMessage response = await base.SendAsync(request, ct);
 
         // 401 → refresh and retry once

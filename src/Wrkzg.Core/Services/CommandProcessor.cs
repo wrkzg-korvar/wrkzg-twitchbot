@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,6 +38,7 @@ public class CommandProcessor : ICommandProcessor
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ITwitchChatClient _chat;
+    private readonly IReadOnlyList<ISystemCommand> _systemCommands;
     private readonly ILogger<CommandProcessor> _logger;
 
     /// <summary>Global cooldown per command trigger. Key: trigger, Value: expiry time.</summary>
@@ -52,10 +55,12 @@ public class CommandProcessor : ICommandProcessor
     public CommandProcessor(
         IServiceScopeFactory scopeFactory,
         ITwitchChatClient chat,
+        IEnumerable<ISystemCommand> systemCommands,
         ILogger<CommandProcessor> logger)
     {
         _scopeFactory = scopeFactory;
         _chat = chat;
+        _systemCommands = systemCommands.ToList();
         _logger = logger;
     }
 
@@ -69,6 +74,24 @@ public class CommandProcessor : ICommandProcessor
 
         // 2. Extract trigger (first word, lowercase)
         string trigger = message.Content.Split(' ', 2)[0].ToLowerInvariant();
+
+        // 2.5 Check system commands first (before DB lookup)
+        foreach (ISystemCommand sysCmd in _systemCommands)
+        {
+            if (string.Equals(sysCmd.Trigger, trigger, StringComparison.OrdinalIgnoreCase)
+                || sysCmd.Aliases.Any(a => string.Equals(a, trigger, StringComparison.OrdinalIgnoreCase)))
+            {
+                string? sysResponse = await sysCmd.ExecuteAsync(message, ct);
+                if (sysResponse is not null)
+                {
+                    await _chat.SendMessageAsync(sysResponse, ct);
+                    _logger.LogInformation("Executed system command {Trigger} for {User}",
+                        sysCmd.Trigger, message.DisplayName);
+                }
+
+                return true;
+            }
+        }
 
         // Resolve scoped repositories
         using IServiceScope scope = _scopeFactory.CreateScope();

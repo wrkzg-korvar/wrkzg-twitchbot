@@ -253,6 +253,9 @@ namespace Wrkzg.Infrastructure.Migrations
                     b.Property<bool>("IsBanned")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("IsBroadcaster")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsMod")
                         .HasColumnType("INTEGER");
 

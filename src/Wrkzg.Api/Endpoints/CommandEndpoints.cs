@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -17,6 +18,19 @@ public static class CommandEndpoints
     public static void MapCommandEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/commands").WithTags("Commands");
+
+        // GET /api/commands/system — returns built-in system commands
+        group.MapGet("/system", (IEnumerable<ISystemCommand> systemCommands) =>
+        {
+            var result = systemCommands.Select(cmd => new
+            {
+                trigger = cmd.Trigger,
+                aliases = cmd.Aliases,
+                description = cmd.Description,
+                isSystem = true
+            });
+            return Results.Ok(result);
+        });
 
         // GET /api/commands — list all commands
         group.MapGet("/", async (ICommandRepository repo, CancellationToken ct) =>

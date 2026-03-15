@@ -12,6 +12,8 @@ This document describes all REST endpoints and SignalR events exposed by the Wrk
 - [Commands](#commands)
 - [Users](#users)
 - [Settings](#settings)
+- [Status](#status)
+- [Window Control](#window-control)
 - [SignalR — Real-Time Events](#signalr--real-time-events)
 
 ---
@@ -224,6 +226,31 @@ Updates an existing command. All fields are optional (partial update).
 
 ---
 
+### `GET /api/commands/system`
+
+Returns the list of built-in system commands.
+
+**Response `200 OK`:**
+
+```json
+[
+  {
+    "trigger": "!commands",
+    "aliases": ["!help"],
+    "description": "Lists all available commands.",
+    "isSystem": true
+  },
+  {
+    "trigger": "!points",
+    "aliases": [],
+    "description": "Shows your current points.",
+    "isSystem": true
+  }
+]
+```
+
+---
+
 ## Users
 
 ### `GET /api/users`
@@ -311,6 +338,44 @@ Updates one or more settings.
 ```
 
 **Response `200 OK`:** Full updated settings map
+
+---
+
+## Status
+
+### `GET /api/status`
+
+Returns the current bot, stream, auth, and platform status.
+
+**Response `200 OK`:**
+
+```json
+{
+  "bot": { "isConnected": true, "channel": "krinlin" },
+  "stream": { "isLive": false, "viewerCount": 0, "title": null, "game": null, "startedAt": null },
+  "auth": { "botTokenPresent": true, "broadcasterTokenPresent": true },
+  "platform": "macos"
+}
+```
+
+---
+
+## Window Control
+
+### `POST /api/window/minimize`
+Minimizes the application window. **Response `200 OK`**
+
+### `POST /api/window/maximize`
+Toggles maximize/restore of the application window. **Response `200 OK`**
+
+### `POST /api/window/close`
+Closes the application window and shuts down the app. **Response `200 OK`**
+
+### `POST /api/window/drag-start`
+Starts a window drag operation. **Request:** `{ "screenX": 100, "screenY": 200 }` **Response `200 OK`**
+
+### `POST /api/window/drag-move`
+Moves the window during drag. **Request:** `{ "screenX": 150, "screenY": 250 }` **Response `200 OK`**
 
 ---
 

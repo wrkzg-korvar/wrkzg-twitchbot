@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using Microsoft.AspNetCore.Builder;
@@ -22,7 +23,7 @@ public static class PhotinoHosting
 {
     private const string ViteDevUrl = "http://localhost:5173";
 
-    public static void Start(WebApplication app)
+    public static void Start(WebApplication app, PhotinoWindowController windowController)
     {
         // Kestrel asynchron im Hintergrund starten
         var serverTask = app.StartAsync();
@@ -41,13 +42,25 @@ public static class PhotinoHosting
             url = kestrelUrl;
         }
 
-        var window = new PhotinoWindow()
+        // Resolve icon path (relative to the executable)
+        string iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "icon.ico");
+
+        PhotinoWindow window = new PhotinoWindow()
             .SetTitle("Wrkzg")
+            .SetChromeless(true)
             .SetSize(1280, 820)
             .SetMinSize(900, 600)
             .SetResizable(true)
-            .SetContextMenuEnabled(false)
-            .Load(new Uri(url));
+            .SetContextMenuEnabled(false);
+
+        if (File.Exists(iconPath))
+        {
+            window.SetIconFile(iconPath);
+        }
+
+        window.Load(new Uri(url));
+
+        windowController.SetWindow(window);
 
         // Blockiert bis das Fenster geschlossen wird
         window.WaitForClose();

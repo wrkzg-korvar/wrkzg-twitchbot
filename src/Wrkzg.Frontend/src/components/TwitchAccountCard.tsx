@@ -34,11 +34,11 @@ export function TwitchAccountCard({
   };
 
   return (
-    <div className="rounded-lg border border-gray-200 p-6 dark:border-gray-700">
+    <div className="rounded-lg border border-[var(--color-border)] p-6">
       <div className="flex items-start justify-between">
         <div>
           <h3 className="text-lg font-semibold">{title}</h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
             {description}
           </p>
         </div>
@@ -48,22 +48,22 @@ export function TwitchAccountCard({
             Connected
           </span>
         ) : (
-          <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+          <span className="inline-flex items-center rounded-full bg-[var(--color-elevated)] px-3 py-1 text-sm font-medium text-[var(--color-text)]">
             Not connected
           </span>
         )}
       </div>
 
       {state.isAuthenticated && state.twitchUsername && (
-        <div className="mt-4 rounded-md bg-gray-50 p-3 dark:bg-gray-800">
+        <div className="mt-4 rounded-md bg-[var(--color-elevated)] p-3">
           <p className="text-sm">
             <span className="font-medium">Account:</span>{" "}
-            <span className="text-purple-600 dark:text-purple-400">
+            <span className="text-[var(--color-twitch)]">
               {state.twitchUsername}
             </span>
           </p>
           {state.scopes && state.scopes.length > 0 && (
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-xs text-[var(--color-text-muted)]">
               Scopes: {state.scopes.join(", ")}
             </p>
           )}
@@ -75,7 +75,7 @@ export function TwitchAccountCard({
           <>
             <button
               onClick={handleConnect}
-              className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+              className="rounded-md bg-[var(--color-elevated)] px-4 py-2 text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-border)]"
             >
               Reconnect
             </button>
@@ -90,7 +90,7 @@ export function TwitchAccountCard({
         ) : (
           <button
             onClick={handleConnect}
-            className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
+            className="rounded-md bg-[var(--color-twitch)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-twitch-hover)]"
           >
             Connect with Twitch
           </button>
@@ -98,7 +98,7 @@ export function TwitchAccountCard({
       </div>
 
       {!state.isAuthenticated && (
-        <div className="mt-3 text-xs text-gray-400">
+        <div className="mt-3 text-xs text-[var(--color-text-secondary)]">
           Required scopes: {scopes.join(", ")}
         </div>
       )}

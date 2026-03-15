@@ -21,6 +21,8 @@
     <ItemGroup Label="Projects Under Test">
         <ProjectReference Include="..\..\src\Wrkzg.Api\Wrkzg.Api.csproj" />
         <ProjectReference Include="..\..\src\Wrkzg.Core\Wrkzg.Core.csproj" />
+        <ProjectReference Include="..\..\src\Wrkzg.Infrastructure\Wrkzg.Infrastructure.csproj" />
+        <ProjectReference Include="..\..\src\Wrkzg.Host\Wrkzg.Host.csproj" />
     </ItemGroup>
 
     <ItemGroup Label="Test Frameworks">

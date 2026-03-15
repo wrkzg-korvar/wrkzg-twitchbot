@@ -11,7 +11,7 @@ Built with C# .NET 10 · Runs on Windows & macOS · Open Source
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-10.0-purple?style=flat-square)](https://dotnet.microsoft.com)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-lightgrey?style=flat-square)](#installation)
-[![Status](https://img.shields.io/badge/status-early%20development-orange?style=flat-square)](#roadmap)
+[![Status](https://img.shields.io/badge/status-v1.0.0-green?style=flat-square)](#roadmap)
 
 ---
 
@@ -37,15 +37,17 @@ Everything stays on your machine. No subscriptions, no data sent to external ser
 | **Twitch OAuth** — bot account + broadcaster account, tokens encrypted in OS keychain | ✅ Implemented |
 | **IRC Connection** — auto-connect on startup, auto token refresh, reconnect on disconnect | ✅ Implemented |
 | **Custom Commands** — `!discord`, `!socials`, variables like `{user}`, `{points}`, `{random:1:6}` | ✅ Implemented |
-| **Dashboard** — live chat feed, command management, user table, settings | ✅ Implemented |
-| **User Tracking** — message count, display name sync, mod/sub status | ✅ Implemented |
+| **System Commands** — built-in `!commands`, `!points`, `!watchtime`, `!followage` | ✅ Implemented |
+| **Dashboard** — live chat feed, bot status, viewer count, command management | ✅ Implemented |
+| **User Tracking** — message count, watch time, points, mod/sub/broadcaster status sync | ✅ Implemented |
+| **Points System** — automatic point rewards per minute while stream is live, sub multiplier | ✅ Implemented |
+| **Custom Title Bar** — OS-native window controls (macOS traffic lights / Windows buttons) | ✅ Implemented |
+| **Design System** — brand colors from logo, Light/Dark theme toggle, CSS custom properties | ✅ Implemented |
 | **Custom Bot Name** — use your own Twitch account as the bot | ✅ Implemented |
-| **Points System** — automatic point rewards per minute while stream is live | 🚧 Planned |
-| **Watch Time Tracking** — track viewer watch time via Helix API polling | 🚧 Planned |
-| **Chat Games** — Heist, Duel, Slots, Roulette, Trivia | 🚧 Planned |
-| **Raffles & Giveaways** — weighted ticket system, subscriber bonuses | 🚧 Planned |
-| **Votes & Polls** — chat-based or native Twitch polls via Helix API | 🚧 Planned |
-| **Automatic Updates** — checks GitHub Releases and updates in the background | 🚧 Planned |
+| **Chat Games** — Heist, Duel, Slots, Roulette, Trivia | 🚧 v1.1 Planned |
+| **Raffles & Giveaways** — weighted ticket system, subscriber bonuses | 🚧 v1.1 Planned |
+| **Votes & Polls** — chat-based or native Twitch polls via Helix API | 🚧 v1.1 Planned |
+| **Automatic Updates** — checks GitHub Releases and updates in the background | 🚧 v1.0.1 Planned |
 
 ---
 
@@ -171,15 +173,21 @@ For questions or ideas, open a [GitHub Discussion](https://github.com/wrkzg-korv
 
 ## Roadmap
 
-### v1.0.0 — MVP
+### v1.0.0 — MVP ✅
 - [x] Twitch OAuth (bot account + broadcaster account)
 - [x] IRC connection + custom commands
-- [x] User tracking (message count, mod/sub status sync)
-- [x] Dashboard (overview, command editor, user table, settings)
+- [x] System commands (!commands, !points, !watchtime, !followage)
+- [x] User tracking (messages, watch time, points, mod/sub/broadcaster sync)
+- [x] Points system (automatic rewards per minute while live, sub multiplier)
+- [x] Dashboard (live chat, commands CRUD, user table, settings)
 - [x] Setup Wizard for first-time users
-- [ ] Points system (automatic rewards per minute while live)
-- [ ] Watch time tracking (Helix API polling)
-- [ ] Automatic updater
+- [x] Custom title bar with OS-native window controls
+- [x] Design system with Light/Dark theme support
+
+### v1.0.1 — Polish
+- [ ] Automatic updater (GitHub Releases check + download + install)
+- [ ] Command aliases support in UI
+- [ ] Command edit modal (inline editing)
 
 ### v1.1.0 — Community Features
 - [ ] Chat games (Heist, Duel, Slots, Trivia, Roulette)
@@ -190,6 +198,7 @@ For questions or ideas, open a [GitHub Discussion](https://github.com/wrkzg-korv
 ### Future
 - [ ] OBS overlay browser sources
 - [ ] Song request queue
+- [ ] EventSub integration (follows, subs, raids in real-time)
 - [ ] Linux support
 
 ---

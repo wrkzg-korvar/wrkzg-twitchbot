@@ -19,7 +19,7 @@ export function SettingsAuthSection() {
       <section className="space-y-4">
         <div>
           <h2 className="text-lg font-semibold">Twitch Accounts</h2>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
             Connect your bot account for chat and your broadcaster account for
             API access. These are two separate Twitch accounts.
           </p>
@@ -74,21 +74,21 @@ function TwitchCredentialsSection() {
   };
 
   return (
-    <section className="rounded-lg border border-gray-200 p-6 dark:border-gray-700">
+    <section className="rounded-lg border border-[var(--color-border)] p-6">
       <div>
         <h2 className="text-lg font-semibold">Twitch App Credentials</h2>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
           Register an app at{" "}
           <a
             href="https://dev.twitch.tv/console"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-purple-600 underline hover:text-purple-700 dark:text-purple-400"
+            className="text-[var(--color-twitch)] underline hover:text-[var(--color-twitch-hover)]"
           >
             dev.twitch.tv/console
           </a>{" "}
           — set redirect URI to{" "}
-          <code className="rounded bg-gray-100 px-1 text-sm dark:bg-gray-800">
+          <code className="rounded bg-[var(--color-elevated)] px-1 text-sm">
             http://localhost:5000/auth/callback
           </code>
         </p>
@@ -102,7 +102,7 @@ function TwitchCredentialsSection() {
       ) : (
         <div className="mt-4 space-y-3">
           <div>
-            <label htmlFor="clientSecret" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label htmlFor="clientSecret" className="block text-sm font-medium text-[var(--color-text)]">
               Client Secret
             </label>
             <input
@@ -111,9 +111,9 @@ function TwitchCredentialsSection() {
               value={secret}
               onChange={(e) => setSecret(e.target.value)}
               placeholder="Enter your Twitch Client Secret"
-              className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-gray-600 dark:bg-gray-800"
+              className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-[var(--color-elevated)] px-3 py-2 text-sm shadow-sm focus:border-[var(--color-brand)] focus:outline-none focus:ring-1 focus:ring-[var(--color-brand)]"
             />
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
               Encrypted and stored locally. Never leaves your machine.
             </p>
           </div>
@@ -123,7 +123,7 @@ function TwitchCredentialsSection() {
           <button
             onClick={handleSave}
             disabled={isSaving || !secret.trim()}
-            className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"
+            className="rounded-md bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-brand-hover)] disabled:opacity-50"
           >
             {isSaving ? "Saving…" : "Save Client Secret"}
           </button>

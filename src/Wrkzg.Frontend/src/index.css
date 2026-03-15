@@ -1,25 +1,89 @@
 @import "tailwindcss";
 
 /*
- * Wrkzg Dashboard — Global Styles
+ * Wrkzg Dashboard — Global Styles + Design System
  * Uses Tailwind v4 (CSS-first config via @import).
- * Dark theme by default (matches Twitch/streaming aesthetic).
+ * Brand colors derived from the Wrkzg logo gradient (Green → Orange → Red).
  */
 
+/* ─── Dark Theme (default) ─────────────────────────── */
 :root {
   color-scheme: dark;
+
+  /* Brand (Logo Green — primary accent) */
+  --color-brand: #8BBF4C;
+  --color-brand-hover: #6FA33A;
+  --color-brand-subtle: rgba(139, 191, 76, 0.15);
+  --color-brand-text: #a3d665;
+
+  /* Accent (Orange — highlights, CTAs) */
+  --color-accent: #F59E0B;
+  --color-accent-hover: #D97706;
+
+  /* Twitch Purple — ONLY for Twitch-specific UI */
+  --color-twitch: #A855F7;
+  --color-twitch-hover: #9333EA;
+  --color-twitch-subtle: rgba(168, 85, 247, 0.15);
+
+  /* Surfaces */
+  --color-bg: #0a0a0f;
+  --color-surface: #111118;
+  --color-elevated: #1a1a24;
+  --color-border: #2a2a36;
+
+  /* Text */
+  --color-text: #e2e8f0;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+
+  /* Semantic */
+  --color-success: #22c55e;
+  --color-warning: #F59E0B;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+}
+
+/* ─── Light Theme ──────────────────────────────────── */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --color-brand: #6FA33A;
+  --color-brand-hover: #548028;
+  --color-brand-subtle: rgba(111, 163, 58, 0.1);
+  --color-brand-text: #416320;
+
+  --color-accent: #D97706;
+  --color-accent-hover: #B45309;
+
+  --color-twitch: #9333EA;
+  --color-twitch-hover: #7C3AED;
+  --color-twitch-subtle: rgba(147, 51, 234, 0.1);
+
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-elevated: #f1f5f9;
+  --color-border: #e2e8f0;
+
+  --color-text: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+
+  --color-success: #16a34a;
+  --color-warning: #D97706;
+  --color-error: #dc2626;
+  --color-info: #2563eb;
 }
 
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background-color: #0a0a0f;
-  color: #e2e8f0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar styling for dark theme */
+/* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -30,10 +94,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: var(--color-border);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: var(--color-text-muted);
 }
