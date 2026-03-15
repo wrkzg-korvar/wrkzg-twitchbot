@@ -58,20 +58,15 @@
     </ItemGroup>
 
     <!--
-      Windows-spezifische APIs für DPAPI (Token-Verschlüsselung).
-      Diese API ist nur auf Windows verfügbar – die Infrastructure-Schicht
-      wählt zur Laufzeit über OperatingSystem.IsWindows() die richtige
-      ISecureStorage-Implementierung.
-      Kein Compile-Fehler auf macOS, da der Code hinter OS-Guards liegt.
+      DPAPI (Token-Verschlüsselung) — Paket wird auf allen Plattformen
+      referenziert damit der Code kompiliert. Zur Laufzeit wählt die DI
+      über OperatingSystem.IsWindows() die richtige ISecureStorage-
+      Implementierung; DPAPI-Aufrufe in WindowsSecureStorage werden
+      nur auf Windows ausgeführt.
     -->
-    <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <ItemGroup Label="Cryptography">
         <PackageReference Include="System.Security.Cryptography.ProtectedData" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Data\" />
-      <Folder Include="Repositories\" />
-      <Folder Include="Twitch\" />
-    </ItemGroup>
 
 </Project>

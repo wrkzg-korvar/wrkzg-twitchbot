@@ -19,7 +19,7 @@ Thank you for your interest in contributing! This document covers everything you
 
 ## Code of Conduct
 
-Be respectful. We're all here to build something useful.  
+Be respectful. We're all here to build something useful.
 Constructive feedback is welcome; personal attacks are not.
 
 ---
@@ -42,8 +42,8 @@ Constructive feedback is welcome; personal attacks are not.
 git clone https://github.com/YOUR_USERNAME/wrkzg-twitchbot.git
 cd wrkzg-twitchbot
 
-# Install frontend dependencies
-cd src/Wrkzg.Frontend && npm install && cd ../..
+# Install frontend dependencies and build
+cd src/Wrkzg.Frontend && npm install && npm run build && cd ../..
 
 # Restore .NET packages
 dotnet restore
@@ -57,13 +57,19 @@ dotnet build
 You need your own Twitch Developer Application to test OAuth and API calls:
 
 1. Go to [dev.twitch.tv/console](https://dev.twitch.tv/console)
-2. Register a new application — redirect URI: `http://localhost:5000/auth/callback`
-3. Create `src/Wrkzg.Api/appsettings.Development.json` (this file is gitignored):
+2. Register a new application:
+    - Name: `Wrkzg-Dev`
+    - OAuth Redirect URL: `http://localhost:5000/auth/callback`
+    - Category: `Chat Bot`
+    - Client Type: `Confidential`
+3. Click "New Secret" to generate a Client Secret
+4. Create `src/Wrkzg.Api/appsettings.Development.json` (this file is gitignored):
 
 ```json
 {
   "Twitch": {
-    "ClientId": "your_client_id_here"
+    "ClientId": "your_client_id_here",
+    "ClientSecret": "your_client_secret_here"
   },
   "Bot": {
     "Port": 5000
@@ -71,17 +77,33 @@ You need your own Twitch Developer Application to test OAuth and API calls:
 }
 ```
 
+> **Note:** In production, credentials are stored in the OS keychain via the Setup Wizard. The `appsettings.Development.json` fallback is only for contributors during development.
+
 ### Running in Development Mode
+
+**Option A — With Vite Hot Reload (recommended for frontend work):**
 
 ```bash
 # Terminal 1: Start the .NET backend
 dotnet run --project src/Wrkzg.Host
 
-# Terminal 2: Start the frontend dev server (Vite with hot reload)
+# Terminal 2: Start the frontend dev server
 cd src/Wrkzg.Frontend && npm run dev
 ```
 
-The Photino window opens automatically. The React frontend at `localhost:5173` proxies API calls to `localhost:5000`.
+Photino detects the Vite Dev Server on `:5173` and opens it automatically. Changes to React components are reflected instantly via Hot Module Replacement.
+
+**Option B — Without Vite (backend work only):**
+
+```bash
+# Build frontend once
+cd src/Wrkzg.Frontend && npm run build && cd ../..
+
+# Run the app (serves built static files)
+dotnet run --project src/Wrkzg.Host
+```
+
+Photino opens the built SPA from `Wrkzg.Api/wwwroot/`. The console shows `[Photino] Using Kestrel at http://localhost:5000`.
 
 ---
 
@@ -90,16 +112,19 @@ The Photino window opens automatically. The React frontend at `localhost:5173` p
 ```
 wrkzg/
 ├── src/
-│   ├── Wrkzg.Host/           Executable — entry point, Photino window, DI bootstrap
-│   ├── Wrkzg.Api/            Class Library (Web SDK) — REST endpoints, SignalR hubs
-│   ├── Wrkzg.Core/           Class Library — business logic, interfaces, domain models
-│   ├── Wrkzg.Infrastructure/ Class Library — EF Core, SQLite, Twitch clients
-│   ├── Wrkzg.Updater/        Executable — standalone auto-update process
-│   └── Wrkzg.Frontend/       React + TypeScript SPA (not a .NET project)
+│   ├── Wrkzg.Host/               Entry point, Photino window, DI bootstrap
+│   ├── Wrkzg.Api/                REST endpoints, SignalR hubs, wwwroot/
+│   ├── Wrkzg.Core/               Business logic, interfaces, domain models
+│   ├── Wrkzg.Infrastructure/     EF Core, SQLite, Twitch clients, secure storage
+│   ├── Wrkzg.Updater/            Standalone auto-update process
+│   └── Wrkzg.Frontend/           React + TypeScript SPA (not in .sln)
 ├── tests/
-│   ├── Wrkzg.Core.Tests/     Unit tests for Core
-│   └── Wrkzg.Api.Tests/      Integration tests for API endpoints
-└── docs/                     This documentation
+│   ├── Wrkzg.Core.Tests/         Unit tests for Core
+│   └── Wrkzg.Api.Tests/          Integration tests for API endpoints
+├── _docs/                        This documentation
+├── Directory.Build.props          Shared build settings
+├── Directory.Packages.props       Central NuGet version management
+└── wrkzg.sln
 ```
 
 ---
@@ -110,34 +135,36 @@ These rules are enforced during code review. Please read them carefully.
 
 ### Dependency Direction
 
-Dependencies only point **inward**. The Core layer has no knowledge of outer layers:
+Dependencies only point **inward**:
 
 ```
 Host → Api → Core ← Infrastructure
 ```
 
-- `Wrkzg.Core` must **never** reference `Wrkzg.Infrastructure`, `Wrkzg.Api`, or `Wrkzg.Host`
-- `Wrkzg.Infrastructure` must **never** reference `Wrkzg.Api` or `Wrkzg.Host`
-- `Wrkzg.Api` must **never** reference `Wrkzg.Host`
+- `Wrkzg.Core` must **never** reference Infrastructure, Api, or Host
+- `Wrkzg.Infrastructure` must **never** reference Api or Host
+- `Wrkzg.Api` must **never** reference Host
 
 ### What Goes Where
 
 | Layer | Belongs here | Does NOT belong here |
 |---|---|---|
 | `Core` | Interfaces, domain models, business logic, chat games | EF Core, HttpClient, Twitch SDK, ASP.NET types |
-| `Infrastructure` | DbContext, repositories, Twitch clients, secure storage | Business logic, API controllers |
-| `Api` | Controllers, SignalR hubs, DTOs, validators, middleware | Database queries, Twitch API calls |
-| `Host` | DI bootstrap, Photino window, app startup, tray icon | Business logic, database access |
+| `Infrastructure` | DbContext, repositories, Twitch clients, secure storage | Business logic, API endpoints |
+| `Api` | Endpoints, SignalR hubs, DTOs, validators | Database queries, Twitch API calls |
+| `Host` | DI bootstrap, Photino window, app startup | Business logic, database access |
 
 ### Interface Rule
 
-Every service in `Core` that has a concrete implementation in `Infrastructure` **must** have a corresponding interface in `Core/Interfaces/`. No concrete infrastructure types may appear in Core.
+Every service in `Core` that has a concrete implementation in `Infrastructure` must have a corresponding interface in `Core/Interfaces/`. No concrete infrastructure types may appear in Core.
+
+### Scoped-in-Singleton Pattern
+
+Singleton services that need scoped dependencies (like repositories or DbContext) must receive `IServiceScopeFactory` and create scopes internally. Never inject a scoped service directly into a singleton.
 
 ---
 
 ## Development Workflow
-
-We use a simple branch strategy:
 
 ```
 main        → stable, tagged releases only
@@ -157,13 +184,8 @@ git checkout -b feat/your-feature-name
 ### Before Opening a PR
 
 ```bash
-# Run all tests
 dotnet test
-
-# Check build is clean
 dotnet build
-
-# Format check (Rider/VS does this automatically, or use CLI)
 dotnet format --verify-no-changes
 ```
 
@@ -171,102 +193,44 @@ dotnet format --verify-no-changes
 
 ## Coding Conventions
 
-The project uses `.editorconfig` in the repository root. Your IDE will pick this up automatically. Key rules:
+The project uses `.editorconfig` in the repository root. Key rules:
 
-- **File-scoped namespaces** — `namespace Wrkzg.Core.Services;` not `namespace Wrkzg.Core.Services { }`
+- **File-scoped namespaces** — `namespace Wrkzg.Core.Services;`
 - **Private fields** — `_camelCase` with underscore prefix
-- **Async methods** — always end with `Async`, always accept a `CancellationToken ct = default`
-- **Explicit usings** — `ImplicitUsings` is disabled; all `using` statements must be written explicitly
+- **Async methods** — always suffix with `Async`, always accept `CancellationToken ct = default`
+- **Explicit usings** — `ImplicitUsings` is disabled; all `using` statements must be written
 - **Braces always** — even for single-line `if`/`for` bodies
-- **No `var`** unless the type is obvious from the right-hand side (e.g. `var user = new User()`)
-
-### Example: Correct Service Implementation
-
-```csharp
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using Wrkzg.Core.Interfaces;
-using Wrkzg.Core.Models;
-
-namespace Wrkzg.Core.Services;
-
-public class ExampleService : IExampleService
-{
-    private readonly IUserRepository _users;
-    private readonly ILogger<ExampleService> _logger;
-
-    public ExampleService(IUserRepository users, ILogger<ExampleService> logger)
-    {
-        _users = users;
-        _logger = logger;
-    }
-
-    public async Task<User?> GetUserAsync(string twitchId, CancellationToken ct = default)
-    {
-        var user = await _users.GetByTwitchIdAsync(twitchId, ct);
-
-        if (user is null)
-        {
-            _logger.LogDebug("User {TwitchId} not found", twitchId);
-        }
-
-        return user;
-    }
-}
-```
+- **No `var`** unless type is obvious from RHS (e.g. `var user = new User()`)
+- **TreatWarningsAsErrors** is enabled globally
 
 ---
 
 ## Commit Messages
 
-We follow [Conventional Commits](https://www.conventionalcommits.org/):
+[Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
 <type>(<scope>): <short description>
-
-[optional body]
-
-[optional footer]
 ```
 
-**Types:**
+Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`
+Scopes: `core`, `api`, `host`, `infrastructure`, `frontend`, `updater`, `docs`
 
-| Type | When to use |
-|---|---|
-| `feat` | New feature |
-| `fix` | Bug fix |
-| `docs` | Documentation only |
-| `refactor` | Code change that neither fixes a bug nor adds a feature |
-| `test` | Adding or updating tests |
-| `chore` | Build process, dependency updates, tooling |
-| `perf` | Performance improvement |
-
-**Scope** is the project or area affected: `core`, `api`, `host`, `infrastructure`, `frontend`, `updater`, `docs`.
-
-**Examples:**
-
+Examples:
 ```
 feat(core): add DuelGame chat game implementation
 fix(infrastructure): handle expired refresh token on startup
 docs: update CONTRIBUTING setup instructions
-chore(deps): bump TwitchLib.Api to 3.10.1
-test(core): add unit tests for CommandProcessor cooldown logic
 ```
 
 ---
 
 ## Pull Request Process
 
-1. Open your PR against the `develop` branch (not `main`)
-2. Fill out the PR template
-3. Ensure CI passes (build + tests)
-4. Link the related issue if one exists
-5. Request a review — maintainers aim to respond within a few days
-6. Address review comments, then re-request review
-
-PRs that break the architecture rules (see above) will be asked to restructure before merging.
+1. Open PR against `develop` (not `main`)
+2. Ensure CI passes (build + tests)
+3. Link related issue if one exists
+4. Request review — maintainers aim to respond within a few days
 
 ---
 
@@ -274,62 +238,40 @@ PRs that break the architecture rules (see above) will be asked to restructure b
 
 Chat games live in `Wrkzg.Core/ChatGames/`. They are auto-discovered via assembly scan — no manual registration needed.
 
-**Step 1:** Create a new class in `Wrkzg.Core/ChatGames/`:
+**Step 1:** Create a new class implementing `IChatGame`:
 
 ```csharp
-using System.Threading;
-using System.Threading.Tasks;
-using Wrkzg.Core.Interfaces;
-using Wrkzg.Core.Models;
-
 namespace Wrkzg.Core.ChatGames;
 
-/// <summary>
-/// Example chat game — replace with your implementation.
-/// </summary>
 public class MyGame : IChatGame
 {
     public string Name => "MyGame";
     public string TriggerCommand => "!mygame";
     public string Description => "A short description shown in the dashboard.";
-    public bool IsActive => false; // return true when a round is in progress
+    public bool IsActive => false;
 
     public Task<bool> StartAsync(ChatMessage initiator, CancellationToken ct = default)
-    {
-        // Called when the trigger command is used
-        return Task.FromResult(true);
-    }
+        => Task.FromResult(true);
 
     public Task StopAsync(CancellationToken ct = default)
-    {
-        return Task.CompletedTask;
-    }
+        => Task.CompletedTask;
 
     public Task<bool> HandleMessageAsync(ChatMessage message, CancellationToken ct = default)
-    {
-        // Called for every chat message while the game is active
-        return Task.FromResult(false);
-    }
+        => Task.FromResult(false);
 }
 ```
 
 **Step 2:** Add unit tests in `Wrkzg.Core.Tests/ChatGames/MyGameTests.cs`.
 
-**Step 3:** That's it. The game is automatically registered in DI and shown in the dashboard.
+**Step 3:** That's it. The game is automatically registered in DI.
 
 ---
 
 ## How to Add an API Endpoint
 
-API endpoints live in `Wrkzg.Api/Endpoints/` as static extension methods.
-
 **Step 1:** Create `Wrkzg.Api/Endpoints/MyFeatureEndpoints.cs`:
 
 ```csharp
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
-
 namespace Wrkzg.Api.Endpoints;
 
 public static class MyFeatureEndpoints

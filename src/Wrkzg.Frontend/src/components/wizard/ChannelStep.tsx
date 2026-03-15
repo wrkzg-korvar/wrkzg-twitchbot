@@ -1,0 +1,125 @@
+import { useState } from "react";
+
+interface ChannelStepProps {
+  onBack: () => void;
+  onFinish: () => void;
+}
+
+export function ChannelStep({ onBack, onFinish }: ChannelStepProps) {
+  const [channel, setChannel] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleFinish = async () => {
+    const trimmed = channel.trim().toLowerCase().replace(/^#/, "");
+    if (!trimmed) return;
+
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      // Save channel name via Settings API
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ "Bot.Channel": trimmed }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to save channel (${res.status})`);
+      }
+
+      onFinish();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save channel name.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const isValid = channel.trim().length >= 2;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-white">Set Your Channel</h2>
+        <p className="mt-2 text-sm text-gray-400">
+          Almost done! Enter your Twitch channel name so the bot knows which
+          chat to join.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <label htmlFor="channel" className="block text-sm font-medium text-gray-300">
+            Channel Name
+          </label>
+          <div className="mt-1 flex items-center gap-2">
+            <span className="text-gray-500 text-sm">#</span>
+            <input
+              id="channel"
+              type="text"
+              value={channel}
+              onChange={(e) => setChannel(e.target.value.replace(/\s/g, ""))}
+              placeholder="your_channel_name"
+              autoComplete="off"
+              className="block w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+            />
+          </div>
+          <p className="mt-1 text-xs text-gray-500">
+            This is your Twitch username, all lowercase. No spaces, no # prefix.
+          </p>
+        </div>
+      </div>
+
+      {error && (
+        <div className="rounded-lg border border-red-800/50 bg-red-950/30 p-3 text-sm text-red-400">
+          {error}
+        </div>
+      )}
+
+      {/* ─── Success Preview ────────────────────────────────── */}
+      <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-5">
+        <h3 className="text-sm font-semibold text-gray-200 mb-3">Setup Summary</h3>
+        <div className="space-y-2 text-sm text-gray-400">
+          <div className="flex items-center gap-2">
+            <span className="text-green-400">✓</span>
+            <span>Twitch App credentials saved</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-green-400">✓</span>
+            <span>Bot account connected</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-green-400">✓</span>
+            <span>Broadcaster account connected</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={isValid ? "text-green-400" : "text-gray-600"}>
+              {isValid ? "✓" : "○"}
+            </span>
+            <span className={isValid ? "text-gray-300" : ""}>
+              Channel: {isValid ? `#${channel.trim().toLowerCase()}` : "not set"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between pt-2">
+        <button
+          onClick={onBack}
+          className="rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 hover:text-gray-200 transition-colors"
+        >
+          ← Back
+        </button>
+        <button
+          onClick={handleFinish}
+          disabled={!isValid || isSaving}
+          className="rounded-lg bg-green-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          {isSaving ? "Saving…" : "Finish Setup ✓"}
+        </button>
+      </div>
+    </div>
+  );
+}

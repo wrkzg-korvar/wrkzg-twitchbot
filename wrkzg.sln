@@ -21,6 +21,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_docs", "_docs", "{3BAD9235
 		_docs\API.md = _docs\API.md
 		_docs\ARCHITECTURE.md = _docs\ARCHITECTURE.md
 		_docs\CONTRIBUTING.md = _docs\CONTRIBUTING.md
+		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_github", "_github", "{22F94070-00AD-481C-9455-E5E0E758C61D}"
@@ -32,6 +33,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISSUE_TEMPLATE", "ISSUE_TEMPLATE", "{183B5610-8EEA-4B69-8880-6D6541B5A56F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_ai", "_ai", "{77D7FD99-CA2D-481B-A22E-886ED412AC7F}"
+	ProjectSection(SolutionItems) = preProject
+		CLAUDE.md = CLAUDE.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

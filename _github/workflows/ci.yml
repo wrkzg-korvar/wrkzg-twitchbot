@@ -1,1 +1,38 @@
-#TODO
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build Frontend
+        working-directory: src/TwitchBot.Frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: dotnet restore
+        run: dotnet restore TwitchBot.sln
+
+      - name: dotnet build
+        run: dotnet build TwitchBot.sln --no-restore -c Release
+
+      - name: dotnet test
+        run: dotnet test TwitchBot.sln --no-build -c Release --verbosity normal

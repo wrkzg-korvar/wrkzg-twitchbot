@@ -15,21 +15,14 @@ Built with C# .NET 10 · Runs on Windows & macOS · Open Source
 
 ---
 
-> ⚠️ **This project is in early development.** Core features are not yet implemented.  
+> ⚠️ **This project is in early development.** Core features are functional but the UI is being refined.  
 > Watch or star the repository to follow progress.
-
----
-
-<!-- Screenshot placeholder – replace once dashboard UI exists -->
-<!--
-<img src=".github/assets/dashboard-preview.png" alt="Wrkzg Dashboard Preview" width="860" />
--->
 
 </div>
 
 ## What is Wrkzg?
 
-Wrkzg is a **locally-run Twitch community bot** inspired by various existing Bots. 
+Wrkzg is a **locally-run Twitch community bot** inspired by various existing bots.
 It runs directly on the streamer's machine and provides a built-in browser-based dashboard for full control over your community without relying on third-party cloud services.
 
 Everything stays on your machine. No subscriptions, no data sent to external servers, no ads.
@@ -38,18 +31,20 @@ Everything stays on your machine. No subscriptions, no data sent to external ser
 
 ## Features
 
-> Features marked 🚧 are planned but not yet implemented.
-
 | Feature | Status |
 |---|---|
-| **Custom Bot Name** — use your own Twitch account as the bot | 🚧 Planned |
-| **Custom Commands** — `!discord`, `!socials`, variables like `{user}`, `{uptime}` | 🚧 Planned |
-| **User Management** — track watch time, points, message count, subscriber status | 🚧 Planned |
+| **Setup Wizard** — guided first-time setup with Twitch app registration | ✅ Implemented |
+| **Twitch OAuth** — bot account + broadcaster account, tokens encrypted in OS keychain | ✅ Implemented |
+| **IRC Connection** — auto-connect on startup, auto token refresh, reconnect on disconnect | ✅ Implemented |
+| **Custom Commands** — `!discord`, `!socials`, variables like `{user}`, `{points}`, `{random:1:6}` | ✅ Implemented |
+| **Dashboard** — live chat feed, command management, user table, settings | ✅ Implemented |
+| **User Tracking** — message count, display name sync, mod/sub status | ✅ Implemented |
+| **Custom Bot Name** — use your own Twitch account as the bot | ✅ Implemented |
 | **Points System** — automatic point rewards per minute while stream is live | 🚧 Planned |
+| **Watch Time Tracking** — track viewer watch time via Helix API polling | 🚧 Planned |
 | **Chat Games** — Heist, Duel, Slots, Roulette, Trivia | 🚧 Planned |
 | **Raffles & Giveaways** — weighted ticket system, subscriber bonuses | 🚧 Planned |
 | **Votes & Polls** — chat-based or native Twitch polls via Helix API | 🚧 Planned |
-| **Dashboard** — live chat feed, analytics, user management, all in one UI | 🚧 Planned |
 | **Automatic Updates** — checks GitHub Releases and updates in the background | 🚧 Planned |
 
 ---
@@ -82,7 +77,7 @@ For a full breakdown, see [ARCHITECTURE.md](_docs/ARCHITECTURE.md).
 | Language & Runtime | C# · .NET 10 |
 | Desktop Host | [Photino.NET](https://tryphotino.io/) |
 | Backend / API | ASP.NET Core · Kestrel · SignalR |
-| Frontend | React · TypeScript · Vite · Tailwind CSS |
+| Frontend | React 19 · TypeScript · Vite · Tailwind CSS v4 |
 | Database | SQLite · Entity Framework Core 10 |
 | Twitch | TwitchLib · Twitch Helix API · EventSub WebSocket |
 
@@ -112,9 +107,10 @@ For a full breakdown, see [ARCHITECTURE.md](_docs/ARCHITECTURE.md).
 git clone https://github.com/wrkzg-korvar/wrkzg-twitchbot.git
 cd wrkzg-twitchbot
 
-# 2. Install frontend dependencies
+# 2. Install frontend dependencies and build
 cd src/Wrkzg.Frontend
 npm install
+npm run build
 cd ../..
 
 # 3. Restore .NET dependencies
@@ -127,20 +123,30 @@ dotnet build
 dotnet run --project src/Wrkzg.Host
 ```
 
-### Twitch Application Setup
+### First-Time Setup
 
-Wrkzg requires a Twitch Developer Application for OAuth authentication:
+When you start Wrkzg for the first time, a **Setup Wizard** guides you through the configuration:
 
-1. Go to [dev.twitch.tv/console](https://dev.twitch.tv/console) and log in
-2. Click **Register Your Application**
-3. Set the redirect URI to `http://localhost:5000/auth/callback`
-4. Category: **Chat Bot**
-5. Copy the **Client ID** into `src/Wrkzg.Api/appsettings.Development.json`:
+1. **Create a Twitch App** — The wizard links you directly to the Twitch Developer Console and provides copy-paste values for the app name and redirect URI
+2. **Enter Credentials** — Paste your Client ID and Client Secret (stored encrypted in your OS keychain, never in config files)
+3. **Connect Bot Account** — Opens your system browser for Twitch OAuth authorization
+4. **Connect Broadcaster Account** — Same flow with your main streamer account
+5. **Set Channel** — Enter your channel name and you're ready to go
+
+No manual config file editing required.
+
+### Development Setup (Contributors)
+
+Contributors can optionally use `appsettings.Development.json` for local development instead of the Setup Wizard:
 
 ```json
 {
   "Twitch": {
-    "ClientId": "your_client_id_here"
+    "ClientId": "your_client_id_here",
+    "ClientSecret": "your_client_secret_here"
+  },
+  "Bot": {
+    "Port": 5000
   }
 }
 ```
@@ -153,11 +159,11 @@ Wrkzg requires a Twitch Developer Application for OAuth authentication:
 
 Contributions are very welcome! Wrkzg is open source and built in the open.
 
-Please read [CONTRIBUTING.md](docs/CONTRIBUTING.md) before opening a pull request. It covers:
+Please read [CONTRIBUTING.md](_docs/CONTRIBUTING.md) before opening a pull request. It covers:
 - How to set up the development environment
 - Project structure and architecture rules
 - Coding conventions and commit message format
-- How to add a new chat game
+- How to add a new chat game or API endpoint
 
 For questions or ideas, open a [GitHub Discussion](https://github.com/wrkzg-korvar/wrkzg-twitchbot/discussions).
 
@@ -166,11 +172,13 @@ For questions or ideas, open a [GitHub Discussion](https://github.com/wrkzg-korv
 ## Roadmap
 
 ### v1.0.0 — MVP
-- [ ] Twitch OAuth (bot account + broadcaster account)
-- [ ] IRC connection + custom commands
-- [ ] User tracking (watch time, points, message count)
-- [ ] Points system (automatic rewards)
-- [ ] Dashboard (overview, user management, command editor, logs)
+- [x] Twitch OAuth (bot account + broadcaster account)
+- [x] IRC connection + custom commands
+- [x] User tracking (message count, mod/sub status sync)
+- [x] Dashboard (overview, command editor, user table, settings)
+- [x] Setup Wizard for first-time users
+- [ ] Points system (automatic rewards per minute while live)
+- [ ] Watch time tracking (Helix API polling)
 - [ ] Automatic updater
 
 ### v1.1.0 — Community Features

@@ -1,29 +1,114 @@
+using System;
+using System.IO;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using Wrkzg.Api;
+using Wrkzg.Api.Endpoints;
+using Wrkzg.Api.Hubs;
+using Wrkzg.Core;
 using Wrkzg.Host;
+using Wrkzg.Infrastructure;
+using Wrkzg.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// TODO: builder.Services.AddCoreServices();
-// TODO: builder.Services.AddInfrastructure(builder.Configuration);
-// TODO: builder.Services.AddApiServices();
+builder.Services.AddCoreServices();
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApiServices();
 
 var app = builder.Build();
+
+// Apply pending EF Core migrations on startup
+using (IServiceScope scope = app.Services.CreateScope())
+{
+    BotDbContext db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
+    await db.Database.MigrateAsync();
+}
 
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
 }
+
+// ─── Static Files ─────────────────────────────────────────────────────
+// The React SPA build output lives in Wrkzg.Api/wwwroot/ (built by Vite).
+// Since the entry point is Wrkzg.Host (a different project), ASP.NET Core's
+// default WebRootPath points to Wrkzg.Host/wwwroot/ which doesn't exist.
+// We resolve the actual path to where the built frontend files are.
+string? wwwrootPath = ResolveWwwrootPath();
+
+if (wwwrootPath is not null && Directory.Exists(wwwrootPath))
+{
+    PhysicalFileProvider fileProvider = new(wwwrootPath);
+
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = fileProvider
+    });
+
+    app.UseRouting();
+
+    app.MapHub<ChatHub>("/hubs/chat");
+    app.MapAuthEndpoints();
+    app.MapCommandEndpoints();
+    app.MapSettingsEndpoints();
+    app.MapUserEndpoints();
+
+    // SPA fallback: unmatched routes serve index.html for React Router
+    app.MapFallbackToFile("index.html", new StaticFileOptions
+    {
+        FileProvider = fileProvider
+    });
+
+}
 else
 {
-    app.UseStaticFiles();
-    app.MapFallbackToFile("index.html");
+    app.UseRouting();
+
+    app.MapHub<ChatHub>("/hubs/chat");
+    app.MapAuthEndpoints();
+    app.MapCommandEndpoints();
+    app.MapSettingsEndpoints();
+    app.MapUserEndpoints();
 }
 
-app.UseRouting();
-
-app.MapGet("/", () => "Wrkzg is running!");
-// TODO: app.MapHub<ChatHub>("/hubs/chat");
-
 PhotinoHosting.Start(app);
+
+// ─── Helper ───────────────────────────────────────────────────────────
+
+/// <summary>
+/// Finds the wwwroot directory containing the built React SPA.
+/// Checks multiple locations because the path differs between
+/// development (source tree) and published (alongside DLL) scenarios.
+/// </summary>
+static string? ResolveWwwrootPath()
+{
+    // 1. Next to the Wrkzg.Api assembly (published/bin output)
+    string apiAssemblyDir = Path.GetDirectoryName(
+        typeof(Wrkzg.Api.DependencyInjection).Assembly.Location)!;
+    string binPath = Path.Combine(apiAssemblyDir, "wwwroot");
+    if (Directory.Exists(binPath) && File.Exists(Path.Combine(binPath, "index.html")))
+    {
+        return binPath;
+    }
+
+    // 2. Relative to CWD (when running from solution root with dotnet run)
+    string devPath = Path.GetFullPath(Path.Combine("src", "Wrkzg.Api", "wwwroot"));
+    if (Directory.Exists(devPath) && File.Exists(Path.Combine(devPath, "index.html")))
+    {
+        return devPath;
+    }
+
+    // 3. Relative to the Host project directory
+    string hostDir = AppContext.BaseDirectory;
+    string relPath = Path.GetFullPath(Path.Combine(hostDir, "..", "..", "..", "..", "Wrkzg.Api", "wwwroot"));
+    if (Directory.Exists(relPath) && File.Exists(Path.Combine(relPath, "index.html")))
+    {
+        return relPath;
+    }
+
+    return null;
+}

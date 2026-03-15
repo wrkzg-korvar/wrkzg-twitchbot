@@ -49,6 +49,8 @@
           Nur Abstractions – keine konkreten Implementierungen.
           Die konkreten Implementierungen (z.B. ServiceProvider) kommen von Infrastructure/Host.
         -->
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
         <PackageReference Include="Microsoft.SourceLink.GitHub">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>

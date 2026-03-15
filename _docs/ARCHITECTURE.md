@@ -36,17 +36,16 @@ Wrkzg is a **locally-run desktop application** that combines an embedded web ser
 │                          ┌──────────────┴────────────┐  │
 │                          │       Core Services       │  │
 │                          │  CommandProcessor         │  │
-│                          │  ChatGameManager          │  │
-│                          │  UserTrackingService      │  │
-│                          │  RaffleService · PollService││
+│                          │  ChatMessagePipeline      │  │
 │                          └──────────────┬────────────┘  │
 │                                         │               │
 │                          ┌──────────────┴────────────┐  │
 │                          │      Infrastructure       │  │
 │                          │  EF Core + SQLite         │  │
 │                          │  TwitchChatClient (IRC)   │  │
-│                          │  TwitchHelixClient (REST) │  │
-│                          │  EventSub (WebSocket)     │  │
+│                          │  TwitchOAuthService       │  │
+│                          │  SecureStorage (DPAPI/KC) │  │
+│                          │  BotConnectionService     │  │
 │                          └───────────────────────────┘  │
 └─────────────────────────────────────────────────────────┘
          │                              │
@@ -76,7 +75,7 @@ Allowed dependency directions:
 
 | Project | May reference |
 |---|---|
-| `Wrkzg.Host` | `Wrkzg.Api` |
+| `Wrkzg.Host` | `Wrkzg.Api`, `Wrkzg.Core`, `Wrkzg.Infrastructure` |
 | `Wrkzg.Api` | `Wrkzg.Core`, `Wrkzg.Infrastructure` |
 | `Wrkzg.Infrastructure` | `Wrkzg.Core` |
 | `Wrkzg.Core` | nothing (only BCL + Microsoft.Extensions abstractions) |
@@ -92,56 +91,64 @@ Allowed dependency directions:
 
 - Builds the DI container (`WebApplication.CreateBuilder`)
 - Starts ASP.NET Core / Kestrel
+- Resolves `wwwroot/` path for serving the React SPA (from `Wrkzg.Api/wwwroot/`)
 - Opens the Photino browser window pointing at `localhost:{PORT}`
-- Manages the system tray icon and application lifecycle
-- On release builds: triggers the frontend build (`npm run build`) before publish
+- In dev mode: detects Vite Dev Server on `:5173` and uses it if running
+- Manages the application lifecycle
 
 ### `Wrkzg.Api`
 
 **Type:** Class Library with `Microsoft.NET.Sdk.Web`  
 No standalone entry point — embedded into the Host.
 
-- Defines all REST endpoints (Minimal API pattern)
-- Hosts SignalR hubs for real-time dashboard communication
-- Serves the React SPA from `wwwroot/` in production
-- Contains DTOs and request validators (FluentValidation)
-- Registers middleware pipeline
+- Defines all REST endpoints (Minimal API pattern) in `Endpoints/`
+- Hosts SignalR hubs (`ChatHub`) for real-time dashboard communication
+- Stores React SPA build output in `wwwroot/` (built by Vite)
+- Contains DTOs and request records
+- Registers SignalR, `IAuthStateNotifier`, `IChatEventBroadcaster`
 
 ### `Wrkzg.Core`
 
 **Type:** Class Library (standard SDK)  
 The heart of the application. Has zero framework dependencies.
 
-- All business logic and use cases
-- Domain models (`User`, `Command`, `Raffle`, `Poll`, etc.)
-- Service interfaces (`ICommandProcessor`, `IChatGame`, `IUserRepository`, etc.)
-- Chat game implementations (`IChatGame`)
-- `IHostedService` implementations for background tasks (user tracking, polling)
+- All business logic: `CommandProcessor`, `ChatMessagePipeline`
+- Domain models: `User`, `Command`, `Raffle`, `Poll`, `Setting`, `ChatMessage`, `BotStatus`
+- Service interfaces: `ICommandProcessor`, `ITwitchChatClient`, `IUserRepository`, etc.
+- Chat game interfaces (`IChatGame`) — implementations will be auto-discovered
+- DI registration via `AddCoreServices()`
 
 ### `Wrkzg.Infrastructure`
 
 **Type:** Class Library (standard SDK)  
 Implements all interfaces defined in Core using real external dependencies.
 
-- `BotDbContext` (EF Core + SQLite)
-- Repository implementations
-- `TwitchChatClient` (TwitchLib IRC)
-- `TwitchHelixClient` (HTTP Client for Helix REST API)
-- `TwitchEventSubClient` (WebSocket for real-time Twitch events)
-- `TwitchOAuthService` (PKCE OAuth flow)
-- `ISecureStorage` implementations (DPAPI on Windows, Keychain on macOS)
+- `BotDbContext` (EF Core + SQLite) with automatic migrations on startup
+- Repository implementations: `UserRepository`, `CommandRepository`, `RaffleRepository`, `PollRepository`, `SettingsRepository`
+- `TwitchChatClient` (TwitchLib IRC) — Singleton, auto token refresh
+- `TwitchOAuthService` — Authorization Code Flow, credential resolution (Keystore → Config fallback)
+- `TwitchAuthHandler` — DelegatingHandler for automatic Bearer token injection + 401 refresh
+- `BotConnectionService` — IHostedService managing IRC lifecycle
+- `WindowsSecureStorage` (DPAPI) / `MacOsSecureStorage` (Keychain) — encrypted credential storage
 
 ### `Wrkzg.Updater`
 
 **Type:** Executable — fully standalone, no references to other projects.
 
-Launched as a separate OS process when an update is ready. Waits for the main process to exit, then replaces application files and restarts the app. See [Auto-Updater](#auto-updater).
+Launched as a separate OS process when an update is ready. Waits for the main process to exit, then replaces application files and restarts the app.
 
 ### `Wrkzg.Frontend`
 
 **Type:** Node.js / Vite project — not part of the .NET solution.
 
-React + TypeScript SPA. In development, runs on `:5173` with a proxy to the Kestrel backend. In production, built to `Wrkzg.Api/wwwroot/` and served as static files.
+React 19 + TypeScript SPA with Tailwind CSS v4. Features:
+- **Setup Wizard** — 5-step guided first-time configuration
+- **Dashboard** — live chat feed via SignalR, bot status, viewer count
+- **Commands** — CRUD management with inline create form
+- **Users** — sortable viewer table with roles and stats
+- **Settings** — Twitch account connections, credential management
+
+In development, runs on `:5173` with a proxy to Kestrel. In production, built to `Wrkzg.Api/wwwroot/`.
 
 ---
 
@@ -156,43 +163,64 @@ Twitch IRC
 TwitchChatClient.OnMessageReceived
    │
    ▼
-CommandProcessor.HandleMessageAsync
-   │  checks: trigger match, permission level, cooldown
-   ▼
-ICommandRepository.GetByTriggerOrAliasAsync  →  SQLite
+BotConnectionService.HandleChatMessage
+   │
+   ├──→ IChatEventBroadcaster (SignalR → Dashboard live chat feed)
    │
    ▼
-Template resolved ({user}, {uptime}, {random})
+ChatMessagePipeline.ProcessAsync
+   │
+   ├── 1. UpdateUserStats (MessageCount, LastSeenAt, DisplayName sync)
+   │
+   ▼
+   ├── 2. CommandProcessor.HandleMessageAsync
+   │      checks: ! prefix → trigger match → permission → cooldown
+   │      resolves: {user}, {points}, {watchtime}, {random:min:max}
    │
    ▼
 TwitchChatClient.SendMessageAsync
    │
    ▼
 Twitch IRC (response appears in chat)
-   │
-   ▼
-IChatEventBroadcaster.BroadcastChatMessageAsync
-   │
-   ▼
-SignalR Hub → Dashboard UI (live chat feed)
 ```
 
 ### Dashboard Action → Bot Response
 
 ```
 Dashboard (React)
-   │  HTTP PUT /api/commands/{id}
+   │  HTTP POST /api/commands
    ▼
 CommandEndpoints (Wrkzg.Api)
-   │  FluentValidation
+   │  validation
    ▼
-ICommandProcessor.UpdateCommandAsync
+ICommandRepository.CreateAsync  →  SQLite
    │
    ▼
-ICommandRepository.UpdateAsync  →  SQLite
+HTTP 201 Created → Dashboard UI updates
+```
+
+### OAuth Flow (System Browser)
+
+```
+Dashboard: "Connect Bot Account" button
    │
    ▼
-HTTP 200 OK → Dashboard UI updates
+POST /auth/open-browser/bot → Server opens OS default browser
+   │
+   ▼
+System Browser → https://id.twitch.tv/oauth2/authorize
+   │  User authorizes
+   ▼
+Twitch → http://localhost:5000/auth/callback?code=XXX&state=YYY
+   │
+   ▼
+Server: validates state, exchanges code for tokens, saves encrypted
+   │
+   ▼
+SignalR: AuthStateChanged → Dashboard updates automatically
+   │
+   ▼
+Browser: "You can close this tab and return to Wrkzg"
 ```
 
 ---
@@ -201,33 +229,33 @@ HTTP 200 OK → Dashboard UI updates
 
 ### Why Photino.NET instead of Electron?
 
-Photino.NET wraps the native OS browser engine (Chromium on Windows via WebView2, WebKit on macOS via WKWebView). This means:
-- No bundled Chromium binary — significantly smaller install size
-- No Node.js runtime required
-- Pure .NET — no context switching between runtimes
-- The trade-off is that macOS uses WebKit instead of Chromium, so the frontend must be tested on both platforms
+Photino.NET wraps the native OS browser engine (WebView2 on Windows, WKWebView on macOS). This means no bundled Chromium binary, significantly smaller install size, no Node.js runtime required. The trade-off: macOS uses WebKit, so popups (`window.open()`) are silently blocked. OAuth flows therefore open the system browser via `Process.Start` from the server side.
 
 ### Why SQLite instead of a server database?
 
-Wrkzg is a single-user, locally-run application. SQLite is a perfect fit:
-- No installation or configuration for the end user
-- File-based — easy to back up or move
-- Fully supported by EF Core with automatic migrations on startup
-- More than sufficient for the data volumes involved (one streamer, one channel)
+Single-user, locally-run application. SQLite needs no installation, is file-based (easy backup), and fully supported by EF Core with automatic migrations.
 
-### Why no plugin system?
+### Why Authorization Code Flow instead of PKCE?
 
-Wrkzg is open source. Instead of a plugin API (which would require a stable ABI and significant maintenance), contributors extend the bot by submitting pull requests. The interface-based architecture makes this straightforward — adding a new chat game, for example, requires only implementing `IChatGame` and writing tests.
+Twitch does not support PKCE (as of March 2026, despite community requests since 2020). We use the standard Authorization Code Flow with Client Secret. Each user registers their own Twitch Developer App. The Client Secret is stored encrypted in the OS keychain (DPAPI on Windows, macOS Keychain). The `ITwitchOAuthService` interface is designed so that a migration to PKCE requires no interface changes once Twitch adds support.
+
+### Why system browser for OAuth instead of in-app?
+
+Photino's WKWebView on macOS silently blocks all `window.open()` calls. Instead, the server opens the OS default browser via `Process.Start("open", url)` on macOS / `UseShellExecute = true` on Windows. The user is likely already logged into Twitch in their browser. The callback page tells the user to close the tab, and the app updates via SignalR.
 
 ### Why Minimal API instead of MVC Controllers?
 
-Minimal API reduces boilerplate and keeps endpoint definitions close to their route definitions. For a project of this size, the extra abstraction of full MVC controllers adds complexity without benefit.
+Minimal API reduces boilerplate and keeps endpoint definitions close to their route definitions. Appropriate for a project of this size.
+
+### Why credentials in OS keychain instead of config files?
+
+End users should not need to edit JSON config files. The Setup Wizard stores Client ID, Client Secret, and OAuth tokens exclusively in the OS-native secure storage (DPAPI / Keychain). `appsettings.Development.json` is only used as a fallback by contributors during local development.
 
 ---
 
 ## Dependency Injection
 
-All services are registered using extension methods that are called from `Wrkzg.Host/Program.cs`:
+All services are registered using extension methods called from `Wrkzg.Host/Program.cs`:
 
 ```csharp
 builder.Services.AddCoreServices();          // Wrkzg.Core
@@ -235,17 +263,21 @@ builder.Services.AddInfrastructure(config);  // Wrkzg.Infrastructure
 builder.Services.AddApiServices();           // Wrkzg.Api
 ```
 
-Chat games are auto-registered via assembly scan in `AddCoreServices()` — any class implementing `IChatGame` is automatically discovered and registered as a singleton.
-
 **Lifetimes:**
 
-| Service type | Lifetime |
-|---|---|
-| Chat games (`IChatGame`) | Singleton — maintain game state across messages |
-| Core services (managers, processors) | Singleton — shared state |
-| Repositories | Scoped — one per request/operation |
-| Background services (`IHostedService`) | Singleton — managed by the .NET host |
-| DbContext | Scoped (via factory for singletons) |
+| Service type | Lifetime | Reason |
+|---|---|---|
+| `CommandProcessor` | Singleton | Cooldown state in-memory (ConcurrentDictionary) |
+| `ChatMessagePipeline` | Singleton | Orchestrates message processing |
+| `TwitchChatClient` | Singleton | One IRC connection per app |
+| `BotConnectionService` | Singleton (IHostedService) | Manages IRC lifecycle |
+| `ISecureStorage` | Singleton | Stateless encrypted I/O |
+| `IChatEventBroadcaster` | Singleton | Wraps SignalR HubContext |
+| `IAuthStateNotifier` | Singleton | Wraps SignalR HubContext |
+| Repositories | Scoped | One per request/operation |
+| `BotDbContext` | Scoped | Standard EF Core lifetime |
+
+**Scoped-in-Singleton pattern:** `CommandProcessor` and `BotConnectionService` need scoped dependencies (repositories). They receive `IServiceScopeFactory` and create scopes for DB access internally.
 
 ---
 
@@ -256,15 +288,28 @@ The SQLite database file is stored in the OS application data directory:
 - **Windows:** `%APPDATA%\Wrkzg\bot.db`
 - **macOS:** `~/Library/Application Support/Wrkzg/bot.db`
 
-### Schema Migrations
+### Schema
 
-EF Core migrations are applied automatically on startup:
+```
+Users         — Id, TwitchId (unique), Username, DisplayName, Points, WatchedMinutes,
+                MessageCount, FollowDate, IsSubscriber, SubscriberTier, IsBanned, IsMod,
+                FirstSeenAt, LastSeenAt
 
-```csharp
-await db.Database.MigrateAsync();
+Commands      — Id, Trigger (unique), Aliases (JSON), ResponseTemplate, PermissionLevel,
+                GlobalCooldownSeconds, UserCooldownSeconds, IsEnabled, UseCount, CreatedAt
+
+Raffles       — Id, Title, IsOpen, WinnerId (FK → Users), CreatedAt, ClosedAt
+RaffleEntries — Id, RaffleId (FK), UserId (FK), TicketCount (unique: RaffleId+UserId)
+
+Polls         — Id, Question, Options (JSON), IsActive, EndsAt, CreatedAt, Source
+PollVotes     — Id, PollId (FK), UserId (FK), OptionIndex (unique: PollId+UserId)
+
+Settings      — Key (PK), Value — seeded with default values on first run
 ```
 
-When adding a new migration during development:
+### Migrations
+
+EF Core migrations are applied automatically on startup. When adding a new migration during development:
 
 ```bash
 dotnet ef migrations add MigrationName \
@@ -278,18 +323,22 @@ dotnet ef migrations add MigrationName \
 
 ### Two OAuth Tokens
 
-Wrkzg authenticates with two separate Twitch accounts:
+| Token | Account | Purpose | Scopes |
+|---|---|---|---|
+| Bot Token | Bot's Twitch account | Chat read/write via IRC | `chat:read`, `chat:edit` |
+| Broadcaster Token | Streamer's account | Helix API, EventSub, polls | `moderator:read:followers`, `channel:read:polls`, `channel:manage:polls`, `bits:read`, `channel:read:subscriptions` |
 
-| Token | Account | Purpose |
-|---|---|---|
-| Bot Token | The bot's Twitch account | Send/receive chat messages via IRC |
-| Broadcaster Token | The streamer's Twitch account | Helix API, polls, EventSub subscriptions |
+Both tokens are acquired via **OAuth 2.0 Authorization Code Flow** with Client Secret (Twitch does not support PKCE). Tokens are stored encrypted in the OS keychain and refreshed automatically.
 
-Both tokens are acquired via **OAuth 2.0 Authorization Code Flow with PKCE** — no client secret required, safe for local apps.
+### Credential Resolution Order
 
-### EventSub WebSocket
+Both Client ID and Client Secret are resolved in this order:
+1. **OS Keychain** (DPAPI / macOS Keychain) — production path, set by Setup Wizard
+2. **appsettings.Development.json** — dev fallback for contributors only
 
-For real-time events (follows, subscriptions, raids), Wrkzg connects to the Twitch EventSub WebSocket endpoint. This avoids polling and provides sub-second latency for event handling.
+### IRC Connection
+
+`TwitchChatClient` connects to Twitch IRC via TwitchLib.Client (WebSocket). `BotConnectionService` manages the lifecycle as an `IHostedService`: auto-connects on startup if tokens and channel are configured, reconnects on disconnect (up to 10 attempts).
 
 ---
 
@@ -304,19 +353,24 @@ Vite Dev Server :5173
       │  proxy /hubs →  :5000 (WebSocket)
       ▼
 Kestrel :5000
+
+Photino detects Vite on :5173 → opens Vite URL (HMR enabled)
+If Vite not running → falls back to Kestrel (static files from wwwroot/)
 ```
 
 ### Production Mode
 
 ```
-dotnet publish (Release)
+npm run build → Wrkzg.Api/wwwroot/
       │
-      ├── npm run build  →  Wrkzg.Api/wwwroot/
+Kestrel serves index.html + static assets
       │
-      └── Kestrel serves index.html + static assets
-              │
-          Photino opens localhost:{PORT}
+Photino opens localhost:{PORT}
 ```
+
+### Static Files Resolution
+
+Because `Wrkzg.Host` is the entry point but `wwwroot/` lives in `Wrkzg.Api`, the `Program.cs` uses a `ResolveWwwrootPath()` helper that searches for the built SPA files in multiple locations (next to Api assembly, relative to CWD, relative to Host directory) and creates an explicit `PhysicalFileProvider`.
 
 ---
 
@@ -324,27 +378,28 @@ dotnet publish (Release)
 
 The dashboard receives live updates via **SignalR**. The hub is hosted at `/hubs/chat`.
 
-Events pushed from server to dashboard:
-
 | SignalR Method | Payload | Trigger |
 |---|---|---|
-| `ChatMessage` | `{ username, displayName, content, isMod, isSubscriber, timestamp }` | New chat message received |
+| `ChatMessage` | `{ userId, username, displayName, content, isMod, isSubscriber, isBroadcaster, timestamp }` | Chat message received via IRC |
 | `ViewerCount` | `int` | Polling interval (60s) |
 | `FollowEvent` | `{ username }` | EventSub follow event |
 | `SubscribeEvent` | `{ username, tier }` | EventSub subscribe event |
-| `BotStatus` | `{ isConnected, channel }` | Connection state change |
+| `BotStatus` | `{ isConnected, channel, reason? }` | IRC connection state change |
+| `AuthStateChanged` | `{ tokenType, isAuthenticated, twitchUsername, ... }` | OAuth login/logout/token refresh failure |
 
 ---
 
 ## Security
 
-- OAuth tokens are **never stored in plaintext**
+- OAuth tokens and Twitch app credentials are **never stored in plaintext**
     - Windows: encrypted with DPAPI (`ProtectedData.Protect`, current-user scope)
-    - macOS: stored in the system Keychain
-- Kestrel only binds to `localhost` — the dashboard is not accessible from other machines on the network
+    - macOS: stored in the system Keychain via `security` CLI
+- Credentials are resolved from Keychain first, config files only as dev fallback
+- Kestrel only binds to `localhost` — the dashboard is not accessible from the network
+- OAuth flows open the system browser (not the embedded WebView) for security and compatibility
+- CSRF protection: cryptographically random state parameter with 10-minute TTL
 - No telemetry, no analytics, no external calls except Twitch API and GitHub Releases API
-- All outbound HTTP calls use Polly retry policies with timeouts
-- Update downloads are verified with SHA-256 checksums before installation
+- All outbound HTTP calls use resilience pipelines (retry + timeout)
 
 ---
 
@@ -362,17 +417,5 @@ Download ZIP to temp directory
 Launch Wrkzg.Updater with args: --zip --target --pid --exe
    │
    ▼
-Main app exits
-   │
-   ▼
-Updater waits for main process to exit
-   │
-   ▼
-Updater extracts ZIP, overwrites files
-   │
-   ▼
-Updater launches new version of main app
-   │
-   ▼
-Updater exits
+Main app exits → Updater waits → extracts ZIP → restarts app
 ```
