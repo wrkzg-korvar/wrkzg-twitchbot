@@ -54,10 +54,9 @@
   </PropertyGroup>
 
   <PropertyGroup Label="XML Documentation" Condition="'$(Configuration)' == 'Release'">
-    <!-- Im Release-Build XML-Doku erzwingen – hilft Contributors -->
+    <!-- Im Release-Build XML-Doku generieren – hilft Contributors -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <!-- CS1591 im Release doch als Fehler: undokumentierte public Members -->
-    <WarningsNotAsErrors></WarningsNotAsErrors>
+    <!-- CS1591 bleibt auch im Release eine Warning, kein Error -->
   </PropertyGroup>
 
   <PropertyGroup Label="Source Link (GitHub)">

@@ -87,11 +87,9 @@ PhotinoHosting.Start(app, windowController);
 
 // ─── Helper ───────────────────────────────────────────────────────────
 
-/// <summary>
-/// Finds the wwwroot directory containing the built React SPA.
-/// Checks multiple locations because the path differs between
-/// development (source tree) and published (alongside DLL) scenarios.
-/// </summary>
+// Finds the wwwroot directory containing the built React SPA.
+// Checks multiple locations because the path differs between
+// development (source tree) and published (alongside DLL) scenarios.
 static string? ResolveWwwrootPath()
 {
     // 1. Next to the Wrkzg.Api assembly (published/bin output)
