@@ -22,22 +22,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_docs", "_docs", "{3BAD9235
 		_docs\ARCHITECTURE.md = _docs\ARCHITECTURE.md
 		_docs\CONTRIBUTING.md = _docs\CONTRIBUTING.md
 		README.md = README.md
+		CHANGELOG.md = CHANGELOG.md
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_github", "_github", "{22F94070-00AD-481C-9455-E5E0E758C61D}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{22F94070-00AD-481C-9455-E5E0E758C61D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{DF5D933A-192C-45EA-B436-8013DE718517}"
 	ProjectSection(SolutionItems) = preProject
-		_github\workflows\ci.yml = _github\workflows\ci.yml
-		_github\workflows\release.yml = _github\workflows\release.yml
+		.github\workflows\ci.yml = .github\workflows\ci.yml
+		.github\workflows\release.yml = .github\workflows\release.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISSUE_TEMPLATE", "ISSUE_TEMPLATE", "{183B5610-8EEA-4B69-8880-6D6541B5A56F}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_ai", "_ai", "{77D7FD99-CA2D-481B-A22E-886ED412AC7F}"
-	ProjectSection(SolutionItems) = preProject
-		CLAUDE.md = CLAUDE.md
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

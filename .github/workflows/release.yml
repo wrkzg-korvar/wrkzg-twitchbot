@@ -1,0 +1,186 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  # ─── Windows x64 ─────────────────────────────────────────
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Build Frontend
+        working-directory: src/Wrkzg.Frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Publish Windows x64
+        run: |
+          dotnet publish src/Wrkzg.Host/Wrkzg.Host.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:PublishTrimmed=false `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -o publish/win-x64
+
+      - name: Create ZIP
+        run: Compress-Archive -Path publish/win-x64/* -DestinationPath Wrkzg-${{ github.ref_name }}-win-x64.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: win-x64
+          path: Wrkzg-${{ github.ref_name }}-win-x64.zip
+
+  # ─── macOS ARM64 (Apple Silicon) ─────────────────────────
+  build-macos-arm64:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Build Frontend
+        working-directory: src/Wrkzg.Frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Publish macOS ARM64
+        run: |
+          dotnet publish src/Wrkzg.Host/Wrkzg.Host.csproj \
+            -c Release \
+            -r osx-arm64 \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:PublishTrimmed=false \
+            -p:IncludeNativeLibrariesForSelfExtract=true \
+            -o publish/osx-arm64
+
+      - name: Create ZIP
+        run: |
+          cd publish/osx-arm64
+          zip -r ../../Wrkzg-${{ github.ref_name }}-osx-arm64.zip .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: osx-arm64
+          path: Wrkzg-${{ github.ref_name }}-osx-arm64.zip
+
+  # ─── macOS x64 (Intel) ──────────────────────────────────
+  build-macos-x64:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Build Frontend
+        working-directory: src/Wrkzg.Frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Publish macOS x64
+        run: |
+          dotnet publish src/Wrkzg.Host/Wrkzg.Host.csproj \
+            -c Release \
+            -r osx-x64 \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:PublishTrimmed=false \
+            -p:IncludeNativeLibrariesForSelfExtract=true \
+            -o publish/osx-x64
+
+      - name: Create ZIP
+        run: |
+          cd publish/osx-x64
+          zip -r ../../Wrkzg-${{ github.ref_name }}-osx-x64.zip .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: osx-x64
+          path: Wrkzg-${{ github.ref_name }}-osx-x64.zip
+
+  # ─── Create GitHub Release ──────────────────────────────
+  create-release:
+    needs: [build-windows, build-macos-arm64, build-macos-x64]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+
+      - name: Generate Checksums
+        run: sha256sum *.zip > checksums-sha256.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          body: |
+            ## Wrkzg ${{ github.ref_name }}
+
+            Self-hosted Twitch community bot with built-in dashboard.
+
+            ### Downloads
+
+            | Platform | File |
+            |---|---|
+            | Windows x64 | `Wrkzg-${{ github.ref_name }}-win-x64.zip` |
+            | macOS Apple Silicon | `Wrkzg-${{ github.ref_name }}-osx-arm64.zip` |
+            | macOS Intel | `Wrkzg-${{ github.ref_name }}-osx-x64.zip` |
+
+            ### Installation
+
+            1. Download the ZIP for your platform
+            2. Extract to a folder of your choice
+            3. Run `Wrkzg` (or `Wrkzg.exe` on Windows)
+            4. The Setup Wizard will guide you through connecting your Twitch account
+
+            ### Verify Downloads
+
+            Check `checksums-sha256.txt` to verify file integrity.
+          files: |
+            *.zip
+            checksums-sha256.txt
