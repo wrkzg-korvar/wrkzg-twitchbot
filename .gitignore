@@ -19,6 +19,7 @@ appsettings.Local.json
 secrets.json
 *.env
 .env.*
+src/Wrkzg.Api/appsettings.Development.json
 
 # --- Verschlüsselte Token-Dateien (werden lokal generiert) ---
 **/tokens/*.enc
