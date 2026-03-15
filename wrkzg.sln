@@ -26,6 +26,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_docs", "_docs", "{3BAD9235
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{22F94070-00AD-481C-9455-E5E0E758C61D}"
+	ProjectSection(SolutionItems) = preProject
+		.github\BRANCHING.md = .github\BRANCHING.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{DF5D933A-192C-45EA-B436-8013DE718517}"
 	ProjectSection(SolutionItems) = preProject
