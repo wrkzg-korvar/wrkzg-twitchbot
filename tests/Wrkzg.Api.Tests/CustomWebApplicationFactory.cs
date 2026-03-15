@@ -5,6 +5,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
+using Wrkzg.Api.Tests.Fakes;
 using Wrkzg.Core.Interfaces;
 using Wrkzg.Infrastructure.Data;
 
@@ -12,13 +13,15 @@ namespace Wrkzg.Api.Tests;
 
 /// <summary>
 /// Custom WebApplicationFactory for integration testing.
-/// Uses an in-memory SQLite connection (shared, kept open) and mocks external dependencies.
+/// Uses an in-memory SQLite connection (shared, kept open) and mocks/fakes for external dependencies.
+/// InMemorySecureStorage is used instead of NSubstitute mock because AddInfrastructure()
+/// may not register ISecureStorage on unsupported platforms (Linux CI).
 /// </summary>
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IDisposable
 {
     private readonly SqliteConnection _connection;
 
-    public ISecureStorage SecureStorage { get; } = Substitute.For<ISecureStorage>();
+    public InMemorySecureStorage SecureStorage { get; } = new();
     public ITwitchChatClient TwitchChatClient { get; } = Substitute.For<ITwitchChatClient>();
     public ITwitchHelixClient TwitchHelixClient { get; } = Substitute.For<ITwitchHelixClient>();
     public ITwitchOAuthService TwitchOAuthService { get; } = Substitute.For<ITwitchOAuthService>();
@@ -46,8 +49,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IDisp
             services.AddDbContext<BotDbContext>(options =>
                 options.UseSqlite(_connection));
 
-            // Replace external dependencies with mocks
-            ReplaceService(services, SecureStorage);
+            // Replace external dependencies with fakes/mocks
+            ReplaceService<ISecureStorage>(services, SecureStorage);
             ReplaceService(services, TwitchChatClient);
             ReplaceService(services, TwitchHelixClient);
             ReplaceService(services, TwitchOAuthService);

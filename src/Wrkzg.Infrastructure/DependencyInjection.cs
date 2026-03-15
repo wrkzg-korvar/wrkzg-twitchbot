@@ -38,10 +38,8 @@ public static class DependencyInjection
         {
             services.AddSingleton<ISecureStorage, MacOsSecureStorage>();
         }
-        else
-        {
-            throw new PlatformNotSupportedException("Wrkzg only supports Windows and macOS.");
-        }
+        // else: No ISecureStorage on unsupported platforms.
+        // Tests provide their own fake; the runtime app only runs on Windows/macOS.
 
         // Twitch OAuth Service (own HttpClient with resilience pipeline)
         services.AddHttpClient<ITwitchOAuthService, TwitchOAuthService>(client =>
