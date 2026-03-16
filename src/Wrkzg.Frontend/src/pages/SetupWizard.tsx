@@ -40,7 +40,7 @@ export function SetupWizard() {
   }, [queryClient, navigate]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--color-bg)]">
+    <div className="flex h-full flex-col bg-[var(--color-bg)]">
       <TitleBar />
 
       {/* ─── Progress Bar ───────────────────────────────────── */}

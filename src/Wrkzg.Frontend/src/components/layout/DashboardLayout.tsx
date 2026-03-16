@@ -19,7 +19,7 @@ const NAV_ITEMS = [
 
 export function DashboardLayout() {
   return (
-    <div className="flex h-screen flex-col bg-[var(--color-bg)]">
+    <div className="flex h-full flex-col bg-[var(--color-bg)]">
       <TitleBar />
 
       <div className="flex flex-1 overflow-hidden">

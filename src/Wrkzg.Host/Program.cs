@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +14,15 @@ using Wrkzg.Core.Interfaces;
 using Wrkzg.Host;
 using Wrkzg.Infrastructure;
 using Wrkzg.Infrastructure.Data;
+
+// WebView2 on Windows requires STA threading for Photino to render correctly.
+// Without this, the Photino window opens but shows a blank white screen.
+if (OperatingSystem.IsWindows())
+{
+    Thread.CurrentThread.SetApartmentState(ApartmentState.Unknown);
+    Thread.CurrentThread.SetApartmentState(ApartmentState.STA);
+}
+
 
 var builder = WebApplication.CreateBuilder(args);
 

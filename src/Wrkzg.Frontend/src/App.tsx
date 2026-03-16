@@ -12,7 +12,7 @@ export default function App() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-950 text-gray-400">
+      <div className="flex h-full items-center justify-center bg-gray-950 text-gray-400">
         <div className="text-center">
           <div className="mb-4 h-8 w-8 animate-spin rounded-full border-2 border-gray-600 border-t-purple-500 mx-auto" />
           <p>Loading Wrkzg…</p>
