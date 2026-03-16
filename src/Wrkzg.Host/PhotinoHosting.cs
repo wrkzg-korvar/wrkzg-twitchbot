@@ -25,48 +25,57 @@ public static class PhotinoHosting
 
     public static void Start(WebApplication app, PhotinoWindowController windowController)
     {
-        // Kestrel asynchron im Hintergrund starten
-        var serverTask = app.StartAsync();
-        serverTask.Wait();
-
-        // URL bestimmen
-        string kestrelUrl = app.Urls.First();
-        string url;
-
-        if (app.Environment.IsDevelopment() && IsViteRunning())
+        try
         {
-            url = ViteDevUrl;
+            // Kestrel asynchron im Hintergrund starten
+            var serverTask = app.StartAsync();
+            serverTask.Wait();
+
+            // URL bestimmen
+            string kestrelUrl = app.Urls.First();
+            string url;
+
+            if (app.Environment.IsDevelopment() && IsViteRunning())
+            {
+                url = ViteDevUrl;
+            }
+            else
+            {
+                url = kestrelUrl;
+            }
+
+            // Resolve icon path (relative to the executable)
+            string iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "icon.ico");
+
+            PhotinoWindow window = new PhotinoWindow()
+                .SetTitle("Wrkzg")
+                .SetChromeless(true)
+                .SetSize(1280, 820)
+                .SetMinSize(900, 600)
+                .SetResizable(true)
+                .SetContextMenuEnabled(false);
+
+            if (File.Exists(iconPath))
+            {
+                window.SetIconFile(iconPath);
+            }
+
+            window.Load(new Uri(url));
+
+            windowController.SetWindow(window);
+
+            // Blockiert bis das Fenster geschlossen wird
+            window.WaitForClose();
+
+            // Sauber herunterfahren
+            app.StopAsync().GetAwaiter().GetResult();
         }
-        else
+        catch (Exception ex)
         {
-            url = kestrelUrl;
+            Console.Error.WriteLine($"[Photino] Fatal error: {ex}");
+            app.StopAsync().GetAwaiter().GetResult();
+            throw;
         }
-
-        // Resolve icon path (relative to the executable)
-        string iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "icon.ico");
-
-        PhotinoWindow window = new PhotinoWindow()
-            .SetTitle("Wrkzg")
-            .SetChromeless(true)
-            .SetSize(1280, 820)
-            .SetMinSize(900, 600)
-            .SetResizable(true)
-            .SetContextMenuEnabled(false);
-
-        if (File.Exists(iconPath))
-        {
-            window.SetIconFile(iconPath);
-        }
-
-        window.Load(new Uri(url));
-
-        windowController.SetWindow(window);
-
-        // Blockiert bis das Fenster geschlossen wird
-        window.WaitForClose();
-
-        // Sauber herunterfahren
-        app.StopAsync().GetAwaiter().GetResult();
     }
 
     /// <summary>

@@ -92,27 +92,43 @@ PhotinoHosting.Start(app, windowController);
 // development (source tree) and published (alongside DLL) scenarios.
 static string? ResolveWwwrootPath()
 {
-    // 1. Next to the executable (published/bin output)
-    string binPath = Path.Combine(AppContext.BaseDirectory, "wwwroot");
-    if (Directory.Exists(binPath) && File.Exists(Path.Combine(binPath, "index.html")))
+    string[] candidates = new[]
     {
-        return binPath;
+        // 1. Next to the executable (published builds, SingleFile)
+        Path.Combine(AppContext.BaseDirectory, "wwwroot"),
+
+        // 2. Next to the Wrkzg.Api assembly (bin output when Host != Api)
+        Path.Combine(
+            Path.GetDirectoryName(typeof(Wrkzg.Api.DependencyInjection).Assembly.Location) ?? AppContext.BaseDirectory,
+            "wwwroot"),
+
+        // 3. Relative to CWD (dotnet run from solution root)
+        Path.GetFullPath(Path.Combine("src", "Wrkzg.Api", "wwwroot")),
+
+        // 4. Relative to AppContext.BaseDirectory going up to find Api project
+        //    Handles: bin/Debug/net10.0/ → go up 4 levels to solution, then into Api
+        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Wrkzg.Api", "wwwroot")),
+
+        // 5. Same but from src/ layout
+        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "Wrkzg.Api", "wwwroot")),
+    };
+
+    foreach (string candidate in candidates)
+    {
+        if (Directory.Exists(candidate) && File.Exists(Path.Combine(candidate, "index.html")))
+        {
+            Console.WriteLine($"[Wrkzg] Serving frontend from: {candidate}");
+            return candidate;
+        }
     }
 
-    // 2. Relative to CWD (when running from solution root with dotnet run)
-    string devPath = Path.GetFullPath(Path.Combine("src", "Wrkzg.Api", "wwwroot"));
-    if (Directory.Exists(devPath) && File.Exists(Path.Combine(devPath, "index.html")))
+    Console.Error.WriteLine("[Wrkzg] WARNING: Frontend wwwroot not found!");
+    Console.Error.WriteLine("[Wrkzg] Searched locations:");
+    foreach (string candidate in candidates)
     {
-        return devPath;
+        Console.Error.WriteLine($"  - {candidate} (exists: {Directory.Exists(candidate)})");
     }
-
-    // 3. Relative to the Host project directory
-    string hostDir = AppContext.BaseDirectory;
-    string relPath = Path.GetFullPath(Path.Combine(hostDir, "..", "..", "..", "..", "Wrkzg.Api", "wwwroot"));
-    if (Directory.Exists(relPath) && File.Exists(Path.Combine(relPath, "index.html")))
-    {
-        return relPath;
-    }
+    Console.Error.WriteLine("[Wrkzg] Run 'cd src/Wrkzg.Frontend && npm run build' to build the SPA.");
 
     return null;
 }
