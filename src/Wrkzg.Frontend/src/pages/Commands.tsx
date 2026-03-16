@@ -76,7 +76,7 @@ export function Commands() {
         </div>
         <button
           onClick={() => setShowCreate(!showCreate)}
-          className="rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-semibold text-[var(--color-text)] hover:bg-[var(--color-brand-hover)] transition-colors"
+          className="rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-semibold text-[var(--color-bg)] hover:bg-[var(--color-brand-hover)] transition-colors"
         >
           {showCreate ? "Cancel" : "+ New Command"}
         </button>
@@ -312,7 +312,7 @@ function CreateCommandForm({ onCreated }: { onCreated: () => void }) {
       <button
         onClick={handleSubmit}
         disabled={isSaving || trigger.length < 2 || !response.trim()}
-        className="rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-semibold text-[var(--color-text)] hover:bg-[var(--color-brand-hover)] disabled:opacity-40 transition-colors"
+        className="rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-semibold text-[var(--color-bg)] hover:bg-[var(--color-brand-hover)] disabled:opacity-40 transition-colors"
       >
         {isSaving ? "Creating…" : "Create Command"}
       </button>
