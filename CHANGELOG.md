@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] — 2026-03-16
+
+### Fixed
+
+- **Windows blank screen** — Added STA (Single-Threaded Apartment) threading required by WebView2 on Windows. Without this, Photino opened but showed only a white screen.
+- **Resize border too small** — Added invisible resize frame (6px edges, 12px corners) around the chromeless window for easier resizing.
+- **wwwroot not found in Release builds** — ResolveWwwrootPath now uses AppContext.BaseDirectory as primary check, works with SingleFile and all publish scenarios.
+- **Chromeless mode on all platforms** — Re-enabled SetChromeless(true) for Windows now that STA fix resolves the rendering issue.
+
+### Changed
+
+- **Windows release ZIP** — Removed unnecessary files (XML docs, PDB, web.config, BuildHost folders, launchSettings). ZIP now contains only essential runtime files.
+- **macOS release** — Now ships as proper `.app` bundle with Info.plist, icns icon, and ad-hoc code signing. Eliminates terminal window on launch.
+
 ## [1.0.0] - 2026-03-15
 
 ### Added

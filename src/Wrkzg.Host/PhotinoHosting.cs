@@ -45,7 +45,7 @@ public static class PhotinoHosting
             }
 
             // Resolve icon path (relative to the executable)
-            string iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "icon.ico");
+            string iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "icon.png");
 
             PhotinoWindow window = new PhotinoWindow()
                 .SetTitle("Wrkzg")

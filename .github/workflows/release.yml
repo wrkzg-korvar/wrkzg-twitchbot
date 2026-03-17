@@ -46,6 +46,18 @@ jobs:
             -p:IncludeNativeLibrariesForSelfExtract=true `
             -o publish/win-x64
 
+      - name: Clean publish output
+        run: |
+          cd publish/win-x64
+          Remove-Item -Force *.xml -ErrorAction SilentlyContinue
+          Remove-Item -Force *.pdb -ErrorAction SilentlyContinue
+          Remove-Item -Force web.config -ErrorAction SilentlyContinue
+          Remove-Item -Force launchSettings.json -ErrorAction SilentlyContinue
+          Remove-Item -Force appsettings.Development.json -ErrorAction SilentlyContinue
+          Remove-Item -Force Wrkzg.staticwebassets.endpoints.json -ErrorAction SilentlyContinue
+          Remove-Item -Recurse -Force BuildHost-net472 -ErrorAction SilentlyContinue
+          Remove-Item -Recurse -Force BuildHost-netcore -ErrorAction SilentlyContinue
+
       - name: Create ZIP
         run: Compress-Archive -Path publish/win-x64/* -DestinationPath Wrkzg-${{ github.ref_name }}-win-x64.zip
 
@@ -87,10 +99,55 @@ jobs:
             -p:IncludeNativeLibrariesForSelfExtract=true \
             -o publish/osx-arm64
 
-      - name: Create ZIP
+      - name: Clean publish output
         run: |
           cd publish/osx-arm64
-          zip -r ../../Wrkzg-${{ github.ref_name }}-osx-arm64.zip .
+          rm -f *.xml *.pdb web.config launchSettings.json appsettings.Development.json Wrkzg.staticwebassets.endpoints.json
+          rm -rf BuildHost-net472 BuildHost-netcore
+
+      - name: Generate icns from PNG
+        run: |
+          if [ -f src/Wrkzg.Host/Assets/icon.png ]; then
+            mkdir -p icon.iconset
+            sips -z 16 16     src/Wrkzg.Host/Assets/icon.png --out icon.iconset/icon_16x16.png
+            sips -z 32 32     src/Wrkzg.Host/Assets/icon.png --out icon.iconset/icon_16x16@2x.png
+            sips -z 32 32     src/Wrkzg.Host/Assets/icon.png --out icon.iconset/icon_32x32.png
+            sips -z 64 64     src/Wrkzg.Host/Assets/icon.png --out icon.iconset/icon_32x32@2x.png
+            sips -z 128 128   src/Wrkzg.Host/Assets/icon.png --out icon.iconset/icon_128x128.png
+            sips -z 256 256   src/Wrkzg.Host/Assets/icon.png --out icon.iconset/icon_128x128@2x.png
+            sips -z 256 256   src/Wrkzg.Host/Assets/icon.png --out icon.iconset/icon_256x256.png
+            sips -z 512 512   src/Wrkzg.Host/Assets/icon.png --out icon.iconset/icon_256x256@2x.png
+            sips -z 512 512   src/Wrkzg.Host/Assets/icon.png --out icon.iconset/icon_512x512.png
+            sips -z 1024 1024 src/Wrkzg.Host/Assets/icon.png --out icon.iconset/icon_512x512@2x.png
+            iconutil -c icns icon.iconset -o icon.icns
+            rm -rf icon.iconset
+          fi
+
+      - name: Create .app Bundle
+        run: |
+          APP_NAME="Wrkzg.app"
+          mkdir -p "$APP_NAME/Contents/MacOS"
+          mkdir -p "$APP_NAME/Contents/Resources"
+
+          # Copy all publish output into MacOS/
+          cp -R publish/osx-arm64/* "$APP_NAME/Contents/MacOS/"
+
+          # Copy Info.plist
+          cp src/Wrkzg.Host/macOS/Info.plist "$APP_NAME/Contents/"
+
+          # Copy icon (icns format)
+          if [ -f icon.icns ]; then
+            cp icon.icns "$APP_NAME/Contents/Resources/icon.icns"
+          fi
+
+          # Make binary executable
+          chmod +x "$APP_NAME/Contents/MacOS/Wrkzg"
+
+          # Ad-hoc code sign (no Apple Developer account needed)
+          codesign --force --deep --sign - "$APP_NAME"
+
+          # Create ZIP preserving the .app structure
+          zip -r -y Wrkzg-${{ github.ref_name }}-osx-arm64.zip "$APP_NAME"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -130,10 +187,55 @@ jobs:
             -p:IncludeNativeLibrariesForSelfExtract=true \
             -o publish/osx-x64
 
-      - name: Create ZIP
+      - name: Clean publish output
         run: |
           cd publish/osx-x64
-          zip -r ../../Wrkzg-${{ github.ref_name }}-osx-x64.zip .
+          rm -f *.xml *.pdb web.config launchSettings.json appsettings.Development.json Wrkzg.staticwebassets.endpoints.json
+          rm -rf BuildHost-net472 BuildHost-netcore
+
+      - name: Generate icns from PNG
+        run: |
+          if [ -f src/Wrkzg.Host/Assets/icon.png ]; then
+            mkdir -p icon.iconset
+            sips -z 16 16     src/Wrkzg.Host/Assets/icon.png --out icon.iconset/icon_16x16.png
+            sips -z 32 32     src/Wrkzg.Host/Assets/icon.png --out icon.iconset/icon_16x16@2x.png
+            sips -z 32 32     src/Wrkzg.Host/Assets/icon.png --out icon.iconset/icon_32x32.png
+            sips -z 64 64     src/Wrkzg.Host/Assets/icon.png --out icon.iconset/icon_32x32@2x.png
+            sips -z 128 128   src/Wrkzg.Host/Assets/icon.png --out icon.iconset/icon_128x128.png
+            sips -z 256 256   src/Wrkzg.Host/Assets/icon.png --out icon.iconset/icon_128x128@2x.png
+            sips -z 256 256   src/Wrkzg.Host/Assets/icon.png --out icon.iconset/icon_256x256.png
+            sips -z 512 512   src/Wrkzg.Host/Assets/icon.png --out icon.iconset/icon_256x256@2x.png
+            sips -z 512 512   src/Wrkzg.Host/Assets/icon.png --out icon.iconset/icon_512x512.png
+            sips -z 1024 1024 src/Wrkzg.Host/Assets/icon.png --out icon.iconset/icon_512x512@2x.png
+            iconutil -c icns icon.iconset -o icon.icns
+            rm -rf icon.iconset
+          fi
+
+      - name: Create .app Bundle
+        run: |
+          APP_NAME="Wrkzg.app"
+          mkdir -p "$APP_NAME/Contents/MacOS"
+          mkdir -p "$APP_NAME/Contents/Resources"
+
+          # Copy all publish output into MacOS/
+          cp -R publish/osx-x64/* "$APP_NAME/Contents/MacOS/"
+
+          # Copy Info.plist
+          cp src/Wrkzg.Host/macOS/Info.plist "$APP_NAME/Contents/"
+
+          # Copy icon (icns format)
+          if [ -f icon.icns ]; then
+            cp icon.icns "$APP_NAME/Contents/Resources/icon.icns"
+          fi
+
+          # Make binary executable
+          chmod +x "$APP_NAME/Contents/MacOS/Wrkzg"
+
+          # Ad-hoc code sign (no Apple Developer account needed)
+          codesign --force --deep --sign - "$APP_NAME"
+
+          # Create ZIP preserving the .app structure
+          zip -r -y Wrkzg-${{ github.ref_name }}-osx-x64.zip "$APP_NAME"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -173,10 +275,16 @@ jobs:
 
             ### Installation
 
-            1. Download the ZIP for your platform
-            2. Extract to a folder of your choice
-            3. Run `Wrkzg` (or `Wrkzg.exe` on Windows)
-            4. The Setup Wizard will guide you through connecting your Twitch account
+            **Windows:**
+            1. Download and extract the ZIP
+            2. Run `Wrkzg.exe`
+
+            **macOS:**
+            1. Download and extract the ZIP
+            2. Double-click `Wrkzg.app`
+            3. On first launch: Right-click → Open → Open (required for unsigned apps)
+
+            The Setup Wizard will guide you through connecting your Twitch account.
 
             ### Verify Downloads
 

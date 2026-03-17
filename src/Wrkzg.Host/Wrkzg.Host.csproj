@@ -28,6 +28,15 @@
       <RuntimeIdentifiers>win-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
     </PropertyGroup>
 
+    <PropertyGroup Label="Publish Settings">
+        <!-- Exclude XML documentation files from publish output -->
+        <PublishDocumentationFile>false</PublishDocumentationFile>
+        <PublishDocumentationFiles>false</PublishDocumentationFiles>
+        <!-- Exclude debug symbols from publish -->
+        <DebugType>none</DebugType>
+        <DebugSymbols>false</DebugSymbols>
+    </PropertyGroup>
+
     <PropertyGroup Label="Application Metadata">
         <!-- Angezeigt im Windows Task-Manager und macOS Activity Monitor -->
         <ApplicationIcon>Assets\icon.ico</ApplicationIcon>

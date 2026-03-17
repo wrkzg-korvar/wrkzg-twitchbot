@@ -54,10 +54,12 @@
     <DebugType>embedded</DebugType>
   </PropertyGroup>
 
-  <PropertyGroup Label="XML Documentation" Condition="'$(Configuration)' == 'Release'">
-    <!-- Im Release-Build XML-Doku generieren – hilft Contributors -->
+  <!-- XML-Doku nur im Debug-Build generieren – im Release-Publish nicht benötigt -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <!-- CS1591 bleibt auch im Release eine Warning, kein Error -->
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Label="Source Link (GitHub)">
