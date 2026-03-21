@@ -209,17 +209,26 @@ public static class AuthEndpoints
         ILogger<ITwitchOAuthService> logger,
         CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(request.ClientId))
-        {
-            return Results.BadRequest(new { error = "clientId is required." });
-        }
-
         if (string.IsNullOrWhiteSpace(request.ClientSecret))
         {
             return Results.BadRequest(new { error = "clientSecret is required." });
         }
 
-        await storage.SaveClientIdAsync(request.ClientId.Trim(), ct);
+        // If clientId is provided, save it. Otherwise keep the existing one.
+        if (!string.IsNullOrWhiteSpace(request.ClientId))
+        {
+            await storage.SaveClientIdAsync(request.ClientId.Trim(), ct);
+        }
+        else
+        {
+            // Verify that an existing clientId is stored
+            string? existingId = await storage.LoadClientIdAsync(ct);
+            if (string.IsNullOrWhiteSpace(existingId))
+            {
+                return Results.BadRequest(new { error = "clientId is required (no existing clientId found)." });
+            }
+        }
+
         await storage.SaveClientSecretAsync(request.ClientSecret.Trim(), ct);
 
         logger.LogInformation("Twitch app credentials saved to secure storage");

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.Versioning;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Hosting;
 using Photino.NET;
@@ -65,26 +66,21 @@ public static class PhotinoHosting
                 window.SetIconFile(iconPath);
             }
 
+            // Customize the native title bar once the window handle is available
+            if (OperatingSystem.IsWindows())
+            {
+                window.RegisterWindowCreatedHandler((sender, args) =>
+                {
+                    PhotinoWindow win = (PhotinoWindow)sender!;
+#pragma warning disable CA1416 // Platform guard is in the enclosing if block
+                    ApplyWindowsTheme(win.WindowHandle);
+#pragma warning restore CA1416
+                });
+            }
+
             window.Load(new Uri(url));
 
             windowController.SetWindow(window);
-
-            // Customize the native title bar to match the app's dark theme
-            if (OperatingSystem.IsWindows())
-            {
-                nint hwnd = window.WindowHandle;
-                Interop.DwmApi.EnableDarkMode(hwnd);
-                // Set caption color to match --color-bg (#0a0a0f)
-                Interop.DwmApi.SetCaptionColor(hwnd, 0x0a, 0x0a, 0x0f);
-
-                // Set taskbar + title bar icon via Win32 API
-                // (Photino's SetIconFile doesn't reliably set the taskbar icon on Windows)
-                string icoPath = Path.Combine(AppContext.BaseDirectory, "Assets", "icon.ico");
-                if (File.Exists(icoPath))
-                {
-                    Interop.DwmApi.SetWindowIcon(hwnd, icoPath);
-                }
-            }
 
             // Blockiert bis das Fenster geschlossen wird
             window.WaitForClose();
@@ -97,6 +93,22 @@ public static class PhotinoHosting
             Console.Error.WriteLine($"[Photino] Fatal error: {ex}");
             app.StopAsync().GetAwaiter().GetResult();
             throw;
+        }
+    }
+
+    [SupportedOSPlatform("windows")]
+    private static void ApplyWindowsTheme(nint hwnd)
+    {
+        Interop.DwmApi.EnableDarkMode(hwnd);
+        // Set caption color to match --color-bg (#0a0a0f)
+        Interop.DwmApi.SetCaptionColor(hwnd, 0x0a, 0x0a, 0x0f);
+
+        // Set taskbar + title bar icon via Win32 API
+        // (Photino's SetIconFile doesn't reliably set the taskbar icon on Windows)
+        string icoPath = Path.Combine(AppContext.BaseDirectory, "Assets", "icon.ico");
+        if (File.Exists(icoPath))
+        {
+            Interop.DwmApi.SetWindowIcon(hwnd, icoPath);
         }
     }
 

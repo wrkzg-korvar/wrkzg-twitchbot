@@ -19,7 +19,7 @@ namespace Wrkzg.Infrastructure.Twitch;
 /// Uses IServiceScopeFactory to resolve Scoped dependencies (ISettingsRepository)
 /// from within this Singleton-lifetime service.
 /// </summary>
-public class BotConnectionService : IHostedService
+public class BotConnectionService : IHostedService, IBotConnectionService
 {
     private readonly ITwitchChatClient _chatClient;
     private readonly ISecureStorage _storage;
@@ -54,7 +54,7 @@ public class BotConnectionService : IHostedService
         _chatClient.OnMessageReceived += HandleChatMessage;
 
         // Try auto-connect if tokens and channel are configured
-        await TryAutoConnectAsync(ct);
+        await TryConnectAsync(ct);
     }
 
     public async Task StopAsync(CancellationToken ct)
@@ -68,7 +68,7 @@ public class BotConnectionService : IHostedService
         await _chatClient.DisconnectAsync(ct);
     }
 
-    private async Task TryAutoConnectAsync(CancellationToken ct)
+    public async Task<bool> TryConnectAsync(CancellationToken ct = default)
     {
         try
         {
@@ -77,9 +77,9 @@ public class BotConnectionService : IHostedService
             if (!hasCredentials)
             {
                 _logger.LogInformation(
-                    "No Twitch app credentials stored — skipping auto-connect. " +
+                    "No Twitch app credentials stored — skipping connect. " +
                     "Please complete the Setup Wizard.");
-                return;
+                return false;
             }
 
             // Check if Bot token exists
@@ -87,9 +87,9 @@ public class BotConnectionService : IHostedService
             if (botToken is null)
             {
                 _logger.LogInformation(
-                    "No Bot token stored — skipping auto-connect. " +
+                    "No Bot token stored — skipping connect. " +
                     "Connect your bot account in the Settings page.");
-                return;
+                return false;
             }
 
             // Read channel from Settings (Scoped dependency → use scope factory)
@@ -104,19 +104,21 @@ public class BotConnectionService : IHostedService
             if (string.IsNullOrWhiteSpace(channel))
             {
                 _logger.LogInformation(
-                    "Bot.Channel not configured — skipping auto-connect. " +
+                    "Bot.Channel not configured — skipping connect. " +
                     "Set your channel name in the Settings page.");
-                return;
+                return false;
             }
 
-            _logger.LogInformation("Auto-connecting bot to channel #{Channel}", channel);
+            _logger.LogInformation("Connecting bot to channel #{Channel}", channel);
             await _chatClient.ConnectAsync(channel, ct);
+            return true;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "Auto-connect failed — the bot will not be in chat. " +
+                "Connect failed — the bot will not be in chat. " +
                 "Check your bot token and channel settings.");
+            return false;
         }
     }
 

@@ -72,6 +72,7 @@ if (wwwrootPath is not null && Directory.Exists(wwwrootPath))
     app.MapUserEndpoints();
     app.MapStatusEndpoints();
     app.MapWindowEndpoints();
+    app.MapBotEndpoints();
 
     // SPA fallback: unmatched routes serve index.html for React Router
     app.MapFallbackToFile("index.html", new StaticFileOptions
@@ -91,6 +92,7 @@ else
     app.MapUserEndpoints();
     app.MapStatusEndpoints();
     app.MapWindowEndpoints();
+    app.MapBotEndpoints();
 }
 
 PhotinoHosting.Start(app, windowController);

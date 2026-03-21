@@ -64,7 +64,9 @@ public static class DependencyInjection
         services.AddSingleton<ITwitchChatClient, TwitchChatClient>();
 
         // Bot Connection Service (IHostedService — manages IRC lifecycle)
-        services.AddHostedService<BotConnectionService>();
+        services.AddSingleton<BotConnectionService>();
+        services.AddHostedService<BotConnectionService>(sp => sp.GetRequiredService<BotConnectionService>());
+        services.AddSingleton<IBotConnectionService>(sp => sp.GetRequiredService<BotConnectionService>());
 
         return services;
     }

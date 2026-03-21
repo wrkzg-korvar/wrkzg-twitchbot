@@ -29,6 +29,9 @@ export function ChannelStep({ onBack, onFinish }: ChannelStepProps) {
         throw new Error(`Failed to save channel (${res.status})`);
       }
 
+      // Trigger the bot to connect now that setup is complete
+      await fetch("/api/bot/connect", { method: "POST" });
+
       onFinish();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save channel name.");
