@@ -11,7 +11,7 @@ Built with C# .NET 10 · Runs on Windows & macOS · Open Source
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-10.0-purple?style=flat-square)](https://dotnet.microsoft.com)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-lightgrey?style=flat-square)](#installation)
-[![Status](https://img.shields.io/badge/status-v1.0.0-green?style=flat-square)](#roadmap)
+[![Status](https://img.shields.io/badge/status-v1.0.1-green?style=flat-square)](#roadmap)
 
 ---
 
@@ -87,15 +87,40 @@ For a full breakdown, see [ARCHITECTURE.md](_docs/ARCHITECTURE.md).
 
 ## Installation
 
-> ⚠️ No installer is available yet. See [Building from Source](#building-from-source) below.
+Download the latest release for your platform from the [Releases page](https://github.com/wrkzg-korvar/wrkzg-twitchbot/releases).
 
-### System Requirements
+### Windows
+
+1. Download and extract the `.zip` file
+2. Run `Wrkzg.exe`
+3. Windows SmartScreen may show a warning — click **"More info"** → **"Run anyway"**
+
+> **Tip:** Right-click the ZIP before extracting → Properties → check **"Unblock"** → OK. This removes the warning for all files inside.
+
+### macOS
+
+1. Download and extract the `.zip` file
+2. Double-click `Wrkzg.app` — macOS will block it. Click **"Done"**
+3. Open **System Settings → Privacy & Security**
+4. Scroll to the bottom — click **"Open Anyway"** next to the Wrkzg message
+5. Enter your password — the app launches and is remembered for future starts
+
+**Alternative (Terminal):**
+```bash
+xattr -cr ~/Downloads/Wrkzg.app
+open ~/Downloads/Wrkzg.app
+```
+
+> **Note:** Wrkzg is not signed with an Apple Developer Certificate. Since macOS 15 (Sequoia), the right-click → Open workaround no longer works. The System Settings method above is required on macOS 15+ and macOS 26 (Tahoe).
+
+### Prerequisites
 
 | | Windows | macOS |
 |---|---|---|
 | OS Version | Windows 10 / 11 | macOS 12+ |
 | Architecture | x64 | x64 · Apple Silicon (ARM64) |
 | .NET Runtime | Bundled (self-contained) | Bundled (self-contained) |
+| WebView | WebView2 Runtime (pre-installed with Edge) | WebKit (built-in) |
 
 ### Building from Source
 

@@ -279,10 +279,21 @@ jobs:
             1. Download and extract the ZIP
             2. Run `Wrkzg.exe`
 
-            **macOS:**
-            1. Download and extract the ZIP
-            2. Double-click `Wrkzg.app`
-            3. On first launch: Right-click → Open → Open (required for unsigned apps)
+            **macOS (First Launch — Gatekeeper):**
+
+            Wrkzg is not signed with an Apple Developer Certificate. macOS will block the first launch.
+
+            *Option A — System Settings (recommended for Sequoia 15+):*
+            1. Double-click `Wrkzg.app` → click **"Done"** on the warning
+            2. Open **System Settings → Privacy & Security**
+            3. Scroll to the bottom — click **"Open Anyway"** next to the Wrkzg message
+            4. Enter your password — the app launches and is remembered
+
+            *Option B — Terminal:*
+            ```
+            xattr -cr ~/Downloads/Wrkzg.app
+            open ~/Downloads/Wrkzg.app
+            ```
 
             The Setup Wizard will guide you through connecting your Twitch account.
 
