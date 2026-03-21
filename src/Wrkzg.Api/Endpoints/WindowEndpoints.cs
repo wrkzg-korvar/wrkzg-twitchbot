@@ -43,8 +43,22 @@ public static class WindowEndpoints
             controller.DragMove(request.ScreenX, request.ScreenY);
             return Results.Ok();
         });
+
+        group.MapPost("/start-resize", (ResizeRequest request, IWindowController controller) =>
+        {
+            if (string.IsNullOrEmpty(request.Direction))
+            {
+                return Results.BadRequest();
+            }
+
+            controller.StartResize(request.Direction);
+            return Results.Ok();
+        });
     }
 }
 
 /// <summary>Request body for drag operations with screen coordinates.</summary>
 public sealed record DragRequest(int ScreenX, int ScreenY);
+
+/// <summary>Request body for resize operations with direction.</summary>
+public sealed record ResizeRequest(string Direction);

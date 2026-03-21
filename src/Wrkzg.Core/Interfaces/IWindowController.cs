@@ -29,4 +29,12 @@ public interface IWindowController
     /// relative to where DragStart was called.
     /// </summary>
     void DragMove(int screenX, int screenY);
+
+    /// <summary>
+    /// Initiates a native window resize operation in the given direction.
+    /// Directions: "n", "s", "e", "w", "ne", "nw", "se", "sw".
+    /// On Windows this triggers Win32 WM_SYSCOMMAND + SC_SIZE.
+    /// On macOS this is a no-op (WebKit handles chromeless resize natively).
+    /// </summary>
+    void StartResize(string direction);
 }

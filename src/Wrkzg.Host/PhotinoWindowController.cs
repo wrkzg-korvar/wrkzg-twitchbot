@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Photino.NET;
 using Wrkzg.Core.Interfaces;
 
@@ -69,5 +72,48 @@ public class PhotinoWindowController : IWindowController
 
         _window.SetLeft(_dragStartWindowX + deltaX);
         _window.SetTop(_dragStartWindowY + deltaY);
+    }
+
+    public void StartResize(string direction)
+    {
+        if (_window is null || !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            return;
+        }
+
+        if (!ResizeDirectionMap.TryGetValue(direction, out int wmszDirection))
+        {
+            return;
+        }
+
+        IntPtr hwnd = _window.WindowHandle;
+        NativeMethods.ReleaseCapture();
+        NativeMethods.SendMessage(hwnd, NativeMethods.WmSyscommand,
+            (IntPtr)(NativeMethods.ScSize | wmszDirection), IntPtr.Zero);
+    }
+
+    private static readonly Dictionary<string, int> ResizeDirectionMap = new()
+    {
+        ["w"] = 1,   // WMSZ_LEFT
+        ["e"] = 2,   // WMSZ_RIGHT
+        ["n"] = 3,   // WMSZ_TOP
+        ["nw"] = 4,  // WMSZ_TOPLEFT
+        ["ne"] = 5,  // WMSZ_TOPRIGHT
+        ["s"] = 6,   // WMSZ_BOTTOM
+        ["sw"] = 7,  // WMSZ_BOTTOMLEFT
+        ["se"] = 8,  // WMSZ_BOTTOMRIGHT
+    };
+
+    private static class NativeMethods
+    {
+        internal const int WmSyscommand = 0x0112;
+        internal const int ScSize = 0xF000;
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool ReleaseCapture();
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        internal static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
     }
 }
