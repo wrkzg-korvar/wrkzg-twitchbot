@@ -79,7 +79,7 @@ export function SetupWizard() {
       </div>
 
       {/* ─── Step Content ───────────────────────────────────── */}
-      <div className="flex flex-1 items-start justify-center px-6 py-10">
+      <div className="flex flex-1 items-start justify-center overflow-y-auto px-6 py-10">
         <div className="w-full max-w-xl">
           {currentStep === 0 && <WelcomeStep onNext={goNext} />}
           {currentStep === 1 && <TwitchAppStep onNext={goNext} onBack={goBack} />}

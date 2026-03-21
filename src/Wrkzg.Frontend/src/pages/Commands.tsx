@@ -98,7 +98,8 @@ export function Commands() {
               System Commands
             </h3>
           </div>
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <tbody>
               {systemCommands.map((cmd) => (
                 <tr key={cmd.trigger} className="border-b border-[var(--color-border)]">
@@ -112,7 +113,7 @@ export function Commands() {
                   </td>
                   <td className="px-4 py-2.5 text-[var(--color-text-secondary)]">{cmd.description}</td>
                   <td className="px-4 py-2.5 text-right">
-                    <span className="rounded bg-gray-700/50 px-2 py-0.5 text-[10px] text-[var(--color-text-secondary)]">
+                    <span className="rounded border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-0.5 text-[10px] text-[var(--color-text-secondary)]">
                       SYSTEM
                     </span>
                   </td>
@@ -120,6 +121,7 @@ export function Commands() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
@@ -134,7 +136,8 @@ export function Commands() {
         </div>
       ) : (
         <div className="rounded-lg border border-[var(--color-border)] overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
                 <th className="px-4 py-3 text-left font-medium text-[var(--color-text-secondary)]">Trigger</th>
@@ -168,8 +171,8 @@ export function Commands() {
                       onClick={() => toggleMutation.mutate({ id: cmd.id, isEnabled: !cmd.isEnabled })}
                       className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                         cmd.isEnabled
-                          ? "bg-green-500/20 text-green-400 hover:bg-green-500/30"
-                          : "bg-gray-700/50 text-[var(--color-text-muted)] hover:bg-gray-700"
+                          ? "bg-green-500/20 text-green-400 border border-green-400/30 hover:bg-green-500/30"
+                          : "bg-red-500/15 text-red-500 border border-red-500/30 hover:bg-red-500/25"
                       }`}
                     >
                       {cmd.isEnabled ? "ON" : "OFF"}
@@ -191,6 +194,7 @@ export function Commands() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>

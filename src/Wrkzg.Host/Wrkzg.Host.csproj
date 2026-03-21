@@ -68,9 +68,10 @@
     </ItemGroup>
 
     <ItemGroup Label="Assets">
-        <!-- Icon und Manifest werden mit dem Publish-Artefakt kopiert -->
-        <None Update="Assets\icon.ico" CopyToOutputDirectory="PreserveNewest" />
-        <None Update="version.json"    CopyToOutputDirectory="PreserveNewest" />
+        <!-- Icon als Content kopieren — ApplicationIcon embedded nur in die .exe-Metadaten,
+             kopiert die Datei aber nicht in den Output für SetWindowIcon zur Laufzeit -->
+        <Content Include="Assets\icon.ico" CopyToOutputDirectory="PreserveNewest" />
+        <None Update="version.json" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
     <!--
