@@ -49,11 +49,16 @@ public static class PhotinoHosting
 
             PhotinoWindow window = new PhotinoWindow()
                 .SetTitle("Wrkzg")
-                .SetChromeless(true)
                 .SetSize(1280, 820)
                 .SetMinSize(900, 600)
                 .SetResizable(true)
                 .SetContextMenuEnabled(false);
+
+            // Chromeless only on macOS — on Windows, WebView2 breaks mouse events in chromeless mode
+            if (OperatingSystem.IsMacOS())
+            {
+                window.SetChromeless(true);
+            }
 
             if (File.Exists(iconPath))
             {

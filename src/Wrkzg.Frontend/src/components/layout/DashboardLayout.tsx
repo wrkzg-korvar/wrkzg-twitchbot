@@ -5,7 +5,6 @@ import { useEffect } from "react";
 import { useSignalR } from "../../hooks/useSignalR";
 import { useTheme } from "../../hooks/useTheme";
 import { TitleBar } from "./TitleBar";
-import { ResizeFrame } from "./ResizeFrame";
 
 interface StatusResponse {
   bot: { isConnected: boolean; channel: string | null };
@@ -21,7 +20,6 @@ const NAV_ITEMS = [
 export function DashboardLayout() {
   return (
     <div className="flex h-full flex-col bg-[var(--color-bg)]">
-      <ResizeFrame />
       <TitleBar />
 
       <div className="flex flex-1 overflow-hidden">
