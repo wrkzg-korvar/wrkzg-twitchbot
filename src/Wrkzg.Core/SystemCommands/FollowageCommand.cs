@@ -15,6 +15,7 @@ public class FollowageCommand : ISystemCommand
     public string Trigger => "!followage";
     public string[] Aliases => Array.Empty<string>();
     public string Description => "Shows how long you've been following.";
+    public string? DefaultResponseTemplate => "@{user} you've been following for {followage}.";
 
     private readonly IServiceScopeFactory _scopeFactory;
 

@@ -18,6 +18,7 @@ public class BotDbContext : DbContext
     public DbSet<Poll> Polls => Set<Poll>();
     public DbSet<PollVote> PollVotes => Set<PollVote>();
     public DbSet<Setting> Settings => Set<Setting>();
+    public DbSet<SystemCommandOverride> SystemCommandOverrides => Set<SystemCommandOverride>();
 
     public BotDbContext(DbContextOptions<BotDbContext> options) : base(options)
     {

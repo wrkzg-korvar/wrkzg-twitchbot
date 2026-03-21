@@ -18,12 +18,16 @@ public static class DependencyInjection
         services.AddSingleton<ISystemCommand, PointsCommand>();
         services.AddSingleton<ISystemCommand, WatchtimeCommand>();
         services.AddSingleton<ISystemCommand, FollowageCommand>();
+        services.AddSingleton<ISystemCommand, EditCommandCommand>();
 
         // Command Processor (Singleton — maintains cooldown state in-memory)
         services.AddSingleton<ICommandProcessor, CommandProcessor>();
 
         // Chat Message Pipeline (Singleton — orchestrates message processing)
         services.AddSingleton<ChatMessagePipeline>();
+
+        // Chat Message Buffer (Singleton — holds last N messages for dashboard reload)
+        services.AddSingleton<ChatMessageBuffer>();
 
         // UserTrackingService (Singleton + IHostedService)
         // Triple registration: same instance as IUserTrackingService, IHostedService, and concrete type

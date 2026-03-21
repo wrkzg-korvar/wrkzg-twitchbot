@@ -31,14 +31,15 @@ public class TwitchOAuthService : ITwitchOAuthService
     private readonly IConfiguration _config;
     private readonly ILogger<TwitchOAuthService> _logger;
 
-    private const string BotScopes = "chat:read chat:edit";
+    private const string BotScopes = "chat:read chat:edit user:write:chat";
 
     private const string BroadcasterScopes =
         "moderator:read:followers " +
         "channel:read:polls " +
         "channel:manage:polls " +
         "bits:read " +
-        "channel:read:subscriptions";
+        "channel:read:subscriptions " +
+        "user:write:chat";
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {

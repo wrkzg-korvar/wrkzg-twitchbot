@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.SignalR;
 using Wrkzg.Api.Hubs;
 using Wrkzg.Core.Interfaces;
 using Wrkzg.Core.Models;
+using Wrkzg.Core.Services;
 
 namespace Wrkzg.Api.Services;
 
@@ -13,14 +14,18 @@ namespace Wrkzg.Api.Services;
 public class SignalRChatBroadcaster : IChatEventBroadcaster
 {
     private readonly IHubContext<ChatHub> _hub;
+    private readonly ChatMessageBuffer _buffer;
 
-    public SignalRChatBroadcaster(IHubContext<ChatHub> hub)
+    public SignalRChatBroadcaster(IHubContext<ChatHub> hub, ChatMessageBuffer buffer)
     {
         _hub = hub;
+        _buffer = buffer;
     }
 
     public Task BroadcastChatMessageAsync(ChatMessage message, CancellationToken ct = default)
     {
+        _buffer.Add(message);
+
         return _hub.Clients.Group("dashboard").SendAsync("ChatMessage", new
         {
             userId = message.UserId,

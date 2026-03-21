@@ -65,6 +65,32 @@ public class TwitchHelixClient : ITwitchHelixClient
         }
     }
 
+    public async Task<bool> SendChatMessageAsync(string broadcasterId, string senderId, string message, CancellationToken ct = default)
+    {
+        try
+        {
+            HttpResponseMessage response = await _http.PostAsJsonAsync(
+                "chat/messages",
+                new { broadcaster_id = broadcasterId, sender_id = senderId, message },
+                ct);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string body = await response.Content.ReadAsStringAsync(ct);
+                _logger.LogWarning("Failed to send chat message via Helix: {Status} {Body}",
+                    response.StatusCode, body);
+                return false;
+            }
+
+            return true;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "Failed to send chat message via Helix API");
+            return false;
+        }
+    }
+
     /// <summary>
     /// Generic Helix API response wrapper. Twitch wraps all responses in { "data": [...] }.
     /// </summary>

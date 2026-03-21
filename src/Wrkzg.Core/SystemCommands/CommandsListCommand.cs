@@ -17,6 +17,7 @@ public class CommandsListCommand : ISystemCommand
     public string Trigger => "!commands";
     public string[] Aliases => new[] { "!help" };
     public string Description => "Lists all available commands.";
+    public string? DefaultResponseTemplate => "Available commands: {commandlist}";
 
     private readonly IServiceScopeFactory _scopeFactory;
 
@@ -32,9 +33,13 @@ public class CommandsListCommand : ISystemCommand
         IReadOnlyList<Command> commands = await repo.GetAllAsync(ct);
 
         IEnumerable<string> enabled = commands.Where(c => c.IsEnabled).Select(c => c.Trigger);
-        string[] systemCmds = new[] { "!commands", "!points", "!watchtime", "!followage" };
-        IEnumerable<string> all = systemCmds.Concat(enabled);
+        string[] systemCmds = new[] { "!commands", "!points", "!watchtime", "!followage", "!editcmd" };
+        string commandList = string.Join(", ", systemCmds.Concat(enabled));
 
-        return $"Available commands: {string.Join(", ", all)}";
+        // Use DefaultResponseTemplate with {commandlist} replaced
+        string template = DefaultResponseTemplate!;
+        return template
+            .Replace("{commandlist}", commandList, StringComparison.OrdinalIgnoreCase)
+            .Replace("{user}", message.DisplayName, StringComparison.OrdinalIgnoreCase);
     }
 }

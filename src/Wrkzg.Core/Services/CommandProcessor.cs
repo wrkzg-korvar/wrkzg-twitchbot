@@ -75,12 +75,64 @@ public class CommandProcessor : ICommandProcessor
         // 2. Extract trigger (first word, lowercase)
         string trigger = message.Content.Split(' ', 2)[0].ToLowerInvariant();
 
+        // Resolve scoped repositories (needed for both system overrides and custom commands)
+        using IServiceScope scope = _scopeFactory.CreateScope();
+
         // 2.5 Check system commands first (before DB lookup)
         foreach (ISystemCommand sysCmd in _systemCommands)
         {
             if (string.Equals(sysCmd.Trigger, trigger, StringComparison.OrdinalIgnoreCase)
                 || sysCmd.Aliases.Any(a => string.Equals(a, trigger, StringComparison.OrdinalIgnoreCase)))
             {
+                // Check if there is an override (disabled or custom response)
+                ISystemCommandOverrideRepository overrides =
+                    scope.ServiceProvider.GetRequiredService<ISystemCommandOverrideRepository>();
+                SystemCommandOverride? ovr = await overrides.GetByTriggerAsync(sysCmd.Trigger, ct);
+
+                if (ovr is not null && !ovr.IsEnabled)
+                {
+                    _logger.LogDebug("System command {Trigger} is disabled via override", sysCmd.Trigger);
+                    return false;
+                }
+
+                // If override has custom response template, use it instead
+                if (ovr?.CustomResponseTemplate is not null)
+                {
+                    IUserRepository usersForSys = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+                    User sysUser = await usersForSys.GetOrCreateAsync(message.UserId, message.Username, ct);
+                    string customResponse = ResolveTemplate(ovr.CustomResponseTemplate, message, sysUser);
+
+                    // Resolve system-command-specific variables
+                    if (customResponse.Contains("{followage}", StringComparison.OrdinalIgnoreCase)
+                        && sysUser.FollowDate.HasValue)
+                    {
+                        TimeSpan dur = DateTimeOffset.UtcNow - sysUser.FollowDate.Value;
+                        customResponse = customResponse.Replace("{followage}",
+                            FormatFollowage(dur), StringComparison.OrdinalIgnoreCase);
+                    }
+                    else if (customResponse.Contains("{followage}", StringComparison.OrdinalIgnoreCase))
+                    {
+                        customResponse = customResponse.Replace("{followage}",
+                            "not following", StringComparison.OrdinalIgnoreCase);
+                    }
+
+                    if (customResponse.Contains("{commandlist}", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ICommandRepository cmds = scope.ServiceProvider.GetRequiredService<ICommandRepository>();
+                        IReadOnlyList<Command> allCmds = await cmds.GetAllAsync(ct);
+                        IEnumerable<string> enabled = allCmds.Where(c => c.IsEnabled).Select(c => c.Trigger);
+                        string[] sysTriggers = _systemCommands.Select(s => s.Trigger).ToArray();
+                        string list = string.Join(", ", sysTriggers.Concat(enabled));
+                        customResponse = customResponse.Replace("{commandlist}",
+                            list, StringComparison.OrdinalIgnoreCase);
+                    }
+
+                    await _chat.SendMessageAsync(customResponse, ct);
+                    _logger.LogInformation("Executed system command {Trigger} (custom override) for {User}",
+                        sysCmd.Trigger, message.DisplayName);
+                    return true;
+                }
+
                 string? sysResponse = await sysCmd.ExecuteAsync(message, ct);
                 if (sysResponse is not null)
                 {
@@ -93,8 +145,6 @@ public class CommandProcessor : ICommandProcessor
             }
         }
 
-        // Resolve scoped repositories
-        using IServiceScope scope = _scopeFactory.CreateScope();
         ICommandRepository commands = scope.ServiceProvider.GetRequiredService<ICommandRepository>();
         IUserRepository users = scope.ServiceProvider.GetRequiredService<IUserRepository>();
 
@@ -289,6 +339,28 @@ public class CommandProcessor : ICommandProcessor
         }
 
         return $"{minutes}m";
+    }
+
+    /// <summary>
+    /// Formats a follow duration as "Xy Zmo", "Xmo Yd", or "Xd".
+    /// </summary>
+    private static string FormatFollowage(TimeSpan duration)
+    {
+        if (duration.TotalDays >= 365)
+        {
+            int years = (int)(duration.TotalDays / 365);
+            int months = (int)((duration.TotalDays % 365) / 30);
+            return months > 0 ? $"{years}y {months}mo" : $"{years}y";
+        }
+
+        if (duration.TotalDays >= 30)
+        {
+            int months = (int)(duration.TotalDays / 30);
+            int days = (int)(duration.TotalDays % 30);
+            return days > 0 ? $"{months}mo {days}d" : $"{months}mo";
+        }
+
+        return $"{(int)duration.TotalDays}d";
     }
 
     /// <summary>

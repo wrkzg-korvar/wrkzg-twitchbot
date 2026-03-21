@@ -18,6 +18,12 @@ public interface ITwitchHelixClient
     /// Gets user info by login name.
     /// </summary>
     Task<HelixUserInfo?> GetUserAsync(string login, CancellationToken ct = default);
+
+    /// <summary>
+    /// Sends a chat message via the Helix API (POST /chat/messages).
+    /// Uses the Broadcaster token. Returns true if sent successfully.
+    /// </summary>
+    Task<bool> SendChatMessageAsync(string broadcasterId, string senderId, string message, CancellationToken ct = default);
 }
 
 /// <summary>

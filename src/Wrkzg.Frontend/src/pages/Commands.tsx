@@ -5,6 +5,9 @@ interface SystemCommand {
   trigger: string;
   aliases: string[];
   description: string;
+  defaultResponseTemplate: string | null;
+  customResponseTemplate: string | null;
+  isEnabled: boolean;
 }
 
 interface Command {
@@ -28,6 +31,9 @@ const PERMISSION_LABELS: Record<number, string> = {
   4: "Broadcaster",
 };
 
+const inputClass =
+  "w-full appearance-none rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-sm text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-brand)] focus:outline-none focus:ring-1 focus:ring-[var(--color-brand)]";
+
 async function fetchCommands(): Promise<Command[]> {
   const res = await fetch("/api/commands");
   if (!res.ok) throw new Error(`Failed to load commands: ${res.status}`);
@@ -46,6 +52,7 @@ export function Commands() {
     },
   });
   const [showCreate, setShowCreate] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   const toggleMutation = useMutation({
     mutationFn: async ({ id, isEnabled }: { id: number; isEnabled: boolean }) => {
@@ -102,22 +109,7 @@ export function Commands() {
           <table className="w-full text-sm min-w-[640px]">
             <tbody>
               {systemCommands.map((cmd) => (
-                <tr key={cmd.trigger} className="border-b border-[var(--color-border)]">
-                  <td className="px-4 py-2.5">
-                    <code className="text-[var(--color-brand-text)]">{cmd.trigger}</code>
-                    {cmd.aliases.length > 0 && (
-                      <span className="ml-2 text-xs text-[var(--color-text-muted)]">
-                        ({cmd.aliases.join(", ")})
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2.5 text-[var(--color-text-secondary)]">{cmd.description}</td>
-                  <td className="px-4 py-2.5 text-right">
-                    <span className="rounded border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-0.5 text-[10px] text-[var(--color-text-secondary)]">
-                      SYSTEM
-                    </span>
-                  </td>
-                </tr>
+                <SystemCommandRow key={cmd.trigger} cmd={cmd} />
               ))}
             </tbody>
           </table>
@@ -150,47 +142,18 @@ export function Commands() {
             </thead>
             <tbody>
               {commands.map((cmd) => (
-                <tr key={cmd.id} className="border-b border-[var(--color-border)] hover:bg-[var(--color-elevated)]">
-                  <td className="px-4 py-3">
-                    <code className="text-[var(--color-brand-text)]">{cmd.trigger}</code>
-                    {cmd.aliases.length > 0 && (
-                      <span className="ml-2 text-xs text-[var(--color-text-muted)]">
-                        +{cmd.aliases.length} alias{cmd.aliases.length > 1 ? "es" : ""}
-                      </span>
-                    )}
-                  </td>
-                  <td className="max-w-xs truncate px-4 py-3 text-[var(--color-text-secondary)]">
-                    {cmd.responseTemplate}
-                  </td>
-                  <td className="px-4 py-3 text-[var(--color-text-secondary)]">
-                    {PERMISSION_LABELS[cmd.permissionLevel] ?? "Unknown"}
-                  </td>
-                  <td className="px-4 py-3 text-center text-[var(--color-text-secondary)]">{cmd.useCount}</td>
-                  <td className="px-4 py-3 text-center">
-                    <button
-                      onClick={() => toggleMutation.mutate({ id: cmd.id, isEnabled: !cmd.isEnabled })}
-                      className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                        cmd.isEnabled
-                          ? "bg-green-500/20 text-green-400 border border-green-400/30 hover:bg-green-500/30"
-                          : "bg-red-500/15 text-red-500 border border-red-500/30 hover:bg-red-500/25"
-                      }`}
-                    >
-                      {cmd.isEnabled ? "ON" : "OFF"}
-                    </button>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => {
-                        if (confirm(`Delete command ${cmd.trigger}?`)) {
-                          deleteMutation.mutate(cmd.id);
-                        }
-                      }}
-                      className="text-xs text-red-400/60 hover:text-red-400 transition-colors"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
+                <CustomCommandRow
+                  key={cmd.id}
+                  cmd={cmd}
+                  isEditing={editingId === cmd.id}
+                  onEdit={() => setEditingId(editingId === cmd.id ? null : cmd.id)}
+                  onToggle={() => toggleMutation.mutate({ id: cmd.id, isEnabled: !cmd.isEnabled })}
+                  onDelete={() => {
+                    if (confirm(`Delete command ${cmd.trigger}?`)) {
+                      deleteMutation.mutate(cmd.id);
+                    }
+                  }}
+                />
               ))}
             </tbody>
           </table>
@@ -201,6 +164,301 @@ export function Commands() {
   );
 }
 
+// ─── System Command Row ──────────────────────────────────────
+
+function SystemCommandRow({ cmd }: { cmd: SystemCommand }) {
+  const queryClient = useQueryClient();
+  const [isEditingResponse, setIsEditingResponse] = useState(false);
+  const [customResponse, setCustomResponse] = useState(cmd.customResponseTemplate ?? "");
+
+  const toggleMutation = useMutation({
+    mutationFn: async () => {
+      await fetch(`/api/commands/system/${encodeURIComponent(cmd.trigger)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customResponseTemplate: cmd.customResponseTemplate, isEnabled: !cmd.isEnabled }),
+      });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["systemCommands"] }),
+  });
+
+  const saveResponseMutation = useMutation({
+    mutationFn: async () => {
+      await fetch(`/api/commands/system/${encodeURIComponent(cmd.trigger)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customResponseTemplate: customResponse.trim() || null,
+          isEnabled: cmd.isEnabled,
+        }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["systemCommands"] });
+      setIsEditingResponse(false);
+    },
+  });
+
+  const resetMutation = useMutation({
+    mutationFn: async () => {
+      await fetch(`/api/commands/system/${encodeURIComponent(cmd.trigger)}/reset`, { method: "POST" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["systemCommands"] });
+      setCustomResponse("");
+      setIsEditingResponse(false);
+    },
+  });
+
+  const hasOverride = cmd.customResponseTemplate !== null || !cmd.isEnabled;
+  const isLocked = cmd.trigger === "!editcmd";
+
+  return (
+    <>
+      <tr className="border-b border-[var(--color-border)]">
+        <td className="px-4 py-2.5">
+          <code className="text-[var(--color-brand-text)]">{cmd.trigger}</code>
+          {cmd.aliases.length > 0 && (
+            <span className="ml-2 text-xs text-[var(--color-text-muted)]">
+              ({cmd.aliases.join(", ")})
+            </span>
+          )}
+        </td>
+        <td className="px-4 py-2.5 text-[var(--color-text-secondary)]">{cmd.description}</td>
+        <td className="px-4 py-2.5 text-center">
+          {!isLocked && (
+            <button
+              onClick={() => toggleMutation.mutate()}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                cmd.isEnabled
+                  ? "bg-green-500/20 text-green-400 border border-green-400/30 hover:bg-green-500/30"
+                  : "bg-red-500/15 text-red-500 border border-red-500/30 hover:bg-red-500/25"
+              }`}
+            >
+              {cmd.isEnabled ? "ON" : "OFF"}
+            </button>
+          )}
+        </td>
+        <td className="px-4 py-2.5 text-right space-x-2">
+          {!isLocked && (
+            <button
+              onClick={() => {
+                setIsEditingResponse(!isEditingResponse);
+                setCustomResponse(cmd.customResponseTemplate ?? "");
+              }}
+              className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+            >
+              {isEditingResponse ? "Cancel" : "Edit"}
+            </button>
+          )}
+          {!isLocked && hasOverride && (
+            <button
+              onClick={() => {
+                if (confirm(`Reset ${cmd.trigger} to default?`)) {
+                  resetMutation.mutate();
+                }
+              }}
+              className="text-xs text-[var(--color-text-muted)] hover:text-orange-400 transition-colors"
+            >
+              Reset
+            </button>
+          )}
+        </td>
+      </tr>
+      {isEditingResponse && (
+        <tr className="border-b border-[var(--color-border)] bg-[var(--color-elevated)]">
+          <td colSpan={4} className="px-4 py-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={customResponse}
+                onChange={(e) => setCustomResponse(e.target.value)}
+                placeholder={cmd.defaultResponseTemplate ?? "Custom response..."}
+                className={inputClass + " flex-1"}
+              />
+              <button
+                onClick={() => saveResponseMutation.mutate()}
+                className="rounded-lg bg-[var(--color-brand)] px-3 py-2 text-xs font-medium text-[var(--color-bg)] hover:bg-[var(--color-brand-hover)]"
+              >
+                Save
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+              Default: {cmd.defaultResponseTemplate}
+            </p>
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
+// ─── Custom Command Row ──────────────────────────────────────
+
+function CustomCommandRow({
+  cmd,
+  isEditing,
+  onEdit,
+  onToggle,
+  onDelete,
+}: {
+  cmd: Command;
+  isEditing: boolean;
+  onEdit: () => void;
+  onToggle: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <>
+      <tr className="border-b border-[var(--color-border)] hover:bg-[var(--color-elevated)]">
+        <td className="px-4 py-3">
+          <code className="text-[var(--color-brand-text)]">{cmd.trigger}</code>
+          {cmd.aliases.length > 0 && (
+            <span className="ml-2 text-xs text-[var(--color-text-muted)]">
+              +{cmd.aliases.length} alias{cmd.aliases.length > 1 ? "es" : ""}
+            </span>
+          )}
+        </td>
+        <td className="max-w-xs truncate px-4 py-3 text-[var(--color-text-secondary)]">
+          {cmd.responseTemplate}
+        </td>
+        <td className="px-4 py-3 text-[var(--color-text-secondary)]">
+          {PERMISSION_LABELS[cmd.permissionLevel] ?? "Unknown"}
+        </td>
+        <td className="px-4 py-3 text-center text-[var(--color-text-secondary)]">{cmd.useCount}</td>
+        <td className="px-4 py-3 text-center">
+          <button
+            onClick={onToggle}
+            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+              cmd.isEnabled
+                ? "bg-green-500/20 text-green-400 border border-green-400/30 hover:bg-green-500/30"
+                : "bg-red-500/15 text-red-500 border border-red-500/30 hover:bg-red-500/25"
+            }`}
+          >
+            {cmd.isEnabled ? "ON" : "OFF"}
+          </button>
+        </td>
+        <td className="px-4 py-3 text-right space-x-2">
+          <button
+            onClick={onEdit}
+            className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+          >
+            {isEditing ? "Cancel" : "Edit"}
+          </button>
+          <button
+            onClick={onDelete}
+            className="text-xs text-red-400/60 hover:text-red-400 transition-colors"
+          >
+            Delete
+          </button>
+        </td>
+      </tr>
+      {isEditing && <EditCommandRow cmd={cmd} onDone={onEdit} />}
+    </>
+  );
+}
+
+// ─── Edit Command Inline Form ────────────────────────────────
+
+function EditCommandRow({ cmd, onDone }: { cmd: Command; onDone: () => void }) {
+  const queryClient = useQueryClient();
+  const [response, setResponse] = useState(cmd.responseTemplate);
+  const [permission, setPermission] = useState(cmd.permissionLevel);
+  const [globalCooldown, setGlobalCooldown] = useState(cmd.globalCooldownSeconds);
+  const [userCooldown, setUserCooldown] = useState(cmd.userCooldownSeconds);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/commands/${cmd.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          responseTemplate: response.trim(),
+          permissionLevel: permission,
+          globalCooldownSeconds: globalCooldown,
+          userCooldownSeconds: userCooldown,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Failed (${res.status})`);
+      }
+      queryClient.invalidateQueries({ queryKey: ["commands"] });
+      onDone();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <tr className="border-b border-[var(--color-border)] bg-[var(--color-elevated)]">
+      <td colSpan={6} className="px-4 py-4">
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Trigger</label>
+              <input type="text" value={cmd.trigger} disabled className={inputClass + " opacity-50 cursor-not-allowed"} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Response</label>
+              <input
+                type="text"
+                value={response}
+                onChange={(e) => setResponse(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Permission</label>
+              <select value={permission} onChange={(e) => setPermission(Number(e.target.value))} className={inputClass}>
+                <option value={0}>Everyone</option>
+                <option value={1}>Follower</option>
+                <option value={2}>Subscriber</option>
+                <option value={3}>Moderator</option>
+                <option value={4}>Broadcaster</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Global Cooldown (s)</label>
+              <input type="number" min={0} value={globalCooldown} onChange={(e) => setGlobalCooldown(Number(e.target.value))} className={inputClass} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">User Cooldown (s)</label>
+              <input type="number" min={0} value={userCooldown} onChange={(e) => setUserCooldown(Number(e.target.value))} className={inputClass} />
+            </div>
+          </div>
+          {error && <p className="text-sm text-red-400">{error}</p>}
+          <div className="flex gap-2">
+            <button
+              onClick={handleSave}
+              disabled={isSaving || !response.trim()}
+              className="rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-[var(--color-bg)] hover:bg-[var(--color-brand-hover)] disabled:opacity-40"
+            >
+              {isSaving ? "Saving…" : "Save"}
+            </button>
+            <button
+              onClick={onDone}
+              className="rounded-lg px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text)]"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+// ─── Create Command Form ─────────────────────────────────────
+
 function CreateCommandForm({ onCreated }: { onCreated: () => void }) {
   const [trigger, setTrigger] = useState("!");
   const [response, setResponse] = useState("");
@@ -209,9 +467,6 @@ function CreateCommandForm({ onCreated }: { onCreated: () => void }) {
   const [userCooldown, setUserCooldown] = useState(10);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const inputClass =
-    "w-full appearance-none rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-sm text-[var(--color-text)] placeholder-gray-600 focus:border-[var(--color-brand)] focus:outline-none focus:ring-1 focus:ring-[var(--color-brand)]";
 
   const handleSubmit = async () => {
     setIsSaving(true);

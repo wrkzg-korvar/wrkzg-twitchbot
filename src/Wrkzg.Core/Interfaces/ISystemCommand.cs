@@ -20,6 +20,12 @@ public interface ISystemCommand
     string Description { get; }
 
     /// <summary>
+    /// Default response template. Shown in the dashboard for reference.
+    /// Null for commands that generate dynamic responses (e.g. !commands).
+    /// </summary>
+    string? DefaultResponseTemplate { get; }
+
+    /// <summary>
     /// Handles the command. Returns the response string to send to chat,
     /// or null if the command should not respond.
     /// </summary>

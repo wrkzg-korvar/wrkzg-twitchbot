@@ -16,6 +16,7 @@ public class PointsCommand : ISystemCommand
     public string Trigger => "!points";
     public string[] Aliases => Array.Empty<string>();
     public string Description => "Shows your current points.";
+    public string? DefaultResponseTemplate => "@{user} you have {points} points.";
 
     private readonly IServiceScopeFactory _scopeFactory;
 

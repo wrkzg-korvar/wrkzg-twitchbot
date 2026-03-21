@@ -28,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<IRaffleRepository, RaffleRepository>();
         services.AddScoped<IPollRepository, PollRepository>();
         services.AddScoped<ISettingsRepository, SettingsRepository>();
+        services.AddScoped<ISystemCommandOverrideRepository, SystemCommandOverrideRepository>();
 
         // Secure Storage (platform-specific)
         if (OperatingSystem.IsWindows())

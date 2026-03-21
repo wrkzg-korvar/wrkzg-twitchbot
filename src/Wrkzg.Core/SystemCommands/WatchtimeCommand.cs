@@ -15,6 +15,7 @@ public class WatchtimeCommand : ISystemCommand
     public string Trigger => "!watchtime";
     public string[] Aliases => Array.Empty<string>();
     public string Description => "Shows your total watch time.";
+    public string? DefaultResponseTemplate => "@{user} your watch time is {watchtime}.";
 
     private readonly IServiceScopeFactory _scopeFactory;
 

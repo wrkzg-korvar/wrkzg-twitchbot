@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -19,17 +20,72 @@ public static class CommandEndpoints
     {
         RouteGroupBuilder group = app.MapGroup("/api/commands").WithTags("Commands");
 
-        // GET /api/commands/system — returns built-in system commands
-        group.MapGet("/system", (IEnumerable<ISystemCommand> systemCommands) =>
+        // GET /api/commands/system — returns built-in system commands with overrides
+        group.MapGet("/system", async (
+            IEnumerable<ISystemCommand> systemCommands,
+            ISystemCommandOverrideRepository overrideRepo,
+            CancellationToken ct) =>
         {
-            var result = systemCommands.Select(cmd => new
+            IReadOnlyList<SystemCommandOverride> allOverrides = await overrideRepo.GetAllAsync(ct);
+            Dictionary<string, SystemCommandOverride> overrideMap = allOverrides.ToDictionary(o => o.Trigger);
+
+            var result = systemCommands.Select(cmd =>
             {
-                trigger = cmd.Trigger,
-                aliases = cmd.Aliases,
-                description = cmd.Description,
-                isSystem = true
+                overrideMap.TryGetValue(cmd.Trigger, out SystemCommandOverride? ovr);
+                return new
+                {
+                    trigger = cmd.Trigger,
+                    aliases = cmd.Aliases,
+                    description = cmd.Description,
+                    defaultResponseTemplate = cmd.DefaultResponseTemplate,
+                    customResponseTemplate = ovr?.CustomResponseTemplate,
+                    isEnabled = ovr?.IsEnabled ?? true,
+                    isSystem = true
+                };
             });
             return Results.Ok(result);
+        });
+
+        // PUT /api/commands/system/{trigger} — update system command override
+        group.MapPut("/system/{trigger}", async (
+            string trigger,
+            UpdateSystemCommandRequest request,
+            IEnumerable<ISystemCommand> systemCommands,
+            ISystemCommandOverrideRepository overrideRepo,
+            CancellationToken ct) =>
+        {
+            if (string.Equals(trigger, "!editcmd", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return Results.BadRequest(new { error = "The !editcmd command cannot be modified." });
+            }
+
+            // Verify system command exists
+            bool exists = systemCommands.Any(c =>
+                string.Equals(c.Trigger, trigger, System.StringComparison.OrdinalIgnoreCase));
+            if (!exists)
+            {
+                return Results.NotFound(new { error = $"System command '{trigger}' not found." });
+            }
+
+            SystemCommandOverride entity = new()
+            {
+                Trigger = trigger.ToLowerInvariant(),
+                CustomResponseTemplate = request.CustomResponseTemplate,
+                IsEnabled = request.IsEnabled
+            };
+
+            await overrideRepo.SaveAsync(entity, ct);
+            return Results.Ok(entity);
+        });
+
+        // POST /api/commands/system/{trigger}/reset — reset system command to default
+        group.MapPost("/system/{trigger}/reset", async (
+            string trigger,
+            ISystemCommandOverrideRepository overrideRepo,
+            CancellationToken ct) =>
+        {
+            await overrideRepo.DeleteAsync(trigger.ToLowerInvariant(), ct);
+            return Results.Ok();
         });
 
         // GET /api/commands — list all commands
@@ -175,3 +231,6 @@ public sealed record UpdateCommandRequest(
     int? UserCooldownSeconds = null,
     bool? IsEnabled = null
 );
+
+/// <summary>Request body for updating a system command override.</summary>
+public sealed record UpdateSystemCommandRequest(string? CustomResponseTemplate, bool IsEnabled);
