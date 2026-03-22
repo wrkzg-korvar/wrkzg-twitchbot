@@ -234,7 +234,7 @@ public class PollService
     private async Task<string> GetTemplateAsync(string key, string defaultValue, CancellationToken ct)
     {
         string? custom = await _settings.GetAsync(key, ct);
-        return string.IsNullOrEmpty(custom) ? defaultValue : custom;
+        return string.IsNullOrWhiteSpace(custom) ? defaultValue : custom;
     }
 
     private async Task SendChatMessageSafeAsync(string message, CancellationToken ct)

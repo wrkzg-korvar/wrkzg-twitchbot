@@ -16,6 +16,15 @@ public class RaffleConfiguration : IEntityTypeConfiguration<Raffle>
             .HasForeignKey(r => r.WinnerId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        builder.Property(r => r.Keyword).HasMaxLength(50);
+        builder.Property(r => r.CreatedBy).HasMaxLength(100).HasDefaultValue("");
+        builder.Property(r => r.EndReason).HasConversion<int>().HasDefaultValue(RaffleEndReason.NotEnded);
+
+        builder.HasOne(r => r.PendingWinner)
+            .WithMany()
+            .HasForeignKey(r => r.PendingWinnerId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder.HasMany(r => r.Entries)
             .WithOne(e => e.Raffle)
             .HasForeignKey(e => e.RaffleId)

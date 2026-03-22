@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Wrkzg.Infrastructure.Data;
 
@@ -10,9 +11,11 @@ using Wrkzg.Infrastructure.Data;
 namespace Wrkzg.Infrastructure.Migrations
 {
     [DbContext(typeof(BotDbContext))]
-    partial class BotDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260322104530_AddRaffleExtendedFields")]
+    partial class AddRaffleExtendedFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
@@ -181,9 +184,6 @@ namespace Wrkzg.Infrastructure.Migrations
                     b.Property<int?>("MaxEntries")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("PendingWinnerId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -194,45 +194,9 @@ namespace Wrkzg.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PendingWinnerId");
-
                     b.HasIndex("WinnerId");
 
                     b.ToTable("Raffles");
-                });
-
-            modelBuilder.Entity("Wrkzg.Core.Models.RaffleDraw", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("DrawNumber")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTimeOffset>("DrawnAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsAccepted")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("RaffleId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("RedrawReason")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RaffleId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("RaffleDraws");
                 });
 
             modelBuilder.Entity("Wrkzg.Core.Models.RaffleEntry", b =>
@@ -421,38 +385,12 @@ namespace Wrkzg.Infrastructure.Migrations
 
             modelBuilder.Entity("Wrkzg.Core.Models.Raffle", b =>
                 {
-                    b.HasOne("Wrkzg.Core.Models.User", "PendingWinner")
-                        .WithMany()
-                        .HasForeignKey("PendingWinnerId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("Wrkzg.Core.Models.User", "Winner")
                         .WithMany()
                         .HasForeignKey("WinnerId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.Navigation("PendingWinner");
-
                     b.Navigation("Winner");
-                });
-
-            modelBuilder.Entity("Wrkzg.Core.Models.RaffleDraw", b =>
-                {
-                    b.HasOne("Wrkzg.Core.Models.Raffle", "Raffle")
-                        .WithMany("Draws")
-                        .HasForeignKey("RaffleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Wrkzg.Core.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Raffle");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Wrkzg.Core.Models.RaffleEntry", b =>
@@ -481,8 +419,6 @@ namespace Wrkzg.Infrastructure.Migrations
 
             modelBuilder.Entity("Wrkzg.Core.Models.Raffle", b =>
                 {
-                    b.Navigation("Draws");
-
                     b.Navigation("Entries");
                 });
 

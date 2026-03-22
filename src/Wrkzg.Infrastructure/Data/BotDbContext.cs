@@ -15,6 +15,7 @@ public class BotDbContext : DbContext
     public DbSet<Command> Commands => Set<Command>();
     public DbSet<Raffle> Raffles => Set<Raffle>();
     public DbSet<RaffleEntry> RaffleEntries => Set<RaffleEntry>();
+    public DbSet<RaffleDraw> RaffleDraws => Set<RaffleDraw>();
     public DbSet<Poll> Polls => Set<Poll>();
     public DbSet<PollVote> PollVotes => Set<PollVote>();
     public DbSet<Setting> Settings => Set<Setting>();

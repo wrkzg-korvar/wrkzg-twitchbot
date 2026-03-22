@@ -54,7 +54,19 @@ public class ChatMessagePipeline
             // Mark user active for watch time tracking
             _tracking.MarkUserActive(message.UserId);
 
-            // 2. Try custom commands
+            // 2. Check for raffle keyword entry (before command processing)
+            {
+                using IServiceScope raffleScope = _scopeFactory.CreateScope();
+                RaffleService raffleService = raffleScope.ServiceProvider.GetRequiredService<RaffleService>();
+                bool wasKeywordEntry = await raffleService.TryKeywordEntryAsync(
+                    message.UserId, message.Username, message.Content, ct);
+                if (wasKeywordEntry)
+                {
+                    return;
+                }
+            }
+
+            // 3. Try custom commands
             bool handled = await _commandProcessor.HandleMessageAsync(message, ct);
 
             if (handled)

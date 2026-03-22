@@ -28,8 +28,19 @@ public class ChatMessagePipelineTests
         _userRepo = Substitute.For<IUserRepository>();
         _logger = Substitute.For<ILogger<ChatMessagePipeline>>();
 
+        IRaffleRepository raffleRepo = Substitute.For<IRaffleRepository>();
+        ISettingsRepository settingsRepo = Substitute.For<ISettingsRepository>();
+        IChatEventBroadcaster broadcaster = Substitute.For<IChatEventBroadcaster>();
+        ITwitchChatClient chatClient = Substitute.For<ITwitchChatClient>();
+
         ServiceCollection services = new();
         services.AddScoped(_ => _userRepo);
+        services.AddScoped(_ => raffleRepo);
+        services.AddScoped(_ => settingsRepo);
+        services.AddSingleton(broadcaster);
+        services.AddSingleton(chatClient);
+        services.AddSingleton(Substitute.For<ILogger<RaffleService>>());
+        services.AddScoped<RaffleService>();
         ServiceProvider provider = services.BuildServiceProvider();
         IServiceScopeFactory scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
 

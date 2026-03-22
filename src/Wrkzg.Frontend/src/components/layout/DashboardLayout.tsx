@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { LayoutDashboard, Terminal, Users, BarChart3, Settings, Wifi, WifiOff, Sun, Moon } from "lucide-react";
+import { LayoutDashboard, Terminal, Users, BarChart3, Gift, Settings, Wifi, WifiOff, Sun, Moon } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useSignalR } from "../../hooks/useSignalR";
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { to: "/commands", label: "Commands", icon: Terminal },
   { to: "/users", label: "Users", icon: Users },
   { to: "/polls", label: "Polls", icon: BarChart3 },
+  { to: "/raffles", label: "Raffles", icon: Gift },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 

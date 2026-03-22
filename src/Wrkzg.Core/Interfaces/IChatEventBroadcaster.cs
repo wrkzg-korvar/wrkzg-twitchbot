@@ -25,4 +25,25 @@ public interface IChatEventBroadcaster
 
     /// <summary>Notifies the dashboard that a poll has ended with results.</summary>
     Task BroadcastPollEndedAsync(object results, CancellationToken ct = default);
+
+    /// <summary>Notifies the dashboard that a new raffle was created.</summary>
+    Task BroadcastRaffleCreatedAsync(Raffle raffle, CancellationToken ct = default);
+
+    /// <summary>Notifies the dashboard of a new raffle entry.</summary>
+    Task BroadcastRaffleEntryAsync(int raffleId, string username, int entryCount, CancellationToken ct = default);
+
+    /// <summary>Notifies the dashboard that a raffle winner was drawn.</summary>
+    Task BroadcastRaffleDrawnAsync(int raffleId, string winnerName, int totalEntries, CancellationToken ct = default);
+
+    /// <summary>Notifies the dashboard that a raffle was cancelled.</summary>
+    Task BroadcastRaffleCancelledAsync(int raffleId, CancellationToken ct = default);
+
+    /// <summary>Notifies dashboard that a winner was drawn but is pending verification.</summary>
+    Task BroadcastRaffleDrawPendingAsync(int raffleId, string winnerName, string winnerTwitchId, int totalEntries, int drawNumber, CancellationToken ct = default);
+
+    /// <summary>Notifies dashboard that a pending winner was accepted (raffle stays open).</summary>
+    Task BroadcastRaffleWinnerAcceptedAsync(int raffleId, string winnerName, int drawNumber, CancellationToken ct = default);
+
+    /// <summary>Notifies dashboard that the raffle has been ended (final close).</summary>
+    Task BroadcastRaffleEndedAsync(int raffleId, CancellationToken ct = default);
 }
