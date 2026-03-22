@@ -41,10 +41,16 @@ public class ChatMessagePipelineTests
         services.AddSingleton(chatClient);
         services.AddSingleton(Substitute.For<ILogger<RaffleService>>());
         services.AddScoped<RaffleService>();
+        services.AddScoped(_ => Substitute.For<ITwitchHelixClient>());
+        services.AddSingleton(Substitute.For<ILogger<SpamFilterService>>());
+        services.AddScoped<SpamFilterService>();
+        services.AddScoped(_ => Substitute.For<ICounterRepository>());
         ServiceProvider provider = services.BuildServiceProvider();
         IServiceScopeFactory scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
 
-        _sut = new ChatMessagePipeline(_commandProcessor, _trackingService, scopeFactory, _logger);
+        TimedMessageService timedService = new(scopeFactory, chatClient, Substitute.For<ILogger<TimedMessageService>>());
+
+        _sut = new ChatMessagePipeline(_commandProcessor, _trackingService, timedService, broadcaster, scopeFactory, _logger);
     }
 
     private static ChatMessage CreateMessage(

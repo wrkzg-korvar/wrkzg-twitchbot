@@ -91,6 +91,23 @@ public class TwitchHelixClient : ITwitchHelixClient
         }
     }
 
+    public async Task<bool> TimeoutUserAsync(string userId, int durationSeconds, string reason, CancellationToken ct = default)
+    {
+        try
+        {
+            // This endpoint requires broadcaster_id and moderator_id (the bot)
+            // For now, log a warning — full implementation requires token resolution
+            _logger.LogWarning("TimeoutUserAsync called for user {UserId} ({Duration}s, {Reason}) — requires moderator token setup",
+                userId, durationSeconds, reason);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to timeout user {UserId}", userId);
+            return false;
+        }
+    }
+
     public async Task<TwitchPollResponse?> CreateTwitchPollAsync(
         string broadcasterId,
         string question,

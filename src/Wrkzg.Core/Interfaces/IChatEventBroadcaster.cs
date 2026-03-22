@@ -46,4 +46,7 @@ public interface IChatEventBroadcaster
 
     /// <summary>Notifies dashboard that the raffle has been ended (final close).</summary>
     Task BroadcastRaffleEndedAsync(int raffleId, CancellationToken ct = default);
+
+    /// <summary>Notifies dashboard that a counter value changed.</summary>
+    Task BroadcastCounterUpdatedAsync(int counterId, string name, int value, CancellationToken ct = default);
 }

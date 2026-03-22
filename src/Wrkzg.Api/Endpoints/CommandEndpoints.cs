@@ -54,9 +54,10 @@ public static class CommandEndpoints
             ISystemCommandOverrideRepository overrideRepo,
             CancellationToken ct) =>
         {
-            if (string.Equals(trigger, "!editcmd", System.StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(trigger, "!editcmd", System.StringComparison.OrdinalIgnoreCase)
+                && request.CustomResponseTemplate is not null)
             {
-                return Results.BadRequest(new { error = "The !editcmd command cannot be modified." });
+                return Results.BadRequest(new { error = "The !editcmd response cannot be customized." });
             }
 
             // Verify system command exists

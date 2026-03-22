@@ -25,6 +25,9 @@ public interface ITwitchHelixClient
     /// </summary>
     Task<bool> SendChatMessageAsync(string broadcasterId, string senderId, string message, CancellationToken ct = default);
 
+    /// <summary>Timeouts a user in the channel via Helix API (POST /moderation/bans).</summary>
+    Task<bool> TimeoutUserAsync(string userId, int durationSeconds, string reason, CancellationToken ct = default);
+
     /// <summary>Creates a Twitch-native poll via Helix API.</summary>
     Task<TwitchPollResponse?> CreateTwitchPollAsync(
         string broadcasterId,

@@ -29,6 +29,8 @@ public static class DependencyInjection
         services.AddScoped<IPollRepository, PollRepository>();
         services.AddScoped<ISettingsRepository, SettingsRepository>();
         services.AddScoped<ISystemCommandOverrideRepository, SystemCommandOverrideRepository>();
+        services.AddScoped<ITimedMessageRepository, TimedMessageRepository>();
+        services.AddScoped<ICounterRepository, CounterRepository>();
 
         // Secure Storage (platform-specific)
         if (OperatingSystem.IsWindows())

@@ -153,4 +153,9 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
     {
         return _hub.Clients.Group("dashboard").SendAsync("RaffleEnded", new { raffleId }, ct);
     }
+
+    public Task BroadcastCounterUpdatedAsync(int counterId, string name, int value, CancellationToken ct = default)
+    {
+        return _hub.Clients.Group("dashboard").SendAsync("CounterUpdated", new { counterId, name, value }, ct);
+    }
 }

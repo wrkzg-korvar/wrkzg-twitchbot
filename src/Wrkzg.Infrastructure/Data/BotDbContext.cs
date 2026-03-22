@@ -20,6 +20,8 @@ public class BotDbContext : DbContext
     public DbSet<PollVote> PollVotes => Set<PollVote>();
     public DbSet<Setting> Settings => Set<Setting>();
     public DbSet<SystemCommandOverride> SystemCommandOverrides => Set<SystemCommandOverride>();
+    public DbSet<TimedMessage> TimedMessages => Set<TimedMessage>();
+    public DbSet<Counter> Counters => Set<Counter>();
 
     public BotDbContext(DbContextOptions<BotDbContext> options) : base(options)
     {

@@ -153,6 +153,48 @@ public class CommandProcessor : ICommandProcessor
 
         if (command is null || !command.IsEnabled)
         {
+            // 3.5 Check counters (dynamic commands based on DB)
+            ICounterRepository counters = scope.ServiceProvider.GetRequiredService<ICounterRepository>();
+            Counter? counter = await counters.GetByTriggerAsync(trigger, ct);
+            if (counter is not null)
+            {
+                string args = message.Content.Length > trigger.Length
+                    ? message.Content[trigger.Length..].Trim()
+                    : string.Empty;
+
+                if (!string.IsNullOrEmpty(args) && (message.IsModerator || message.IsBroadcaster))
+                {
+                    if (args is "+" or "+1")
+                    {
+                        counter.Value++;
+                    }
+                    else if (args is "-" or "-1")
+                    {
+                        counter.Value--;
+                    }
+                    else if (args.StartsWith('+') && int.TryParse(args[1..], out int addVal))
+                    {
+                        counter.Value += addVal;
+                    }
+                    else if (args.StartsWith('-') && int.TryParse(args[1..], out int subVal))
+                    {
+                        counter.Value -= subVal;
+                    }
+                    else if (args.StartsWith('=') && int.TryParse(args[1..], out int setVal))
+                    {
+                        counter.Value = setVal;
+                    }
+
+                    await counters.UpdateAsync(counter, ct);
+                }
+
+                string counterResponse = counter.ResponseTemplate
+                    .Replace("{name}", counter.Name)
+                    .Replace("{value}", counter.Value.ToString(CultureInfo.InvariantCulture));
+                await _chat.SendMessageAsync(counterResponse, ct);
+                return true;
+            }
+
             return false;
         }
 

@@ -176,7 +176,7 @@ function SystemCommandRow({ cmd }: { cmd: SystemCommand }) {
       await fetch(`/api/commands/system/${encodeURIComponent(cmd.trigger)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customResponseTemplate: cmd.customResponseTemplate, isEnabled: !cmd.isEnabled }),
+        body: JSON.stringify({ customResponseTemplate: canEdit ? cmd.customResponseTemplate : null, isEnabled: !cmd.isEnabled }),
       });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["systemCommands"] }),
@@ -211,7 +211,8 @@ function SystemCommandRow({ cmd }: { cmd: SystemCommand }) {
   });
 
   const hasOverride = cmd.customResponseTemplate !== null || !cmd.isEnabled;
-  const isLocked = cmd.trigger === "!editcmd";
+  const canToggle = true;
+  const canEdit = cmd.trigger !== "!editcmd";
 
   return (
     <>
@@ -226,7 +227,7 @@ function SystemCommandRow({ cmd }: { cmd: SystemCommand }) {
         </td>
         <td className="px-4 py-2.5 text-[var(--color-text-secondary)]">{cmd.description}</td>
         <td className="px-4 py-2.5 text-center">
-          {!isLocked && (
+          {canToggle && (
             <button
               onClick={() => toggleMutation.mutate()}
               className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
@@ -240,7 +241,7 @@ function SystemCommandRow({ cmd }: { cmd: SystemCommand }) {
           )}
         </td>
         <td className="px-4 py-2.5 text-right space-x-2">
-          {!isLocked && (
+          {canEdit && (
             <button
               onClick={() => {
                 setIsEditingResponse(!isEditingResponse);
@@ -251,7 +252,7 @@ function SystemCommandRow({ cmd }: { cmd: SystemCommand }) {
               {isEditingResponse ? "Cancel" : "Edit"}
             </button>
           )}
-          {!isLocked && hasOverride && (
+          {canEdit && hasOverride && (
             <button
               onClick={() => {
                 if (confirm(`Reset ${cmd.trigger} to default?`)) {

@@ -31,6 +31,8 @@ public class CommandProcessorTests
         ServiceCollection services = new();
         services.AddScoped(_ => _commandRepo);
         services.AddScoped(_ => _userRepo);
+        services.AddScoped(_ => Substitute.For<ICounterRepository>());
+        services.AddScoped(_ => Substitute.For<ISystemCommandOverrideRepository>());
         ServiceProvider provider = services.BuildServiceProvider();
         IServiceScopeFactory scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
 

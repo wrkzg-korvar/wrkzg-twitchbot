@@ -8,6 +8,9 @@ import { Users } from "./pages/Users";
 import { Settings } from "./pages/Settings";
 import { Polls } from "./pages/Polls";
 import { Raffles } from "./pages/Raffles";
+import { Timers } from "./pages/Timers";
+import { Counters } from "./pages/Counters";
+import { SpamFilter } from "./pages/SpamFilter";
 
 export default function App() {
   const { setupComplete, isLoading } = useSetupStatus();
@@ -42,6 +45,9 @@ export default function App() {
         <Route path="users" element={<Users />} />
         <Route path="polls" element={<Polls />} />
         <Route path="raffles" element={<Raffles />} />
+        <Route path="timers" element={<Timers />} />
+        <Route path="counters" element={<Counters />} />
+        <Route path="spam-filter" element={<SpamFilter />} />
         <Route path="settings" element={<Settings />} />
       </Route>
       {/* Redirect unknown routes to dashboard */}

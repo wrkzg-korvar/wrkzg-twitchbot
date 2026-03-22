@@ -36,6 +36,13 @@ public static class DependencyInjection
         services.AddScoped<RaffleService>();
         services.AddHostedService<RaffleTimerService>();
 
+        // Timed Messages (Singleton + IHostedService)
+        services.AddSingleton<TimedMessageService>();
+        services.AddHostedService(sp => sp.GetRequiredService<TimedMessageService>());
+
+        // Spam Filter
+        services.AddScoped<SpamFilterService>();
+
         // Command Processor (Singleton — maintains cooldown state in-memory)
         services.AddSingleton<ICommandProcessor, CommandProcessor>();
 
