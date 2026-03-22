@@ -19,6 +19,18 @@ public class Poll
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public PollSource Source { get; set; } = PollSource.BotNative;
     public List<PollVote> Votes { get; set; } = new();
+
+    /// <summary>Duration in seconds. Used to calculate EndsAt and for display.</summary>
+    public int DurationSeconds { get; set; } = 60;
+
+    /// <summary>Twitch Poll ID (only for TwitchNative polls). Null for BotNative.</summary>
+    public string? TwitchPollId { get; set; }
+
+    /// <summary>Who created the poll (username for display).</summary>
+    public string CreatedBy { get; set; } = string.Empty;
+
+    /// <summary>How the poll ended.</summary>
+    public PollEndReason EndReason { get; set; } = PollEndReason.NotEnded;
 }
 
 /// <summary>
@@ -28,6 +40,17 @@ public enum PollSource
 {
     BotNative = 0,
     TwitchNative = 1
+}
+
+/// <summary>
+/// How a poll was ended.
+/// </summary>
+public enum PollEndReason
+{
+    NotEnded = 0,
+    TimerExpired = 1,
+    ManuallyClosed = 2,
+    Cancelled = 3
 }
 
 /// <summary>

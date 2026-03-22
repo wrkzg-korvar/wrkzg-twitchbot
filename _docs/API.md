@@ -14,6 +14,13 @@ This document describes all REST endpoints and SignalR events exposed by the Wrk
 - [Settings](#settings)
 - [Status](#status)
 - [Window Control](#window-control)
+- [Chat](#chat)
+- [Bot Control](#bot-control)
+- [Polls](#polls)
+- [Raffles](#raffles)
+- [Timers](#timers)
+- [Counters](#counters)
+- [Spam Filter](#spam-filter)
 - [SignalR — Real-Time Events](#signalr--real-time-events)
 
 ---
@@ -125,14 +132,14 @@ Returns the current authentication state for both accounts.
     "isAuthenticated": true,
     "twitchUsername": "mybotname",
     "twitchUserId": "123456789",
-    "scopes": ["chat:read", "chat:edit"]
+    "scopes": ["chat:read", "chat:edit", "user:write:chat"]
   },
   "broadcaster": {
     "tokenType": "broadcaster",
     "isAuthenticated": true,
     "twitchUsername": "mystreamname",
     "twitchUserId": "987654321",
-    "scopes": ["moderator:read:followers", "channel:read:polls", "channel:manage:polls", "bits:read", "channel:read:subscriptions"]
+    "scopes": ["moderator:read:followers", "channel:read:polls", "channel:manage:polls", "bits:read", "channel:read:subscriptions", "user:write:chat"]
   }
 }
 ```
@@ -379,6 +386,264 @@ Moves the window during drag. **Request:** `{ "screenX": 150, "screenY": 250 }` 
 
 ---
 
+## Chat
+
+### `GET /api/chat/recent`
+
+Returns the most recent chat messages from the in-memory buffer (up to 15).
+
+| Query Param | Type | Default | Description |
+|---|---|---|---|
+| `userId` | string | — | Optional: filter messages by Twitch user ID |
+
+**Response `200 OK`:** Array of chat message objects
+
+---
+
+### `POST /api/chat/send`
+
+Sends a chat message as the bot or broadcaster.
+
+**Request Body:**
+
+```json
+{
+  "message": "Hello chat!",
+  "sendAs": "bot"
+}
+```
+
+`sendAs`: `"bot"` (default) or `"broadcaster"`
+
+**Response `200 OK`:** `{ "sent": true }`
+
+---
+
+## Bot Control
+
+### `POST /api/bot/connect`
+
+Connects the bot to Twitch IRC. **Response `200 OK`**
+
+---
+
+## Polls
+
+### `GET /api/polls/active`
+
+Returns the currently active poll with vote results. Returns `404` if no poll is active.
+
+### `GET /api/polls/history`
+
+Returns the last 10 completed polls.
+
+### `GET /api/polls/{id}`
+
+Returns a single poll by ID with full results.
+
+### `POST /api/polls`
+
+Creates a new bot-native poll. Fails if another poll is already active.
+
+**Request Body:**
+
+```json
+{
+  "question": "Best game?",
+  "options": ["Minecraft", "Fortnite", "Valorant"],
+  "durationSeconds": 60,
+  "createdBy": "Dashboard"
+}
+```
+
+**Response `201 Created`**
+
+### `POST /api/polls/end`
+
+Ends the active poll. **Response `200 OK`** or `400` if no active poll.
+
+### `POST /api/polls/cancel`
+
+Cancels the active poll without results. **Response `200 OK`** or `400`.
+
+### `GET /api/polls/templates`
+
+Returns all poll announcement template definitions with current overrides and defaults.
+
+### `POST /api/polls/templates/reset/{key}`
+
+Removes a custom template override, reverting to default. **Response `200 OK`** or `404`.
+
+---
+
+## Raffles
+
+### `GET /api/raffles/active`
+
+Returns the currently active raffle with entries, draws, and pending winner. Returns `404` if none active.
+
+### `GET /api/raffles/history`
+
+Returns the last 10 completed raffles.
+
+### `GET /api/raffles/{id}`
+
+Returns a single raffle by ID with full entries and draw history.
+
+### `POST /api/raffles`
+
+Creates a new raffle.
+
+**Request Body:**
+
+```json
+{
+  "title": "Gaming Maus Giveaway",
+  "keyword": "win",
+  "durationSeconds": 120,
+  "maxEntries": 50,
+  "createdBy": "Dashboard"
+}
+```
+
+All fields except `title` are optional.
+
+**Response `201 Created`**
+
+### `POST /api/raffles/draw`
+
+Draws a random winner (pending verification). **Response `200 OK`** or `400`.
+
+### `POST /api/raffles/accept`
+
+Accepts the pending winner. Raffle stays open for additional draws. **Response `200 OK`** or `400`.
+
+### `POST /api/raffles/redraw`
+
+Rejects the pending winner and draws a new one.
+
+**Request Body:** `{ "reason": "User not present" }` (optional)
+
+### `POST /api/raffles/end`
+
+Closes the raffle and announces all accepted winners. **Response `200 OK`** or `400`.
+
+### `POST /api/raffles/cancel`
+
+Cancels the raffle without drawing. **Response `200 OK`** or `400`.
+
+### `GET /api/raffles/{id}/draws`
+
+Returns the draw history for a raffle.
+
+### `GET /api/raffles/templates`
+
+Returns all raffle announcement template definitions with current overrides.
+
+### `POST /api/raffles/templates/reset/{key}`
+
+Removes a custom template override. **Response `200 OK`** or `404`.
+
+---
+
+## Timers
+
+### `GET /api/timers`
+
+Returns all timed messages.
+
+### `GET /api/timers/{id}`
+
+Returns a single timer by ID.
+
+### `POST /api/timers`
+
+Creates a new timed message.
+
+**Request Body:**
+
+```json
+{
+  "name": "Follow Reminder",
+  "messages": ["Don't forget to follow!", "Hit that follow button!"],
+  "intervalMinutes": 15,
+  "minChatLines": 5,
+  "isEnabled": true,
+  "runWhenOnline": true,
+  "runWhenOffline": false
+}
+```
+
+**Response `201 Created`**
+
+### `PUT /api/timers/{id}`
+
+Updates a timer. All fields are optional (partial update). **Response `200 OK`**
+
+### `DELETE /api/timers/{id}`
+
+**Response `204 No Content`**
+
+---
+
+## Counters
+
+### `GET /api/counters`
+
+Returns all counters.
+
+### `POST /api/counters`
+
+Creates a new counter. The trigger is auto-generated from the name (e.g. `"Deaths"` → `"!deaths"`).
+
+**Request Body:**
+
+```json
+{
+  "name": "Deaths",
+  "value": 0,
+  "responseTemplate": "{name}: {value}"
+}
+```
+
+**Response `201 Created`**
+
+### `PUT /api/counters/{id}`
+
+Updates a counter. **Response `200 OK`**
+
+### `DELETE /api/counters/{id}`
+
+**Response `204 No Content`**
+
+### `POST /api/counters/{id}/increment`
+
+Increments the counter by 1. **Response `200 OK`** with updated counter.
+
+### `POST /api/counters/{id}/decrement`
+
+Decrements the counter by 1. **Response `200 OK`** with updated counter.
+
+### `POST /api/counters/{id}/reset`
+
+Resets the counter to 0. **Response `200 OK`** with updated counter.
+
+---
+
+## Spam Filter
+
+### `GET /api/spam-filter`
+
+Returns the current spam filter configuration.
+
+### `PUT /api/spam-filter`
+
+Updates the spam filter configuration.
+
+**Request/Response Body:** Full `SpamFilterConfig` object with all filter settings (links, caps, banned words, emote spam, repetition).
+
+---
+
 ## SignalR — Real-Time Events
 
 Connect to the SignalR hub at `/hubs/chat` for live dashboard updates.
@@ -460,3 +725,29 @@ connection.on("FollowEvent", (event: { username: string }) => { });
 ```typescript
 connection.on("SubscribeEvent", (event: { username: string; tier: number }) => { });
 ```
+
+#### Poll Events
+
+| Event | Payload | Description |
+|---|---|---|
+| `PollCreated` | `{ id, question, options, durationSeconds, endsAt, createdBy, source }` | New poll started |
+| `PollVote` | `{ pollId, optionIndex }` | Vote received |
+| `PollEnded` | `{ id, question, isActive, totalVotes, options, winnerIndex }` | Poll ended |
+
+#### Raffle Events
+
+| Event | Payload | Description |
+|---|---|---|
+| `RaffleCreated` | `{ id, title, keyword, durationSeconds, entriesCloseAt, maxEntries, createdBy, entryCount }` | New raffle started |
+| `RaffleEntry` | `{ raffleId, username, entryCount }` | New entry |
+| `RaffleDrawPending` | `{ raffleId, winnerName, twitchId, totalEntries, drawNumber }` | Winner drawn, pending verification |
+| `RaffleWinnerAccepted` | `{ raffleId, winnerName, drawNumber }` | Winner accepted |
+| `RaffleDrawn` | `{ raffleId, winnerName, totalEntries }` | Final winner announced (legacy) |
+| `RaffleEnded` | `{ raffleId }` | Raffle closed |
+| `RaffleCancelled` | `{ raffleId }` | Raffle cancelled |
+
+#### Counter Events
+
+| Event | Payload | Description |
+|---|---|---|
+| `CounterUpdated` | `{ counterId, name, value }` | Counter value changed |

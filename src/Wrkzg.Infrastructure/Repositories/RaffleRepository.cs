@@ -23,7 +23,22 @@ public class RaffleRepository : IRaffleRepository
         return await _db.Raffles
             .Include(r => r.Entries)
             .ThenInclude(e => e.User)
+            .Include(r => r.Draws)
+            .ThenInclude(d => d.User)
+            .Include(r => r.PendingWinner)
             .FirstOrDefaultAsync(r => r.IsOpen, ct);
+    }
+
+    public async Task<Raffle?> GetByIdAsync(int id, CancellationToken ct = default)
+    {
+        return await _db.Raffles
+            .Include(r => r.Entries)
+            .ThenInclude(e => e.User)
+            .Include(r => r.Winner)
+            .Include(r => r.Draws)
+            .ThenInclude(d => d.User)
+            .Include(r => r.PendingWinner)
+            .FirstOrDefaultAsync(r => r.Id == id, ct);
     }
 
     public async Task<Raffle?> GetWithEntriesAsync(int raffleId, CancellationToken ct = default)
@@ -32,6 +47,9 @@ public class RaffleRepository : IRaffleRepository
             .Include(r => r.Entries)
             .ThenInclude(e => e.User)
             .Include(r => r.Winner)
+            .Include(r => r.Draws)
+            .ThenInclude(d => d.User)
+            .Include(r => r.PendingWinner)
             .FirstOrDefaultAsync(r => r.Id == raffleId, ct);
     }
 
@@ -39,7 +57,17 @@ public class RaffleRepository : IRaffleRepository
     {
         return await _db.Raffles
             .Include(r => r.Winner)
-            .OrderByDescending(r => r.CreatedAt)
+            .OrderByDescending(r => r.Id)
+            .ToListAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<Raffle>> GetRecentAsync(int count = 10, CancellationToken ct = default)
+    {
+        return await _db.Raffles
+            .Include(r => r.Winner)
+            .Include(r => r.Entries)
+            .OrderByDescending(r => r.Id)
+            .Take(count)
             .ToListAsync(ct);
     }
 
@@ -60,5 +88,31 @@ public class RaffleRepository : IRaffleRepository
     {
         _db.RaffleEntries.Add(entry);
         await _db.SaveChangesAsync(ct);
+    }
+
+    public async Task<bool> HasUserEnteredAsync(int raffleId, int userId, CancellationToken ct = default)
+    {
+        return await _db.RaffleEntries
+            .AnyAsync(e => e.RaffleId == raffleId && e.UserId == userId, ct);
+    }
+
+    public async Task<int> GetEntryCountAsync(int raffleId, CancellationToken ct = default)
+    {
+        return await _db.RaffleEntries.CountAsync(e => e.RaffleId == raffleId, ct);
+    }
+
+    public async Task AddDrawAsync(RaffleDraw draw, CancellationToken ct = default)
+    {
+        _db.RaffleDraws.Add(draw);
+        await _db.SaveChangesAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<RaffleDraw>> GetDrawsAsync(int raffleId, CancellationToken ct = default)
+    {
+        return await _db.RaffleDraws
+            .Include(d => d.User)
+            .Where(d => d.RaffleId == raffleId)
+            .OrderBy(d => d.DrawNumber)
+            .ToListAsync(ct);
     }
 }

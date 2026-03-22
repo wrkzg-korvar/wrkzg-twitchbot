@@ -91,6 +91,92 @@ public class TwitchHelixClient : ITwitchHelixClient
         }
     }
 
+    public async Task<bool> TimeoutUserAsync(string userId, int durationSeconds, string reason, CancellationToken ct = default)
+    {
+        try
+        {
+            // This endpoint requires broadcaster_id and moderator_id (the bot)
+            // For now, log a warning — full implementation requires token resolution
+            _logger.LogWarning("TimeoutUserAsync called for user {UserId} ({Duration}s, {Reason}) — requires moderator token setup",
+                userId, durationSeconds, reason);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to timeout user {UserId}", userId);
+            return false;
+        }
+    }
+
+    public async Task<TwitchPollResponse?> CreateTwitchPollAsync(
+        string broadcasterId,
+        string question,
+        string[] options,
+        int durationSeconds,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            object body = new
+            {
+                broadcaster_id = broadcasterId,
+                title = question,
+                choices = options.Select(o => new { title = o }).ToArray(),
+                duration = durationSeconds
+            };
+
+            HttpResponseMessage response = await _http.PostAsJsonAsync("polls", body, ct);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string err = await response.Content.ReadAsStringAsync(ct);
+                _logger.LogWarning("Failed to create Twitch poll: {Status} {Body}", response.StatusCode, err);
+                return null;
+            }
+
+            HelixResponse<TwitchPollResponse>? data = await response.Content.ReadFromJsonAsync<HelixResponse<TwitchPollResponse>>(_jsonOptions, ct);
+            return data?.Data?.FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to create Twitch poll");
+            return null;
+        }
+    }
+
+    public async Task<bool> EndTwitchPollAsync(
+        string broadcasterId,
+        string pollId,
+        string status,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            object body = new
+            {
+                broadcaster_id = broadcasterId,
+                id = pollId,
+                status
+            };
+
+            HttpResponseMessage response = await _http.PatchAsJsonAsync("polls", body, ct);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string err = await response.Content.ReadAsStringAsync(ct);
+                _logger.LogWarning("Failed to end Twitch poll: {Status} {Body}", response.StatusCode, err);
+                return false;
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to end Twitch poll");
+            return false;
+        }
+    }
+
     /// <summary>
     /// Generic Helix API response wrapper. Twitch wraps all responses in { "data": [...] }.
     /// </summary>

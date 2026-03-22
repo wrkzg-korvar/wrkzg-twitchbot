@@ -25,11 +25,27 @@ public class PollRepository : IPollRepository
             .FirstOrDefaultAsync(p => p.IsActive, ct);
     }
 
+    public async Task<Poll?> GetByIdAsync(int id, CancellationToken ct = default)
+    {
+        return await _db.Polls
+            .Include(p => p.Votes)
+            .FirstOrDefaultAsync(p => p.Id == id, ct);
+    }
+
     public async Task<IReadOnlyList<Poll>> GetAllAsync(CancellationToken ct = default)
     {
         return await _db.Polls
             .Include(p => p.Votes)
-            .OrderByDescending(p => p.CreatedAt)
+            .OrderByDescending(p => p.Id)
+            .ToListAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<Poll>> GetRecentAsync(int count = 10, CancellationToken ct = default)
+    {
+        return await _db.Polls
+            .Include(p => p.Votes)
+            .OrderByDescending(p => p.Id)
+            .Take(count)
             .ToListAsync(ct);
     }
 
@@ -50,5 +66,11 @@ public class PollRepository : IPollRepository
     {
         _db.PollVotes.Add(vote);
         await _db.SaveChangesAsync(ct);
+    }
+
+    public async Task<bool> HasUserVotedAsync(int pollId, int userId, CancellationToken ct = default)
+    {
+        return await _db.PollVotes
+            .AnyAsync(v => v.PollId == pollId && v.UserId == userId, ct);
     }
 }

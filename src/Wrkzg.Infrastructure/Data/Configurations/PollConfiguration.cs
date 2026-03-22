@@ -23,6 +23,11 @@ public class PollConfiguration : IEntityTypeConfiguration<Poll>
         builder.Property(p => p.Source)
             .HasConversion<int>();
 
+        builder.Property(p => p.DurationSeconds).HasDefaultValue(60);
+        builder.Property(p => p.TwitchPollId).HasMaxLength(100);
+        builder.Property(p => p.CreatedBy).HasMaxLength(100).HasDefaultValue("");
+        builder.Property(p => p.EndReason).HasConversion<int>().HasDefaultValue(PollEndReason.NotEnded);
+
         builder.HasMany(p => p.Votes)
             .WithOne(v => v.Poll)
             .HasForeignKey(v => v.PollId)

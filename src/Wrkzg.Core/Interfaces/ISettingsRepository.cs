@@ -13,4 +13,5 @@ public interface ISettingsRepository
     Task<IDictionary<string, string>> GetAllAsync(CancellationToken ct = default);
     Task SetAsync(string key, string value, CancellationToken ct = default);
     Task SetManyAsync(IDictionary<string, string> settings, CancellationToken ct = default);
+    Task<bool> DeleteAsync(string key, CancellationToken ct = default);
 }

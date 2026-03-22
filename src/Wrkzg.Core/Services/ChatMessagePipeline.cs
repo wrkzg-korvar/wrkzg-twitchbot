@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,13 +12,17 @@ using Wrkzg.Core.Models;
 namespace Wrkzg.Core.Services;
 
 /// <summary>
-/// Processes every incoming chat message through the command and game pipeline.
+/// Processes every incoming chat message through the full pipeline.
 ///
 /// Called by BotConnectionService for each message received from IRC.
 /// Runs in order:
-///   1. Update user stats (message count, last seen)
-///   2. Try CommandProcessor (custom commands like !discord, !socials)
-///   3. Try ChatGameManager (active games like !duel, !slots) — future step
+///   1. Update user stats (message count, last seen, role sync)
+///   2. Mark user active (watch time tracking)
+///   3. Increment chat line counter (timed messages)
+///   4. Try raffle keyword entry
+///   5. Spam filter (links, caps, banned words, repetition)
+///   6. Counter commands (!trigger, !trigger+, !trigger-)
+///   7. CommandProcessor (system commands + custom commands)
 ///
 /// Uses IServiceScopeFactory to resolve Scoped dependencies (repositories)
 /// because this service is Singleton (registered via BotConnectionService).
@@ -26,17 +31,23 @@ public class ChatMessagePipeline
 {
     private readonly ICommandProcessor _commandProcessor;
     private readonly IUserTrackingService _tracking;
+    private readonly TimedMessageService _timedMessageService;
+    private readonly IChatEventBroadcaster _broadcaster;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ChatMessagePipeline> _logger;
 
     public ChatMessagePipeline(
         ICommandProcessor commandProcessor,
         IUserTrackingService tracking,
+        TimedMessageService timedMessageService,
+        IChatEventBroadcaster broadcaster,
         IServiceScopeFactory scopeFactory,
         ILogger<ChatMessagePipeline> logger)
     {
         _commandProcessor = commandProcessor;
         _tracking = tracking;
+        _timedMessageService = timedMessageService;
+        _broadcaster = broadcaster;
         _scopeFactory = scopeFactory;
         _logger = logger;
     }
@@ -54,7 +65,93 @@ public class ChatMessagePipeline
             // Mark user active for watch time tracking
             _tracking.MarkUserActive(message.UserId);
 
-            // 2. Try custom commands
+            // 2. Increment chat line counter for timed messages
+            _timedMessageService.IncrementChatLineCounter();
+
+            // 3. Check for raffle keyword entry (before command processing)
+            {
+                using IServiceScope raffleScope = _scopeFactory.CreateScope();
+                RaffleService raffleService = raffleScope.ServiceProvider.GetRequiredService<RaffleService>();
+                bool wasKeywordEntry = await raffleService.TryKeywordEntryAsync(
+                    message.UserId, message.Username, message.Content, ct);
+                if (wasKeywordEntry)
+                {
+                    return;
+                }
+            }
+
+            // 5. Spam filter — BEFORE commands
+            try
+            {
+                using IServiceScope spamScope = _scopeFactory.CreateScope();
+                SpamFilterService spamFilter = spamScope.ServiceProvider.GetRequiredService<SpamFilterService>();
+                bool isSpam = await spamFilter.CheckAsync(message, ct);
+                if (isSpam)
+                {
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Spam filter error for message from {User}", message.Username);
+            }
+
+            // 6. Counter commands (dynamic — !trigger shows, !trigger+ increments, !trigger- decrements)
+            if (message.Content.StartsWith('!'))
+            {
+                try
+                {
+                    using IServiceScope counterScope = _scopeFactory.CreateScope();
+                    ICounterRepository counters = counterScope.ServiceProvider.GetRequiredService<ICounterRepository>();
+
+                    string content = message.Content.Trim();
+                    string command = content.Split(' ', 2)[0][1..].ToLowerInvariant();
+                    bool isIncrement = command.EndsWith('+');
+                    bool isDecrement = command.EndsWith('-');
+                    string triggerName = isIncrement || isDecrement ? command[..^1] : command;
+                    string trigger = "!" + triggerName;
+
+                    Counter? counter = await counters.GetByTriggerAsync(trigger, ct);
+                    if (counter is not null)
+                    {
+                        bool changed = false;
+                        if (isIncrement && (message.IsModerator || message.IsBroadcaster))
+                        {
+                            counter.Value++;
+                            await counters.UpdateAsync(counter, ct);
+                            changed = true;
+                        }
+                        else if (isDecrement && (message.IsModerator || message.IsBroadcaster))
+                        {
+                            counter.Value--;
+                            await counters.UpdateAsync(counter, ct);
+                            changed = true;
+                        }
+
+                        if (changed)
+                        {
+                            await _broadcaster.BroadcastCounterUpdatedAsync(counter.Id, counter.Name, counter.Value, ct);
+                        }
+
+                        string response = counter.ResponseTemplate
+                            .Replace("{name}", counter.Name)
+                            .Replace("{value}", counter.Value.ToString(CultureInfo.InvariantCulture));
+
+                        ITwitchChatClient chat = counterScope.ServiceProvider.GetRequiredService<ITwitchChatClient>();
+                        if (chat.IsConnected)
+                        {
+                            await chat.SendMessageAsync(response, ct);
+                        }
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Counter command error for message from {User}", message.Username);
+                }
+            }
+
+            // 7. Try custom commands
             bool handled = await _commandProcessor.HandleMessageAsync(message, ct);
 
             if (handled)

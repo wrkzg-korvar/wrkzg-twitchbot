@@ -28,12 +28,29 @@ public class ChatMessagePipelineTests
         _userRepo = Substitute.For<IUserRepository>();
         _logger = Substitute.For<ILogger<ChatMessagePipeline>>();
 
+        IRaffleRepository raffleRepo = Substitute.For<IRaffleRepository>();
+        ISettingsRepository settingsRepo = Substitute.For<ISettingsRepository>();
+        IChatEventBroadcaster broadcaster = Substitute.For<IChatEventBroadcaster>();
+        ITwitchChatClient chatClient = Substitute.For<ITwitchChatClient>();
+
         ServiceCollection services = new();
         services.AddScoped(_ => _userRepo);
+        services.AddScoped(_ => raffleRepo);
+        services.AddScoped(_ => settingsRepo);
+        services.AddSingleton(broadcaster);
+        services.AddSingleton(chatClient);
+        services.AddSingleton(Substitute.For<ILogger<RaffleService>>());
+        services.AddScoped<RaffleService>();
+        services.AddScoped(_ => Substitute.For<ITwitchHelixClient>());
+        services.AddSingleton(Substitute.For<ILogger<SpamFilterService>>());
+        services.AddScoped<SpamFilterService>();
+        services.AddScoped(_ => Substitute.For<ICounterRepository>());
         ServiceProvider provider = services.BuildServiceProvider();
         IServiceScopeFactory scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
 
-        _sut = new ChatMessagePipeline(_commandProcessor, _trackingService, scopeFactory, _logger);
+        TimedMessageService timedService = new(scopeFactory, chatClient, Substitute.For<ILogger<TimedMessageService>>());
+
+        _sut = new ChatMessagePipeline(_commandProcessor, _trackingService, timedService, broadcaster, scopeFactory, _logger);
     }
 
     private static ChatMessage CreateMessage(

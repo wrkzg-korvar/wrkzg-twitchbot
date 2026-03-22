@@ -19,6 +19,29 @@ public static class DependencyInjection
         services.AddSingleton<ISystemCommand, WatchtimeCommand>();
         services.AddSingleton<ISystemCommand, FollowageCommand>();
         services.AddSingleton<ISystemCommand, EditCommandCommand>();
+        services.AddSingleton<ISystemCommand, PollCommand>();
+        services.AddSingleton<ISystemCommand, VoteCommand>();
+        services.AddSingleton<ISystemCommand, PollEndCommand>();
+        services.AddSingleton<ISystemCommand, PollResultCommand>();
+        services.AddSingleton<ISystemCommand, RaffleCommand>();
+        services.AddSingleton<ISystemCommand, JoinRaffleCommand>();
+        services.AddSingleton<ISystemCommand, DrawRaffleCommand>();
+        services.AddSingleton<ISystemCommand, CancelRaffleCommand>();
+
+        // Poll System
+        services.AddScoped<PollService>();
+        services.AddHostedService<PollTimerService>();
+
+        // Raffle System
+        services.AddScoped<RaffleService>();
+        services.AddHostedService<RaffleTimerService>();
+
+        // Timed Messages (Singleton + IHostedService)
+        services.AddSingleton<TimedMessageService>();
+        services.AddHostedService(sp => sp.GetRequiredService<TimedMessageService>());
+
+        // Spam Filter
+        services.AddScoped<SpamFilterService>();
 
         // Command Processor (Singleton — maintains cooldown state in-memory)
         services.AddSingleton<ICommandProcessor, CommandProcessor>();

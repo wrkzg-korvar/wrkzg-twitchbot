@@ -63,6 +63,43 @@ namespace Wrkzg.Infrastructure.Migrations
                     b.ToTable("Commands");
                 });
 
+            modelBuilder.Entity("Wrkzg.Core.Models.Counter", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ResponseTemplate")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("{name}: {value}");
+
+                    b.Property<string>("Trigger")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Value")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Trigger")
+                        .IsUnique();
+
+                    b.ToTable("Counters");
+                });
+
             modelBuilder.Entity("Wrkzg.Core.Models.Poll", b =>
                 {
                     b.Property<int>("Id")
@@ -71,6 +108,23 @@ namespace Wrkzg.Infrastructure.Migrations
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("");
+
+                    b.Property<int>("DurationSeconds")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(60);
+
+                    b.Property<int>("EndReason")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
 
                     b.Property<DateTimeOffset>("EndsAt")
                         .HasColumnType("TEXT");
@@ -89,6 +143,10 @@ namespace Wrkzg.Infrastructure.Migrations
 
                     b.Property<int>("Source")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("TwitchPollId")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -132,7 +190,35 @@ namespace Wrkzg.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("");
+
+                    b.Property<int?>("DurationSeconds")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("EndReason")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
+
+                    b.Property<DateTimeOffset?>("EntriesCloseAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("IsOpen")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Keyword")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("MaxEntries")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("PendingWinnerId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Title")
@@ -145,9 +231,45 @@ namespace Wrkzg.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PendingWinnerId");
+
                     b.HasIndex("WinnerId");
 
                     b.ToTable("Raffles");
+                });
+
+            modelBuilder.Entity("Wrkzg.Core.Models.RaffleDraw", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("DrawNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset>("DrawnAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsAccepted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RaffleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("RedrawReason")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RaffleId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RaffleDraws");
                 });
 
             modelBuilder.Entity("Wrkzg.Core.Models.RaffleEntry", b =>
@@ -251,6 +373,60 @@ namespace Wrkzg.Infrastructure.Migrations
                     b.ToTable("SystemCommandOverrides");
                 });
 
+            modelBuilder.Entity("Wrkzg.Core.Models.TimedMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("IntervalMinutes")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(10);
+
+                    b.Property<bool>("IsEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true);
+
+                    b.Property<DateTimeOffset?>("LastFiredAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Messages")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("MinChatLines")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(5);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("NextMessageIndex")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("RunWhenOffline")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("RunWhenOnline")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true);
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TimedMessages");
+                });
+
             modelBuilder.Entity("Wrkzg.Core.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -336,12 +512,38 @@ namespace Wrkzg.Infrastructure.Migrations
 
             modelBuilder.Entity("Wrkzg.Core.Models.Raffle", b =>
                 {
+                    b.HasOne("Wrkzg.Core.Models.User", "PendingWinner")
+                        .WithMany()
+                        .HasForeignKey("PendingWinnerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Wrkzg.Core.Models.User", "Winner")
                         .WithMany()
                         .HasForeignKey("WinnerId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.Navigation("PendingWinner");
+
                     b.Navigation("Winner");
+                });
+
+            modelBuilder.Entity("Wrkzg.Core.Models.RaffleDraw", b =>
+                {
+                    b.HasOne("Wrkzg.Core.Models.Raffle", "Raffle")
+                        .WithMany("Draws")
+                        .HasForeignKey("RaffleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Wrkzg.Core.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Raffle");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Wrkzg.Core.Models.RaffleEntry", b =>
@@ -370,6 +572,8 @@ namespace Wrkzg.Infrastructure.Migrations
 
             modelBuilder.Entity("Wrkzg.Core.Models.Raffle", b =>
                 {
+                    b.Navigation("Draws");
+
                     b.Navigation("Entries");
                 });
 

@@ -24,6 +24,35 @@ public interface ITwitchHelixClient
     /// Uses the Broadcaster token. Returns true if sent successfully.
     /// </summary>
     Task<bool> SendChatMessageAsync(string broadcasterId, string senderId, string message, CancellationToken ct = default);
+
+    /// <summary>Timeouts a user in the channel via Helix API (POST /moderation/bans).</summary>
+    Task<bool> TimeoutUserAsync(string userId, int durationSeconds, string reason, CancellationToken ct = default);
+
+    /// <summary>Creates a Twitch-native poll via Helix API.</summary>
+    Task<TwitchPollResponse?> CreateTwitchPollAsync(
+        string broadcasterId,
+        string question,
+        string[] options,
+        int durationSeconds,
+        CancellationToken ct = default);
+
+    /// <summary>Ends a Twitch-native poll.</summary>
+    Task<bool> EndTwitchPollAsync(
+        string broadcasterId,
+        string pollId,
+        string status,
+        CancellationToken ct = default);
+}
+
+/// <summary>
+/// Response from the Twitch Helix "Create Poll" endpoint.
+/// </summary>
+public sealed class TwitchPollResponse
+{
+    public string Id { get; init; } = string.Empty;
+    public string Title { get; init; } = string.Empty;
+    public string Status { get; init; } = string.Empty;
+    public int Duration { get; init; }
 }
 
 /// <summary>

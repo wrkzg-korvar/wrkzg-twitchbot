@@ -20,10 +20,10 @@ public static class ChatEndpoints
     {
         RouteGroupBuilder group = app.MapGroup("/api/chat").WithTags("Chat");
 
-        group.MapGet("/recent", (ChatMessageBuffer buffer) =>
+        group.MapGet("/recent", (ChatMessageBuffer buffer, string? userId) =>
         {
             // Transform to the same shape as the SignalR broadcast
-            var messages = buffer.GetRecent().Select(m => new
+            var messages = buffer.GetRecent(15, userId).Select(m => new
             {
                 userId = m.UserId,
                 username = m.Username,
