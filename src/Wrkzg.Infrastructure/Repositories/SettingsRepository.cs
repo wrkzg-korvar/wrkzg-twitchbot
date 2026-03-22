@@ -63,4 +63,17 @@ public class SettingsRepository : ISettingsRepository
 
         await _db.SaveChangesAsync(ct);
     }
+
+    public async Task<bool> DeleteAsync(string key, CancellationToken ct = default)
+    {
+        Setting? existing = await _db.Settings.FindAsync(new object[] { key }, ct);
+        if (existing is null)
+        {
+            return false;
+        }
+
+        _db.Settings.Remove(existing);
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
 }

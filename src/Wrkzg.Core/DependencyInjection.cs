@@ -19,6 +19,14 @@ public static class DependencyInjection
         services.AddSingleton<ISystemCommand, WatchtimeCommand>();
         services.AddSingleton<ISystemCommand, FollowageCommand>();
         services.AddSingleton<ISystemCommand, EditCommandCommand>();
+        services.AddSingleton<ISystemCommand, PollCommand>();
+        services.AddSingleton<ISystemCommand, VoteCommand>();
+        services.AddSingleton<ISystemCommand, PollEndCommand>();
+        services.AddSingleton<ISystemCommand, PollResultCommand>();
+
+        // Poll System
+        services.AddScoped<PollService>();
+        services.AddHostedService<PollTimerService>();
 
         // Command Processor (Singleton — maintains cooldown state in-memory)
         services.AddSingleton<ICommandProcessor, CommandProcessor>();

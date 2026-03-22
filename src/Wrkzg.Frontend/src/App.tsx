@@ -6,6 +6,7 @@ import { Dashboard } from "./pages/Dashboard";
 import { Commands } from "./pages/Commands";
 import { Users } from "./pages/Users";
 import { Settings } from "./pages/Settings";
+import { Polls } from "./pages/Polls";
 
 export default function App() {
   const { setupComplete, isLoading } = useSetupStatus();
@@ -38,6 +39,7 @@ export default function App() {
         <Route index element={<Dashboard />} />
         <Route path="commands" element={<Commands />} />
         <Route path="users" element={<Users />} />
+        <Route path="polls" element={<Polls />} />
         <Route path="settings" element={<Settings />} />
       </Route>
       {/* Redirect unknown routes to dashboard */}

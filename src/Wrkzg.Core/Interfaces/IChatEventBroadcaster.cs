@@ -16,4 +16,13 @@ public interface IChatEventBroadcaster
     Task BroadcastFollowEventAsync(string username, CancellationToken ct = default);
     Task BroadcastSubscribeEventAsync(string username, int tier, CancellationToken ct = default);
     Task BroadcastBotStatusAsync(object status, CancellationToken ct = default);
+
+    /// <summary>Notifies the dashboard that a new poll was created.</summary>
+    Task BroadcastPollCreatedAsync(Poll poll, CancellationToken ct = default);
+
+    /// <summary>Notifies the dashboard of a live vote update.</summary>
+    Task BroadcastPollVoteAsync(int pollId, int optionIndex, CancellationToken ct = default);
+
+    /// <summary>Notifies the dashboard that a poll has ended with results.</summary>
+    Task BroadcastPollEndedAsync(object results, CancellationToken ct = default);
 }

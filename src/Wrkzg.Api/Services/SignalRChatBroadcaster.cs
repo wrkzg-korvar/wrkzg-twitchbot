@@ -58,4 +58,32 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
     {
         return _hub.Clients.Group("dashboard").SendAsync("BotStatus", status, ct);
     }
+
+    public Task BroadcastPollCreatedAsync(Poll poll, CancellationToken ct = default)
+    {
+        return _hub.Clients.Group("dashboard").SendAsync("PollCreated", new
+        {
+            poll.Id,
+            poll.Question,
+            poll.Options,
+            poll.DurationSeconds,
+            poll.EndsAt,
+            poll.CreatedBy,
+            source = poll.Source.ToString()
+        }, ct);
+    }
+
+    public Task BroadcastPollVoteAsync(int pollId, int optionIndex, CancellationToken ct = default)
+    {
+        return _hub.Clients.Group("dashboard").SendAsync("PollVote", new
+        {
+            pollId,
+            optionIndex
+        }, ct);
+    }
+
+    public Task BroadcastPollEndedAsync(object results, CancellationToken ct = default)
+    {
+        return _hub.Clients.Group("dashboard").SendAsync("PollEnded", results, ct);
+    }
 }
