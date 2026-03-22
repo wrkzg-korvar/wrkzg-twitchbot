@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] — 2026-03-22
+
+### Added
+
+- **Polls & Votes** — create polls via dashboard or `!poll` chat command; vote with `!vote`/`!v`; live bar chart with countdown timer; auto-end on expiry; customizable announcement templates; full history with results
+- **Raffles & Giveaways** — create via dashboard or `!raffle` chat command; keyword-based entry (`!join` or custom keyword); draw animation with trophy overlay; winner verification flow with live chat polling; accept/redraw/end workflow; multi-winner support; customizable announcement templates; full history
+- **Timed Messages** — recurring bot messages on configurable intervals; multi-message cycling (round-robin); minimum chat lines threshold; online/offline mode toggle; enable/disable per timer; dashboard CRUD
+- **Spam Filter** — link detection with domain whitelist; excessive caps detection with configurable threshold; banned word list (case-insensitive); emote spam limit; message repetition detection; broadcaster/mod always exempt; subscriber exempt option; configurable timeout duration per filter; dashboard toggle per filter
+- **Counters** — create named counters with custom chat triggers; increment/decrement via dashboard buttons or chat (`!trigger+`, `!trigger-` for mods); display via `!trigger`; custom response templates with `{count}` and `{name}` variables; real-time SignalR updates
+- **Editable System Commands** — enable/disable toggle for all system commands; custom response override per command; reset to default option
+- **Live Chat Improvements** — send messages as bot or broadcaster account; account selector in chat input; auto-scroll with smart pause on scroll-up
+
+### Fixed
+
+- **Raffle keyword entry** — keyword matching now runs before command processing in the chat pipeline, preventing `!join` from being treated as an unknown command
+- **Bot auto-connect** — bot now automatically connects to IRC after completing the setup wizard
+
 ## [1.0.1] — 2026-03-16
 
 ### Fixed

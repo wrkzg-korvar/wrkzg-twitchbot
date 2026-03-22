@@ -11,11 +11,11 @@ Built with C# .NET 10 · Runs on Windows & macOS · Open Source
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-10.0-purple?style=flat-square)](https://dotnet.microsoft.com)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-lightgrey?style=flat-square)](#installation)
-[![Status](https://img.shields.io/badge/status-v1.0.1-green?style=flat-square)](#roadmap)
+[![Status](https://img.shields.io/badge/status-v1.1.0-green?style=flat-square)](#roadmap)
 
 ---
 
-> ⚠️ **This project is in early development.** Core features are functional but the UI is being refined.  
+> ⚠️ **This project is in active development.** Core features are stable and tested. New features are being added regularly.
 > Watch or star the repository to follow progress.
 
 </div>
@@ -31,23 +31,29 @@ Everything stays on your machine. No subscriptions, no data sent to external ser
 
 ## Features
 
-| Feature | Status |
-|---|---|
-| **Setup Wizard** — guided first-time setup with Twitch app registration | ✅ Implemented |
-| **Twitch OAuth** — bot account + broadcaster account, tokens encrypted in OS keychain | ✅ Implemented |
-| **IRC Connection** — auto-connect on startup, auto token refresh, reconnect on disconnect | ✅ Implemented |
-| **Custom Commands** — `!discord`, `!socials`, variables like `{user}`, `{points}`, `{random:1:6}` | ✅ Implemented |
-| **System Commands** — built-in `!commands`, `!points`, `!watchtime`, `!followage` | ✅ Implemented |
-| **Dashboard** — live chat feed, bot status, viewer count, command management | ✅ Implemented |
-| **User Tracking** — message count, watch time, points, mod/sub/broadcaster status sync | ✅ Implemented |
-| **Points System** — automatic point rewards per minute while stream is live, sub multiplier | ✅ Implemented |
-| **Custom Title Bar** — OS-native window controls (macOS traffic lights / Windows buttons) | ✅ Implemented |
-| **Design System** — brand colors from logo, Light/Dark theme toggle, CSS custom properties | ✅ Implemented |
-| **Custom Bot Name** — use your own Twitch account as the bot | ✅ Implemented |
-| **Chat Games** — Heist, Duel, Slots, Roulette, Trivia | 🚧 v1.1 Planned |
-| **Raffles & Giveaways** — weighted ticket system, subscriber bonuses | 🚧 v1.1 Planned |
-| **Votes & Polls** — chat-based or native Twitch polls via Helix API | 🚧 v1.1 Planned |
-| **Automatic Updates** — checks GitHub Releases and updates in the background | 🚧 v1.0.1 Planned |
+| Feature | Status          |
+|---|-----------------|
+| **Setup Wizard** — guided first-time setup with Twitch app registration | ✅ Implemented   |
+| **Twitch OAuth** — bot + broadcaster accounts, tokens encrypted in OS keychain | ✅ Implemented   |
+| **IRC Connection** — auto-connect, auto token refresh, reconnect on disconnect | ✅ Implemented   |
+| **Custom Commands** — `!discord`, `!socials`, variables like `{user}`, `{points}`, `{random:1:6}` | ✅ Implemented   |
+| **System Commands** — 13 built-in commands incl. `!poll`, `!vote`, `!raffle`, `!join`, `!draw`, `!editcmd` with enable/disable and custom responses | ✅ Implemented   |
+| **Dashboard** — live chat feed, bot status, viewer count, command management | ✅ Implemented   |
+| **Live Chat** — send messages as bot or broadcaster, auto-scroll, message history | ✅ Implemented   |
+| **User Tracking** — message count, watch time, points, mod/sub/broadcaster status sync | ✅ Implemented   |
+| **Points System** — automatic point rewards per minute while live, sub multiplier | ✅ Implemented   |
+| **Polls & Votes** — `!poll`, `!vote`, live bar chart, countdown, customizable templates | ✅ Implemented   |
+| **Raffles & Giveaways** — keyword entry, draw animation, winner verification, multi-winner, templates | ✅ Implemented   |
+| **Timed Messages** — recurring messages, multi-message cycling, min chat lines, online/offline mode | ✅ Implemented   |
+| **Spam Filter** — links, caps, banned words, emote spam, repetition, mod/sub exempt | ✅ Implemented   |
+| **Counters** — dashboard +/-, chat commands (`!deaths`, `!deaths+`), custom response templates | ✅ Implemented   |
+| **Design System** — brand colors, Light/Dark theme, CSS custom properties | ✅ Implemented   |
+| **Cross-Platform** — Windows 10/11 + macOS 12+ with native title bar per platform | ✅ Implemented   |
+| **Quotes** — save memorable chat moments, random recall, browse by number | 🚧 v1.2 Planned |
+| **Shoutout Command** — `!so @user` with automatic game lookup | 🚧 v1.2 Planned |
+| **Stream Uptime** — `!uptime` shows current stream duration | 🚧 v1.2 Planned |
+| **Event Notifications** — follow, sub, raid announcements in chat | 🚧 v1.3 Planned |
+| **Chat Games** — Heist, Duel, Slots, Roulette, Trivia | 🔮 Future       |
 
 ---
 
@@ -164,21 +170,17 @@ No manual config file editing required.
 
 ### Development Setup (Contributors)
 
-Contributors can optionally use `appsettings.Development.json` for local development instead of the Setup Wizard:
+Contributors can optionally use `appsettings.Development.json` as a **fallback** for local development. The app always checks the OS keychain first — this file is only used if no keychain credentials are found.
 
 ```json
 {
-  "Twitch": {
-    "ClientId": "your_client_id_here",
-    "ClientSecret": "your_client_secret_here"
-  },
   "Bot": {
     "Port": 5000
   }
 }
 ```
 
-> ⚠️ Never commit `appsettings.Development.json` — it is listed in `.gitignore`.
+> ⚠️ Never put secrets in config files. Use the Setup Wizard to store Client ID and Client Secret in the OS keychain. The config file is only for non-sensitive settings like the port number. `appsettings.Development.json` is listed in `.gitignore`.
 
 ---
 
@@ -209,21 +211,39 @@ For questions or ideas, open a [GitHub Discussion](https://github.com/wrkzg-korv
 - [x] Custom title bar with OS-native window controls
 - [x] Design system with Light/Dark theme support
 
-### v1.0.1 — Polish
-- [ ] Automatic updater (GitHub Releases check + download + install)
-- [ ] Command aliases support in UI
-- [ ] Command edit modal (inline editing)
+### v1.0.1 — Polish ✅
+- [x] Windows blank screen fix (STA threading for WebView2)
+- [x] macOS .app bundle with ad-hoc code signing
+- [x] Release artifact cleanup (no PDB, XML docs, web.config)
+- [x] Chromeless window resize border
 
-### v1.1.0 — Community Features
-- [ ] Chat games (Heist, Duel, Slots, Trivia, Roulette)
-- [ ] Raffles & Giveaways
-- [ ] Votes & Polls
-- [ ] Analytics & Charts
+### v1.1.0 — Community Features ✅
+- [x] Polls & Votes (create, vote, end, results, live bar chart, templates)
+- [x] Raffles & Giveaways (keyword entry, draw animation, winner verification, multi-winner, templates)
+- [x] Timed Messages (recurring messages, message cycling, min chat lines, online/offline mode)
+- [x] Spam Filter (links, caps, banned words, emote spam, repetition detection, mod/sub exempt)
+- [x] Counters (dashboard +/-, chat commands, custom response templates)
+- [x] Editable System Commands (enable/disable toggle, custom response override)
+- [x] Live Chat improvements (send as bot/broadcaster, auto-scroll, message buffer)
+
+### v1.2.0 — Chat Tools (Next)
+- [ ] Quotes System (!quote add, !quote, !quote #, dashboard page)
+- [ ] Shoutout Command (!so @user — with Helix game lookup)
+- [ ] Uptime Command (!uptime — current stream duration)
+- [ ] Command Aliases (multiple triggers for one command)
+
+### v1.3.0 — Live Events
+- [ ] Follow Notifications (chat announcement on new follower)
+- [ ] Subscription Notifications (chat announcement on new/resub/gifted)
+- [ ] Raid Notifications (chat announcement + auto-shoutout option)
+- [ ] EventSub WebSocket integration for real-time Twitch events
 
 ### Future
+- [ ] Chat Games (Heist, Duel, Slots, Trivia, Roulette)
+- [ ] Automatic Updater (GitHub Releases check + download + install)
 - [ ] OBS overlay browser sources
 - [ ] Song request queue
-- [ ] EventSub integration (follows, subs, raids in real-time)
+- [ ] Analytics & Charts
 - [ ] Linux support
 
 ---

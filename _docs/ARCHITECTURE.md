@@ -115,10 +115,10 @@ No standalone entry point — embedded into the Host.
 **Type:** Class Library (standard SDK)  
 The heart of the application. Has zero framework dependencies.
 
-- All business logic: `CommandProcessor`, `ChatMessagePipeline`
-- Domain models: `User`, `Command`, `Raffle`, `Poll`, `Setting`, `ChatMessage`, `BotStatus`
-- Service interfaces: `ICommandProcessor`, `ITwitchChatClient`, `IUserRepository`, etc.
-- Chat game interfaces (`IChatGame`) — implementations will be auto-discovered
+- All business logic: `CommandProcessor`, `ChatMessagePipeline`, `PollService`, `RaffleService`, `SpamFilterService`, `TimedMessageService`
+- Domain models: `User`, `Command`, `Poll`, `PollVote`, `Raffle`, `RaffleEntry`, `RaffleDraw`, `TimedMessage`, `Counter`, `Setting`, `SystemCommandOverride`, `SpamFilterConfig`, `ChatMessage`, `BotStatus`
+- Service interfaces: `ICommandProcessor`, `ITwitchChatClient`, `IUserRepository`, `IPollRepository`, `IRaffleRepository`, `ITimedMessageRepository`, `ICounterRepository`, `ISettingsRepository`, etc.
+- System commands: 13 built-in commands implementing `ISystemCommand`
 - DI registration via `AddCoreServices()`
 
 ### `Wrkzg.Infrastructure`
@@ -127,7 +127,7 @@ The heart of the application. Has zero framework dependencies.
 Implements all interfaces defined in Core using real external dependencies.
 
 - `BotDbContext` (EF Core + SQLite) with automatic migrations on startup
-- Repository implementations: `UserRepository`, `CommandRepository`, `RaffleRepository`, `PollRepository`, `SettingsRepository`
+- Repository implementations: `UserRepository`, `CommandRepository`, `PollRepository`, `RaffleRepository`, `TimedMessageRepository`, `CounterRepository`, `SettingsRepository`, `SystemCommandOverrideRepository`
 - `TwitchChatClient` (TwitchLib IRC) — Singleton, auto token refresh
 - `TwitchOAuthService` — Authorization Code Flow, credential resolution (Keystore → Config fallback)
 - `TwitchAuthHandler` — DelegatingHandler for automatic Bearer token injection + 401 refresh
@@ -144,11 +144,16 @@ Launched as a separate OS process when an update is ready. Waits for the main pr
 
 **Type:** Node.js / Vite project — not part of the .NET solution.
 
-React 19 + TypeScript SPA with Tailwind CSS v4. Features:
+React 19 + TypeScript SPA with Tailwind CSS v4. Pages:
 - **Setup Wizard** — 5-step guided first-time configuration
-- **Dashboard** — live chat feed via SignalR, bot status, viewer count
-- **Commands** — CRUD management with inline create form
+- **Dashboard** — live chat feed via SignalR, bot status, viewer count, chat send
+- **Commands** — custom command CRUD + system command enable/disable + custom response override
 - **Users** — sortable viewer table with roles and stats
+- **Polls** — create polls, live bar chart, countdown, history, customizable templates
+- **Raffles** — create raffles, keyword entry, draw animation, winner verification, multi-winner, history
+- **Timers** — timed message CRUD, multi-message editor, online/offline toggle
+- **Counters** — counter cards with +/- buttons, chat trigger display, create/edit
+- **Spam Filter** — per-filter toggle + configuration (links, caps, banned words, emotes, repetition)
 - **Settings** — Twitch account connections, credential management
 
 In development, runs on `:5173` with a proxy to Kestrel. In production, built to `Wrkzg.Api/wwwroot/`.
@@ -156,6 +161,18 @@ In development, runs on `:5173` with a proxy to Kestrel. In production, built to
 ---
 
 ## Data Flow
+
+### Chat Message Pipeline
+
+Every incoming chat message passes through the pipeline in this order:
+
+1. **UpdateUserStats** — increment message count, update LastSeenAt, sync roles
+2. **MarkUserActive** — flag user for watch time tracking
+3. **IncrementChatLineCounter** — notify TimedMessageService of chat activity
+4. **TryKeywordEntry** — check if message matches active raffle keyword
+5. **SpamFilter.CheckAsync** — run spam checks (links, caps, banned words, emotes, repetition); if spam → timeout + return
+6. **Counter Commands** — check for dynamic counter triggers (`!trigger`, `!trigger+`, `!trigger-`)
+7. **CommandProcessor** — match against system commands and custom commands
 
 ### Chat Message → Command Response
 
@@ -173,18 +190,16 @@ BotConnectionService.HandleChatMessage
    ▼
 ChatMessagePipeline.ProcessAsync
    │
-   ├── 1. UpdateUserStats (MessageCount, LastSeenAt, DisplayName sync)
+   ├── 1. UpdateUserStats
+   ├── 2. MarkUserActive (Watchtime)
+   ├── 3. IncrementChatLineCounter (Timed Messages)
+   ├── 4. TryKeywordEntry (Raffle)
+   ├── 5. SpamFilter.CheckAsync → return if spam
+   ├── 6. Counter Commands (dynamic !trigger/!trigger+/!trigger-)
+   ├── 7. CommandProcessor (System + Custom Commands)
    │
    ▼
-   ├── 2. CommandProcessor.HandleMessageAsync
-   │      checks: ! prefix → trigger match → permission → cooldown
-   │      resolves: {user}, {points}, {watchtime}, {random:min:max}
-   │
-   ▼
-TwitchChatClient.SendMessageAsync
-   │
-   ▼
-Twitch IRC (response appears in chat)
+TwitchChatClient.SendMessageAsync → Twitch IRC
 ```
 
 ### Dashboard Action → Bot Response
@@ -272,11 +287,19 @@ builder.Services.AddApiServices();           // Wrkzg.Api
 |---|---|---|
 | `CommandProcessor` | Singleton | Cooldown state in-memory (ConcurrentDictionary) |
 | `ChatMessagePipeline` | Singleton | Orchestrates message processing |
+| `ChatMessageBuffer` | Singleton | In-memory ring buffer for recent messages |
 | `TwitchChatClient` | Singleton | One IRC connection per app |
 | `BotConnectionService` | Singleton (IHostedService) | Manages IRC lifecycle |
+| `TimedMessageService` | Singleton (IHostedService) | Checks timer intervals, tracks chat line count |
+| `PollTimerService` | IHostedService | Auto-ends expired polls |
+| `RaffleTimerService` | IHostedService | Auto-draws expired raffles |
+| `UserTrackingService` | Singleton (IHostedService) | Awards watch time and points |
 | `ISecureStorage` | Singleton | Stateless encrypted I/O |
 | `IChatEventBroadcaster` | Singleton | Wraps SignalR HubContext |
 | `IAuthStateNotifier` | Singleton | Wraps SignalR HubContext |
+| `PollService` | Scoped | Poll lifecycle (create, vote, end) |
+| `RaffleService` | Scoped | Raffle lifecycle (create, enter, draw, verify) |
+| `SpamFilterService` | Scoped | Checks messages against spam rules |
 | Repositories | Scoped | One per request/operation |
 | `BotDbContext` | Scoped | Standard EF Core lifetime |
 
@@ -294,20 +317,30 @@ The SQLite database file is stored in the OS application data directory:
 ### Schema
 
 ```
-Users         — Id, TwitchId (unique), Username, DisplayName, Points, WatchedMinutes,
-                MessageCount, FollowDate, IsSubscriber, SubscriberTier, IsBanned, IsMod,
-                FirstSeenAt, LastSeenAt
+Users                — Id, TwitchId (unique), Username, DisplayName, Points, WatchedMinutes,
+                       MessageCount, FollowDate, IsSubscriber, SubscriberTier, IsBanned, IsMod,
+                       IsBroadcaster, FirstSeenAt, LastSeenAt
 
-Commands      — Id, Trigger (unique), Aliases (JSON), ResponseTemplate, PermissionLevel,
-                GlobalCooldownSeconds, UserCooldownSeconds, IsEnabled, UseCount, CreatedAt
+Commands             — Id, Trigger (unique), Aliases (JSON), ResponseTemplate, PermissionLevel,
+                       GlobalCooldownSeconds, UserCooldownSeconds, IsEnabled, UseCount, CreatedAt
 
-Raffles       — Id, Title, IsOpen, WinnerId (FK → Users), CreatedAt, ClosedAt
-RaffleEntries — Id, RaffleId (FK), UserId (FK), TicketCount (unique: RaffleId+UserId)
+SystemCommandOverrides — Trigger (PK), IsEnabled, CustomResponseTemplate
 
-Polls         — Id, Question, Options (JSON), IsActive, EndsAt, CreatedAt, Source
-PollVotes     — Id, PollId (FK), UserId (FK), OptionIndex (unique: PollId+UserId)
+Polls                — Id, Question, Options (JSON), DurationSeconds, IsActive, EndsAt, CreatedBy,
+                       EndReason, Source, TwitchPollId, CreatedAt
+PollVotes            — Id, PollId (FK), UserId (FK), OptionIndex (unique: PollId+UserId)
 
-Settings      — Key (PK), Value — seeded with default values on first run
+Raffles              — Id, Title, Keyword, DurationSeconds, MaxEntries, EntriesCloseAt, IsOpen,
+                       ClosedAt, EndReason, CreatedBy, WinnerId (FK), PendingWinnerId (FK), CreatedAt
+RaffleEntries        — Id, RaffleId (FK), UserId (FK), TicketCount (unique: RaffleId+UserId)
+RaffleDraws          — Id, RaffleId (FK), UserId (FK), DrawNumber, IsAccepted, RedrawReason, DrawnAt
+
+TimedMessages        — Id, Name, Messages (JSON), IntervalMinutes, MinChatLines, IsEnabled,
+                       RunWhenOnline, RunWhenOffline, LastFiredAt, NextMessageIndex, CreatedAt
+
+Counters             — Id, Name, Trigger (unique), Value, ResponseTemplate, CreatedAt
+
+Settings             — Key (PK), Value
 ```
 
 ### Migrations
@@ -328,8 +361,8 @@ dotnet ef migrations add MigrationName \
 
 | Token | Account | Purpose | Scopes |
 |---|---|---|---|
-| Bot Token | Bot's Twitch account | Chat read/write via IRC | `chat:read`, `chat:edit` |
-| Broadcaster Token | Streamer's account | Helix API, EventSub, polls | `moderator:read:followers`, `channel:read:polls`, `channel:manage:polls`, `bits:read`, `channel:read:subscriptions` |
+| Bot Token | Bot's Twitch account | Chat read/write via IRC, Helix chat send | `chat:read`, `chat:edit`, `user:write:chat` |
+| Broadcaster Token | Streamer's account | Helix API, EventSub, polls, chat send | `moderator:read:followers`, `channel:read:polls`, `channel:manage:polls`, `bits:read`, `channel:read:subscriptions`, `user:write:chat` |
 
 Both tokens are acquired via **OAuth 2.0 Authorization Code Flow** with Client Secret (Twitch does not support PKCE). Tokens are stored encrypted in the OS keychain and refreshed automatically.
 
@@ -389,6 +422,17 @@ The dashboard receives live updates via **SignalR**. The hub is hosted at `/hubs
 | `SubscribeEvent` | `{ username, tier }` | EventSub subscribe event |
 | `BotStatus` | `{ isConnected, channel, reason? }` | IRC connection state change |
 | `AuthStateChanged` | `{ tokenType, isAuthenticated, twitchUsername, ... }` | OAuth login/logout/token refresh failure |
+| `PollCreated` | `{ id, question, options, durationSeconds, endsAt, createdBy, source }` | New poll started |
+| `PollVote` | `{ pollId, optionIndex }` | Vote received |
+| `PollEnded` | `{ id, question, totalVotes, options, winnerIndex }` | Poll ended |
+| `RaffleCreated` | `{ id, title, keyword, durationSeconds, maxEntries, createdBy }` | New raffle started |
+| `RaffleEntry` | `{ raffleId, username, entryCount }` | New raffle entry |
+| `RaffleDrawPending` | `{ raffleId, winnerName, twitchId, totalEntries, drawNumber }` | Winner drawn, pending verification |
+| `RaffleWinnerAccepted` | `{ raffleId, winnerName, drawNumber }` | Winner accepted |
+| `RaffleDrawn` | `{ raffleId, winnerName, totalEntries }` | Final winner announced |
+| `RaffleEnded` | `{ raffleId }` | Raffle closed |
+| `RaffleCancelled` | `{ raffleId }` | Raffle cancelled |
+| `CounterUpdated` | `{ counterId, name, value }` | Counter value changed |
 
 ---
 
@@ -408,16 +452,38 @@ The dashboard receives live updates via **SignalR**. The hub is hosted at `/hubs
 
 ## System Commands
 
-Built-in commands that live in code, not in the database. They cannot be deleted or disabled.
+Built-in commands that live in code, not in the database. They can be enabled/disabled and have custom response overrides via `SystemCommandOverrides`.
 
 | Command | Aliases | Description |
 |---|---|---|
-| `!commands` | `!help` | Lists all available commands (system + custom) |
-| `!points` | — | Shows the user's current point balance |
-| `!watchtime` | — | Shows the user's total watch time |
-| `!followage` | — | Shows how long the user has been following |
+| `!commands` | `!help` | Lists all available commands |
+| `!points` | — | Shows user's point balance |
+| `!watchtime` | — | Shows user's total watch time |
+| `!followage` | — | Shows how long user has followed |
+| `!editcmd` | `!editcommand` | Edit a custom command's response |
+| `!poll` | — | Start a poll (Mod+) |
+| `!vote` | `!v` | Vote in active poll |
+| `!pollend` | `!endpoll`, `!closepoll` | End the active poll (Mod+) |
+| `!pollresult` | `!pollresults`, `!results` | Show poll results |
+| `!raffle` | `!giveaway` | Start a raffle (Mod+) |
+| `!join` | `!enter` | Enter the active raffle |
+| `!draw` | — | Draw a raffle winner (Mod+) |
+| `!cancelraffle` | `!rafflecancel` | Cancel the active raffle (Mod+) |
 
 System commands are implemented via the `ISystemCommand` interface in Core and auto-registered in DI. They are checked before custom (DB) commands in the `CommandProcessor` pipeline. The API exposes them at `GET /api/commands/system`.
+
+Each system command can be enabled/disabled and given a custom response override via the `SystemCommandOverrides` table. Overrides are managed from the Commands page in the dashboard.
+
+---
+
+## Background Services
+
+| Service | Interval | Purpose |
+|---|---|---|
+| `PollTimerService` | 2s | Checks if active poll timer has expired, auto-ends poll |
+| `RaffleTimerService` | 2s | Checks if active raffle timer has expired, auto-draws winner |
+| `TimedMessageService` | 30s | Checks if any timed message should fire (interval + min chat lines + online/offline) |
+| `UserTrackingService` | 60s | Awards watch time minutes and points to active users |
 
 ---
 
