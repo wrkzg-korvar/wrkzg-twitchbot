@@ -2,8 +2,14 @@
 
 # 🎮 Wrkzg
 
-**A self-hosted, local Twitch community bot with a built-in dashboard.**  
-Built with C# .NET 10 · Runs on Windows & macOS · Open Source
+### The open-source, local-first Twitch bot with a modern dashboard.
+
+**Your stream. Your data. Your machine.**
+
+Wrkzg runs directly on your computer — no cloud services, no subscriptions, no data leaving your machine.
+A full-featured Twitch bot with a built-in dashboard for chat commands, moderation, polls, raffles, points, and more.
+
+[Download Latest Release](https://github.com/wrkzg-korvar/wrkzg-twitchbot/releases) · [Report Bug](https://github.com/wrkzg-korvar/wrkzg-twitchbot/issues) · [Request Feature](https://github.com/wrkzg-korvar/wrkzg-twitchbot/discussions)
 
 ---
 
@@ -11,70 +17,134 @@ Built with C# .NET 10 · Runs on Windows & macOS · Open Source
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-10.0-purple?style=flat-square)](https://dotnet.microsoft.com)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-lightgrey?style=flat-square)](#installation)
-[![Status](https://img.shields.io/badge/status-v1.1.0-green?style=flat-square)](#roadmap)
-
----
-
-> ⚠️ **This project is in active development.** Core features are stable and tested. New features are being added regularly.
-> Watch or star the repository to follow progress.
+[![Latest Release](https://img.shields.io/github/v/release/wrkzg-korvar/wrkzg-twitchbot?style=flat-square&color=green)](https://github.com/wrkzg-korvar/wrkzg-twitchbot/releases)
+[![GitHub Stars](https://img.shields.io/github/stars/wrkzg-korvar/wrkzg-twitchbot?style=flat-square)](https://github.com/wrkzg-korvar/wrkzg-twitchbot/stargazers)
 
 </div>
 
-## What is Wrkzg?
+---
 
-Wrkzg is a **locally-run Twitch community bot** inspired by various existing bots.
-It runs directly on the streamer's machine and provides a built-in browser-based dashboard for full control over your community without relying on third-party cloud services.
+<div align="center">
+    <img src="_docs/screenshots/dashboard-overview.png" alt="Wrkzg Dashboard" width="800">
+    <br>
+    <sub>Dashboard with live chat, bot status, and command management — shown in Dark & Light Mode</sub>
+</div>
 
-Everything stays on your machine. No subscriptions, no data sent to external servers, no ads.
+## Why Wrkzg?
+
+Most Twitch bots either live in the cloud (your data on someone else's server) or are stuck on Windows only.
+Wrkzg is different:
+
+- **100% local** — Everything runs on your machine. No cloud, no external servers, no tracking.
+- **Real desktop app** — Not a browser tab. A native window with a modern React dashboard built in.
+- **Windows & macOS** — One of the only open-source Twitch bots that runs natively on both platforms.
+- **Secure by default** — Your Twitch credentials are stored in your OS keychain (Windows DPAPI / macOS Keychain), never in config files.
+- **Zero cost, forever** — Open source under MIT license. No subscriptions, no premium tiers, no ads.
+- **Setup in minutes** — A built-in wizard walks you through everything. No config files, no terminal commands.
+
+---
+
+## How It Compares
+
+> Choosing a Twitch bot? Here's how Wrkzg stacks up against the most popular alternatives.
+
+| | **Wrkzg** | **Nightbot** | **Firebot** | **PhantomBot** | **Streamlabs Bot** |
+|---|:---:|:---:|:---:|:---:|:---:|
+| **Runs locally** | ✅ | ❌ Cloud | ✅ | ✅ | ❌ Cloud |
+| **Desktop app** | ✅ Native | ❌ Browser | ✅ Electron | ❌ Web Panel | ❌ Browser |
+| **Windows** | ✅ | ✅ Cloud | ✅ | ✅ | ✅ Cloud |
+| **macOS** | ✅ | ✅ Cloud | ❌ | ✅ (via Java) | ❌ |
+| **Modern dashboard** | ✅ React | ⚠️ Dated | ⚠️ Angular | ⚠️ Dated | ✅ |
+| **Setup wizard** | ✅ | ✅ | ✅ | ❌ Manual | ✅ |
+| **Secure credential storage** | ✅ OS Keychain | N/A | ❌ Config file | ❌ Config file | N/A |
+| **Custom commands** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Points system** | ✅ | ❌ | ✅ | ✅ | ✅ |
+| **Polls & raffles** | ✅ | ✅ Basic | ✅ | ✅ | ✅ |
+| **Spam filter** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Timed messages** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Open source** | ✅ MIT | ❌ | ✅ GPL-3 | ✅ GPL-3 | ❌ |
+| **No account required** | ✅ | ❌ | ✅ | ✅ | ❌ |
+| **Price** | **Free** | Free (limited) | **Free** | **Free** | Freemium |
 
 ---
 
 ## Features
 
-| Feature | Status          |
-|---|-----------------|
-| **Setup Wizard** — guided first-time setup with Twitch app registration | ✅ Implemented   |
-| **Twitch OAuth** — bot + broadcaster accounts, tokens encrypted in OS keychain | ✅ Implemented   |
-| **IRC Connection** — auto-connect, auto token refresh, reconnect on disconnect | ✅ Implemented   |
-| **Custom Commands** — `!discord`, `!socials`, variables like `{user}`, `{points}`, `{random:1:6}` | ✅ Implemented   |
-| **System Commands** — 13 built-in commands incl. `!poll`, `!vote`, `!raffle`, `!join`, `!draw`, `!editcmd` with enable/disable and custom responses | ✅ Implemented   |
-| **Dashboard** — live chat feed, bot status, viewer count, command management | ✅ Implemented   |
-| **Live Chat** — send messages as bot or broadcaster, auto-scroll, message history | ✅ Implemented   |
-| **User Tracking** — message count, watch time, points, mod/sub/broadcaster status sync | ✅ Implemented   |
-| **Points System** — automatic point rewards per minute while live, sub multiplier | ✅ Implemented   |
-| **Polls & Votes** — `!poll`, `!vote`, live bar chart, countdown, customizable templates | ✅ Implemented   |
-| **Raffles & Giveaways** — keyword entry, draw animation, winner verification, multi-winner, templates | ✅ Implemented   |
-| **Timed Messages** — recurring messages, multi-message cycling, min chat lines, online/offline mode | ✅ Implemented   |
-| **Spam Filter** — links, caps, banned words, emote spam, repetition, mod/sub exempt | ✅ Implemented   |
-| **Counters** — dashboard +/-, chat commands (`!deaths`, `!deaths+`), custom response templates | ✅ Implemented   |
-| **Design System** — brand colors, Light/Dark theme, CSS custom properties | ✅ Implemented   |
-| **Cross-Platform** — Windows 10/11 + macOS 12+ with native title bar per platform | ✅ Implemented   |
-| **Quotes** — save memorable chat moments, random recall, browse by number | 🚧 v1.2 Planned |
-| **Shoutout Command** — `!so @user` with automatic game lookup | 🚧 v1.2 Planned |
-| **Stream Uptime** — `!uptime` shows current stream duration | 🚧 v1.2 Planned |
-| **Event Notifications** — follow, sub, raid announcements in chat | 🚧 v1.3 Planned |
-| **Chat Games** — Heist, Duel, Slots, Roulette, Trivia | 🔮 Future       |
+### ✅ Implemented
+
+**Chat & Commands**
+- **Custom Commands** — Create commands like `!discord`, `!socials` with variables: `{user}`, `{points}`, `{random:1:6}`
+- **13 System Commands** — Built-in `!poll`, `!vote`, `!raffle`, `!join`, `!draw`, `!editcmd` and more — all with enable/disable toggle and custom response templates
+- **Command Aliases** — Coming in v1.2
+
+**Community Engagement**
+- **Points System** — Automatic rewards per minute while live, with subscriber multiplier
+- **Polls & Votes** — `!poll` with live bar chart, countdown timer, and customizable templates
+- **Raffles & Giveaways** — Keyword entry, animated draw, winner verification, multi-winner support
+- **Counters** — Dashboard +/- buttons, chat commands (`!deaths`, `!deaths+`), custom templates
+
+**Moderation**
+- **Spam Filter** — Links, caps, banned words, emote spam, repetition detection — mods and subs exempt
+- **Timed Messages** — Recurring messages with cycling, minimum chat line threshold, online/offline modes
+
+**Dashboard & UX**
+- **Live Dashboard** — Real-time chat feed, bot status, viewer count, command management
+- **Live Chat** — Send messages as bot or broadcaster, auto-scroll, message history
+- **User Tracking** — Message count, watch time, points, mod/sub/broadcaster status sync
+- **Setup Wizard** — Guided first-time setup with direct links to Twitch Developer Console
+- **Design System** — Light and Dark theme with consistent CSS custom properties
+- **Cross-Platform** — Native desktop app on Windows 10/11 and macOS 12+ with platform-specific title bars
+
+### 🚧 Coming Soon
+
+| Version | Features |
+|---|---|
+| **v1.2** | Quotes system, Shoutout command (`!so @user`), Stream uptime (`!uptime`), Command aliases |
+| **v1.3** | Follow / Sub / Raid notifications via EventSub WebSocket |
+| **Future** | Chat games, OBS overlay sources, auto-updater, song requests, analytics, Linux support |
 
 ---
 
-## Architecture at a Glance
+## Architecture
 
-Wrkzg runs as a single desktop process that embeds both a **Kestrel HTTP server** and a **Photino browser window**. The dashboard is a React SPA served locally — no external hosting needed.
+Wrkzg runs as a **single desktop process** — no separate server, no Docker, no external dependencies.
+It embeds a Kestrel HTTP server and a Photino browser window into one self-contained application.
 
 ```
-Photino Window (Chromium / WebKit)
-        │
-        ▼
-ASP.NET Core Kestrel  ←→  SignalR (real-time events)
-        │
-   ┌────┴────┐
- Core     Infrastructure
-(Logic)  (DB · Twitch API)
-        │
-      SQLite
+┌─────────────────────────────────────────────┐
+│           Photino Window                     │
+│        (Chromium on Windows / WebKit on Mac) │
+│                                              │
+│   ┌─────────────────────────────────────┐    │
+│   │  React 19 Dashboard (TypeScript)    │    │
+│   │  Tailwind CSS v4 · Vite · SignalR   │    │
+│   └──────────────┬──────────────────────┘    │
+└──────────────────┼───────────────────────────┘
+                   │ HTTP + WebSocket
+┌──────────────────┼───────────────────────────┐
+│  ASP.NET Core Kestrel Server                 │
+│                                              │
+│  ┌──────────┐  ┌────────────┐  ┌──────────┐ │
+│  │   Core   │  │ Infra-     │  │ SignalR  │ │
+│  │  (Logic, │  │ structure  │  │  Hubs    │ │
+│  │ Commands,│  │ (EF Core,  │  │ (Real-   │ │
+│  │  Events) │  │  Twitch    │  │  time)   │ │
+│  │          │  │  API, IRC) │  │          │ │
+│  └──────────┘  └─────┬──────┘  └──────────┘ │
+│                      │                       │
+│               ┌──────┴──────┐                │
+│               │   SQLite    │                │
+│               └─────────────┘                │
+└──────────────────────────────────────────────┘
 ```
 
-For a full breakdown, see [ARCHITECTURE.md](_docs/ARCHITECTURE.md).
+**Key design decisions:**
+- **Clean Architecture** — Core logic has zero dependencies on infrastructure
+- **OS Keychain** — Twitch secrets stored via Windows DPAPI / macOS Keychain (never in config files)
+- **SignalR** — Real-time push from backend to dashboard (chat messages, poll updates, viewer count)
+- **Single-file publish** — One executable, no runtime installation needed
+
+For the full architecture breakdown, see [ARCHITECTURE.md](_docs/ARCHITECTURE.md).
 
 ---
 
@@ -87,13 +157,13 @@ For a full breakdown, see [ARCHITECTURE.md](_docs/ARCHITECTURE.md).
 | Backend / API | ASP.NET Core · Kestrel · SignalR |
 | Frontend | React 19 · TypeScript · Vite · Tailwind CSS v4 |
 | Database | SQLite · Entity Framework Core 10 |
-| Twitch | TwitchLib · Twitch Helix API · EventSub WebSocket |
+| Twitch Integration | TwitchLib · Twitch Helix API · EventSub WebSocket |
 
 ---
 
 ## Installation
 
-Download the latest release for your platform from the [Releases page](https://github.com/wrkzg-korvar/wrkzg-twitchbot/releases).
+Download the latest release for your platform from the **[Releases page](https://github.com/wrkzg-korvar/wrkzg-twitchbot/releases)**.
 
 ### Windows
 
@@ -126,9 +196,26 @@ open ~/Downloads/Wrkzg.app
 | OS Version | Windows 10 / 11 | macOS 12+ |
 | Architecture | x64 | x64 · Apple Silicon (ARM64) |
 | .NET Runtime | Bundled (self-contained) | Bundled (self-contained) |
-| WebView | WebView2 Runtime (pre-installed with Edge) | WebKit (built-in) |
+| WebView | WebView2 (pre-installed with Edge) | WebKit (built-in) |
 
-### Building from Source
+### First-Time Setup
+
+When you start Wrkzg for the first time, a **Setup Wizard** guides you through everything:
+
+1. **Create a Twitch App** — The wizard links you directly to the Twitch Developer Console and provides copy-paste values
+2. **Enter Credentials** — Paste your Client ID and Client Secret (encrypted in your OS keychain)
+3. **Connect Bot Account** — OAuth flow opens in your system browser
+4. **Connect Broadcaster Account** — Same flow with your main streamer account
+5. **Set Channel** — Enter your channel name — done
+
+No manual config file editing. No terminal. No JSON.
+
+---
+
+## Building from Source
+
+<details>
+<summary>Click to expand build instructions</summary>
 
 **Prerequisites:**
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
@@ -156,18 +243,6 @@ dotnet build
 dotnet run --project src/Wrkzg.Host
 ```
 
-### First-Time Setup
-
-When you start Wrkzg for the first time, a **Setup Wizard** guides you through the configuration:
-
-1. **Create a Twitch App** — The wizard links you directly to the Twitch Developer Console and provides copy-paste values for the app name and redirect URI
-2. **Enter Credentials** — Paste your Client ID and Client Secret (stored encrypted in your OS keychain, never in config files)
-3. **Connect Bot Account** — Opens your system browser for Twitch OAuth authorization
-4. **Connect Broadcaster Account** — Same flow with your main streamer account
-5. **Set Channel** — Enter your channel name and you're ready to go
-
-No manual config file editing required.
-
 ### Development Setup (Contributors)
 
 Contributors can optionally use `appsettings.Development.json` as a **fallback** for local development. The app always checks the OS keychain first — this file is only used if no keychain credentials are found.
@@ -180,74 +255,90 @@ Contributors can optionally use `appsettings.Development.json` as a **fallback**
 }
 ```
 
-> ⚠️ Never put secrets in config files. Use the Setup Wizard to store Client ID and Client Secret in the OS keychain. The config file is only for non-sensitive settings like the port number. `appsettings.Development.json` is listed in `.gitignore`.
+> ⚠️ Never put secrets in config files. Use the Setup Wizard to store credentials in the OS keychain. The config file is only for non-sensitive settings like the port number. `appsettings.Development.json` is listed in `.gitignore`.
+
+</details>
 
 ---
 
 ## Contributing
 
-Contributions are very welcome! Wrkzg is open source and built in the open.
+Contributions are welcome! Wrkzg is open source and built in the open.
 
-Please read [CONTRIBUTING.md](_docs/CONTRIBUTING.md) before opening a pull request. It covers:
-- How to set up the development environment
-- Project structure and architecture rules
-- Coding conventions and commit message format
-- How to add a new chat game or API endpoint
+Please read **[CONTRIBUTING.md](_docs/CONTRIBUTING.md)** before opening a pull request. It covers the development environment, project structure, architecture rules, coding conventions, and commit message format.
 
-For questions or ideas, open a [GitHub Discussion](https://github.com/wrkzg-korvar/wrkzg-twitchbot/discussions).
+For questions or ideas, open a **[GitHub Discussion](https://github.com/wrkzg-korvar/wrkzg-twitchbot/discussions)**.
 
 ---
 
 ## Roadmap
 
-### v1.0.0 — MVP ✅
-- [x] Twitch OAuth (bot account + broadcaster account)
-- [x] IRC connection + custom commands
-- [x] System commands (!commands, !points, !watchtime, !followage)
-- [x] User tracking (messages, watch time, points, mod/sub/broadcaster sync)
-- [x] Points system (automatic rewards per minute while live, sub multiplier)
-- [x] Dashboard (live chat, commands CRUD, user table, settings)
-- [x] Setup Wizard for first-time users
-- [x] Custom title bar with OS-native window controls
-- [x] Design system with Light/Dark theme support
+<details>
+<summary><strong>v1.0.0 — MVP ✅</strong></summary>
 
-### v1.0.1 — Polish ✅
-- [x] Windows blank screen fix (STA threading for WebView2)
-- [x] macOS .app bundle with ad-hoc code signing
-- [x] Release artifact cleanup (no PDB, XML docs, web.config)
-- [x] Chromeless window resize border
+- Twitch OAuth (bot + broadcaster account)
+- IRC connection + custom commands
+- System commands (!commands, !points, !watchtime, !followage)
+- User tracking (messages, watch time, points, mod/sub/broadcaster sync)
+- Points system (automatic rewards, sub multiplier)
+- Dashboard (live chat, commands CRUD, user table, settings)
+- Setup Wizard
+- Custom title bar with OS-native window controls
+- Design system with Light/Dark theme
 
-### v1.1.0 — Community Features ✅
-- [x] Polls & Votes (create, vote, end, results, live bar chart, templates)
-- [x] Raffles & Giveaways (keyword entry, draw animation, winner verification, multi-winner, templates)
-- [x] Timed Messages (recurring messages, message cycling, min chat lines, online/offline mode)
-- [x] Spam Filter (links, caps, banned words, emote spam, repetition detection, mod/sub exempt)
-- [x] Counters (dashboard +/-, chat commands, custom response templates)
-- [x] Editable System Commands (enable/disable toggle, custom response override)
-- [x] Live Chat improvements (send as bot/broadcaster, auto-scroll, message buffer)
+</details>
 
-### v1.2.0 — Chat Tools (Next)
-- [ ] Quotes System (!quote add, !quote, !quote #, dashboard page)
-- [ ] Shoutout Command (!so @user — with Helix game lookup)
-- [ ] Uptime Command (!uptime — current stream duration)
-- [ ] Command Aliases (multiple triggers for one command)
+<details>
+<summary><strong>v1.0.1 — Polish ✅</strong></summary>
+
+- Windows blank screen fix (STA threading for WebView2)
+- macOS .app bundle with ad-hoc code signing
+- Release artifact cleanup
+- Chromeless window resize border
+
+</details>
+
+<details>
+<summary><strong>v1.1.0 — Community Features ✅</strong></summary>
+
+- Polls & Votes (live bar chart, countdown, templates)
+- Raffles & Giveaways (animated draw, multi-winner, templates)
+- Timed Messages (message cycling, min chat lines, online/offline)
+- Spam Filter (links, caps, banned words, emotes, repetition)
+- Counters (dashboard +/-, chat commands, templates)
+- Editable System Commands (enable/disable, custom responses)
+- Live Chat improvements (send as bot/broadcaster, auto-scroll)
+
+</details>
+
+### v1.2.0 — Chat Tools *(Next)*
+- Quotes System (`!quote add`, `!quote`, `!quote #`, dashboard page)
+- Shoutout Command (`!so @user` with Helix game lookup)
+- Uptime Command (`!uptime`)
+- Command Aliases
 
 ### v1.3.0 — Live Events
-- [ ] Follow Notifications (chat announcement on new follower)
-- [ ] Subscription Notifications (chat announcement on new/resub/gifted)
-- [ ] Raid Notifications (chat announcement + auto-shoutout option)
-- [ ] EventSub WebSocket integration for real-time Twitch events
+- Follow / Sub / Raid notifications via EventSub WebSocket
+- Chat announcements with customizable templates
 
 ### Future
-- [ ] Chat Games (Heist, Duel, Slots, Trivia, Roulette)
-- [ ] Automatic Updater (GitHub Releases check + download + install)
-- [ ] OBS overlay browser sources
-- [ ] Song request queue
-- [ ] Analytics & Charts
-- [ ] Linux support
+- Chat Games (Heist, Duel, Slots, Trivia, Roulette)
+- OBS overlay browser sources
+- Automatic updater (GitHub Releases check)
+- Song request queue
+- Analytics & Charts
+- Linux support
 
 ---
 
 ## License
 
 Wrkzg is licensed under the [MIT License](LICENSE). © 2026 wrkzg.io
+
+---
+
+<div align="center">
+
+**If Wrkzg is useful to you, consider giving it a ⭐ on GitHub — it helps others discover the project.**
+
+</div>
