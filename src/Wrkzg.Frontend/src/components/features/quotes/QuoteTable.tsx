@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { quotesApi } from "../../../api/quotes";
+import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { DataTable } from "../../../components/ui/DataTable";
 import { showToast } from "../../../hooks/useToast";
 import type { Quote } from "../../../types/quotes";
@@ -12,6 +14,7 @@ interface QuoteTableProps {
 
 export function QuoteTable({ quotes, search }: QuoteTableProps) {
   const queryClient = useQueryClient();
+  const [deleteTarget, setDeleteTarget] = useState<Quote | null>(null);
 
   const deleteMut = useMutation({
     mutationFn: quotesApi.remove,
@@ -79,11 +82,7 @@ export function QuoteTable({ quotes, search }: QuoteTableProps) {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <button
-                      onClick={() => {
-                        if (confirm(`Delete quote #${quote.number}?`)) {
-                          deleteMut.mutate(quote.id);
-                        }
-                      }}
+                      onClick={() => setDeleteTarget(quote)}
                       disabled={deleteMut.isPending}
                       className="rounded p-1 text-[var(--color-text-muted)] hover:text-red-400 hover:bg-[var(--color-elevated)] transition-colors"
                       title="Delete quote"
@@ -101,6 +100,20 @@ export function QuoteTable({ quotes, search }: QuoteTableProps) {
           No quotes match &ldquo;{search}&rdquo;.
         </p>
       )}
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete Quote"
+        message={`Delete quote #${deleteTarget?.number}? This action cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteMut.mutate(deleteTarget.id);
+          }
+          setDeleteTarget(null);
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </>
   );
 }

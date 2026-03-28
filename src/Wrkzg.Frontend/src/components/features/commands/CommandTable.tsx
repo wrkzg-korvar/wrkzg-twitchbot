@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { commandsApi } from "../../../api/commands";
+import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { DataTable } from "../../../components/ui/DataTable";
 import { showToast } from "../../../hooks/useToast";
 import { inputClass, PERMISSION_LABELS } from "../../../lib/constants";
@@ -13,6 +14,7 @@ interface CommandTableProps {
 export function CommandTable({ commands }: CommandTableProps) {
   const queryClient = useQueryClient();
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Command | null>(null);
 
   const toggleMutation = useMutation({
     mutationFn: ({ id, isEnabled }: { id: number; isEnabled: boolean }) =>
@@ -42,6 +44,7 @@ export function CommandTable({ commands }: CommandTableProps) {
   }
 
   return (
+    <>
     <DataTable minWidth={700}>
           <thead>
             <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
@@ -61,15 +64,26 @@ export function CommandTable({ commands }: CommandTableProps) {
                 isEditing={editingId === cmd.id}
                 onEdit={() => setEditingId(editingId === cmd.id ? null : cmd.id)}
                 onToggle={() => toggleMutation.mutate({ id: cmd.id, isEnabled: !cmd.isEnabled })}
-                onDelete={() => {
-                  if (confirm(`Delete command ${cmd.trigger}?`)) {
-                    deleteMutation.mutate(cmd.id);
-                  }
-                }}
+                onDelete={() => setDeleteTarget(cmd)}
               />
             ))}
           </tbody>
     </DataTable>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete Command"
+        message={`Are you sure you want to delete "${deleteTarget?.trigger}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteMutation.mutate(deleteTarget.id);
+          }
+          setDeleteTarget(null);
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
+    </>
   );
 }
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { commandsApi } from "../../../api/commands";
+import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { DataTable } from "../../../components/ui/DataTable";
 import { showToast } from "../../../hooks/useToast";
 import { inputClass } from "../../../lib/constants";
@@ -37,6 +38,7 @@ function SystemCommandRow({ cmd }: { cmd: SystemCommand }) {
   const queryClient = useQueryClient();
   const [isEditingResponse, setIsEditingResponse] = useState(false);
   const [customResponse, setCustomResponse] = useState(cmd.customResponseTemplate ?? "");
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const canEdit = cmd.trigger !== "!editcmd";
   const hasOverride = cmd.customResponseTemplate !== null || !cmd.isEnabled;
@@ -117,11 +119,7 @@ function SystemCommandRow({ cmd }: { cmd: SystemCommand }) {
           )}
           {canEdit && hasOverride && (
             <button
-              onClick={() => {
-                if (confirm(`Reset ${cmd.trigger} to default?`)) {
-                  resetMutation.mutate();
-                }
-              }}
+              onClick={() => setShowResetConfirm(true)}
               className="text-xs text-[var(--color-text-muted)] hover:text-orange-400 transition-colors"
             >
               Reset
@@ -153,6 +151,19 @@ function SystemCommandRow({ cmd }: { cmd: SystemCommand }) {
           </td>
         </tr>
       )}
+
+      <ConfirmDialog
+        open={showResetConfirm}
+        title="Reset to Default"
+        message={`Reset ${cmd.trigger} to its default response? Your custom template will be removed.`}
+        confirmLabel="Reset"
+        variant="warning"
+        onConfirm={() => {
+          resetMutation.mutate();
+          setShowResetConfirm(false);
+        }}
+        onCancel={() => setShowResetConfirm(false)}
+      />
     </>
   );
 }
