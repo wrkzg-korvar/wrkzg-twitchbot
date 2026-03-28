@@ -6,6 +6,7 @@ export interface ChatMsg {
   isSubscriber: boolean;
   isBroadcaster: boolean;
   timestamp: string;
+  emotes?: Record<string, string[]> | null;
 }
 
 export interface LiveEvent {

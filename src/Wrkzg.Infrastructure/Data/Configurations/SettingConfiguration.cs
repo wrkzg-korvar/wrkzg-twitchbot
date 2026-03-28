@@ -16,7 +16,7 @@ public class SettingConfiguration : IEntityTypeConfiguration<Setting>
         builder.HasData(
             new Setting { Key = "Bot.Channel", Value = "" },
             new Setting { Key = "Bot.BotUsername", Value = "" },
-            new Setting { Key = "Bot.Port", Value = "5000" },
+            new Setting { Key = "Bot.Port", Value = "5050" },
             new Setting { Key = "Points.PerMinute", Value = "10" },
             new Setting { Key = "Points.SubMultiplier", Value = "1.5" },
             new Setting { Key = "Points.FollowBonus", Value = "100" },

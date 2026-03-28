@@ -118,7 +118,7 @@ The heart of the application. Has zero framework dependencies.
 - All business logic: `CommandProcessor`, `ChatMessagePipeline`, `PollService`, `RaffleService`, `SpamFilterService`, `TimedMessageService`
 - Domain models: `User`, `Command`, `Poll`, `PollVote`, `Raffle`, `RaffleEntry`, `RaffleDraw`, `TimedMessage`, `Counter`, `Setting`, `SystemCommandOverride`, `SpamFilterConfig`, `ChatMessage`, `BotStatus`
 - Service interfaces: `ICommandProcessor`, `ITwitchChatClient`, `IUserRepository`, `IPollRepository`, `IRaffleRepository`, `ITimedMessageRepository`, `ICounterRepository`, `ISettingsRepository`, etc.
-- System commands: 13 built-in commands implementing `ISystemCommand`
+- System commands: 16 built-in commands implementing `ISystemCommand`
 - DI registration via `AddCoreServices()`
 
 ### `Wrkzg.Infrastructure`
@@ -132,6 +132,7 @@ Implements all interfaces defined in Core using real external dependencies.
 - `TwitchOAuthService` — Authorization Code Flow, credential resolution (Keystore → Config fallback)
 - `TwitchAuthHandler` — DelegatingHandler for automatic Bearer token injection + 401 refresh
 - `BotConnectionService` — IHostedService managing IRC lifecycle
+- `EventSubConnectionService` — IHostedService managing Twitch EventSub WebSocket (follows, subs, raids, gifts, resubs)
 - `WindowsSecureStorage` (DPAPI) / `MacOsSecureStorage` (Keychain) — encrypted credential storage
 
 ### `Wrkzg.Updater`
@@ -146,17 +147,35 @@ Launched as a separate OS process when an update is ready. Waits for the main pr
 
 React 19 + TypeScript SPA with Tailwind CSS v4. Pages:
 - **Setup Wizard** — 5-step guided first-time configuration
-- **Dashboard** — live chat feed via SignalR, bot status, viewer count, chat send
+- **Dashboard** — live chat feed via SignalR, bot status, viewer count, activity feed, chat send
 - **Commands** — custom command CRUD + system command enable/disable + custom response override
 - **Users** — sortable viewer table with roles and stats
 - **Polls** — create polls, live bar chart, countdown, history, customizable templates
 - **Raffles** — create raffles, keyword entry, draw animation, winner verification, multi-winner, history
+- **Quotes** — save and browse memorable chat moments
 - **Timers** — timed message CRUD, multi-message editor, online/offline toggle
 - **Counters** — counter cards with +/- buttons, chat trigger display, create/edit
 - **Spam Filter** — per-filter toggle + configuration (links, caps, banned words, emotes, repetition)
+- **Notifications** — EventSub event notifications with per-type toggle and templates
+- **Overlays** — OBS overlay configuration with live preview, copy URL, and settings
 - **Settings** — Twitch account connections, credential management
 
-In development, runs on `:5173` with a proxy to Kestrel. In production, built to `Wrkzg.Api/wwwroot/`.
+In development, runs on `:5173` with a proxy to Kestrel on `:5050`. In production, built to `Wrkzg.Api/wwwroot/`.
+
+### OBS Overlay System
+
+6 overlay types available as OBS Browser Sources at `http://localhost:5050/overlay/{type}`:
+
+| Overlay | URL | Description |
+|---|---|---|
+| Alert Box | `/overlay/alerts` | Animated follow/sub/raid notifications |
+| Chat Box | `/overlay/chat` | Live chat display with Twitch emotes |
+| Poll | `/overlay/poll` | Animated bar chart with countdown |
+| Raffle | `/overlay/raffle` | Winner reveal with confetti |
+| Counter | `/overlay/counter?id=N` | Large counter display |
+| Event List | `/overlay/events` | Scrolling event feed |
+
+Overlays connect to SignalR without authentication (`?source=overlay`) and auto-reconnect when the bot restarts by polling `/overlay/health` every 10 seconds.
 
 ---
 
@@ -229,7 +248,7 @@ POST /auth/open-browser/bot → Server opens OS default browser
 System Browser → https://id.twitch.tv/oauth2/authorize
    │  User authorizes
    ▼
-Twitch → http://localhost:5000/auth/callback?code=XXX&state=YYY
+Twitch → http://localhost:5050/auth/callback?code=XXX&state=YYY
    │
    ▼
 Server: validates state, exchanges code for tokens, saves encrypted
@@ -340,6 +359,8 @@ TimedMessages        — Id, Name, Messages (JSON), IntervalMinutes, MinChatLine
 
 Counters             — Id, Name, Trigger (unique), Value, ResponseTemplate, CreatedAt
 
+Quotes               — Id, Text, AddedBy, GameName, CreatedAt
+
 Settings             — Key (PK), Value
 ```
 
@@ -412,14 +433,22 @@ Because `Wrkzg.Host` is the entry point but `wwwroot/` lives in `Wrkzg.Api`, the
 
 ## Real-Time Communication
 
-The dashboard receives live updates via **SignalR**. The hub is hosted at `/hubs/chat`.
+The dashboard and overlays receive live updates via **SignalR**. The hub is hosted at `/hubs/chat` with two groups:
+
+- **`dashboard`** — Authenticated clients (Photino WebView with X-Wrkzg-Token)
+- **`overlay`** — Unauthenticated overlay clients (connect with `?source=overlay` query param)
+
+Both groups receive the same events. The `IChatEventBroadcaster` broadcasts to both groups via `BroadcastToAllAsync()`.
 
 | SignalR Method | Payload | Trigger |
 |---|---|---|
-| `ChatMessage` | `{ userId, username, displayName, content, isMod, isSubscriber, isBroadcaster, timestamp }` | Chat message received via IRC |
+| `ChatMessage` | `{ userId, username, displayName, content, emotes, isMod, isSubscriber, isBroadcaster, timestamp }` | Chat message received via IRC |
 | `ViewerCount` | `int` | Polling interval (60s) |
 | `FollowEvent` | `{ username }` | EventSub follow event |
 | `SubscribeEvent` | `{ username, tier }` | EventSub subscribe event |
+| `RaidEvent` | `{ username, viewers }` | EventSub raid event |
+| `GiftSubEvent` | `{ username, total }` | EventSub gift sub event |
+| `ResubEvent` | `{ username, months, message }` | EventSub resub event |
 | `BotStatus` | `{ isConnected, channel, reason? }` | IRC connection state change |
 | `AuthStateChanged` | `{ tokenType, isAuthenticated, twitchUsername, ... }` | OAuth login/logout/token refresh failure |
 | `PollCreated` | `{ id, question, options, durationSeconds, endsAt, createdBy, source }` | New poll started |
@@ -469,6 +498,9 @@ Built-in commands that live in code, not in the database. They can be enabled/di
 | `!join` | `!enter` | Enter the active raffle |
 | `!draw` | — | Draw a raffle winner (Mod+) |
 | `!cancelraffle` | `!rafflecancel` | Cancel the active raffle (Mod+) |
+| `!uptime` | `!live` | Show stream uptime |
+| `!so` | `!shoutout` | Shoutout a user with game info (Mod+) |
+| `!quote` | `!q`, `!addquote` | Add/retrieve/delete quotes |
 
 System commands are implemented via the `ISystemCommand` interface in Core and auto-registered in DI. They are checked before custom (DB) commands in the `CommandProcessor` pipeline. The API exposes them at `GET /api/commands/system`.
 

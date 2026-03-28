@@ -42,13 +42,28 @@ export function initApiToken(): void {
   }
 
   // Patch window.fetch to include the token header on all requests.
-  // Creates a new init object to avoid mutating the caller's original.
+  // Uses plain header objects (not the Headers class) to avoid WKWebView
+  // "The string did not match the expected pattern" errors.
   const originalFetch = window.fetch;
   window.fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     if (apiToken) {
-      const headers = new Headers(init?.headers);
-      headers.set("X-Wrkzg-Token", apiToken);
-      init = { ...init, headers };
+      const existing = init?.headers;
+      let headerRecord: Record<string, string> = {};
+
+      if (existing instanceof Headers) {
+        existing.forEach((value, key) => {
+          headerRecord[key] = value;
+        });
+      } else if (Array.isArray(existing)) {
+        for (const [key, value] of existing) {
+          headerRecord[key] = value;
+        }
+      } else if (existing && typeof existing === "object") {
+        headerRecord = { ...(existing as Record<string, string>) };
+      }
+
+      headerRecord["X-Wrkzg-Token"] = apiToken;
+      init = { ...init, headers: headerRecord };
     }
     return originalFetch.call(window, input, init);
   };

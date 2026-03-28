@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from "react";
+import { renderWithEmotes } from "../../lib/emotes";
 import type { ChatMsg } from "../../types/status";
 
 interface LiveChatProps {
@@ -101,7 +102,7 @@ export function LiveChat({
                 {msg.displayName}
               </span>
               <span className="text-[var(--color-text-muted)]">: </span>
-              <span className="text-[var(--color-text)]">{msg.content}</span>
+              <span className="text-[var(--color-text)]">{renderWithEmotes(msg.content, msg.emotes, 20)}</span>
             </div>
           ))
         )}

@@ -2,8 +2,8 @@
 
 This document describes all REST endpoints and SignalR events exposed by the Wrkzg local API.
 
-> **Base URL:** `http://localhost:5000`
-> The port defaults to `5000`. It is configurable via the `Bot.Port` setting.
+> **Base URL:** `http://localhost:5050`
+> The port defaults to `5050` (changed from 5000 to avoid macOS AirPlay Receiver conflict). It is configurable via the `Bot.Port` setting.
 
 ## Table of Contents
 
@@ -20,6 +20,9 @@ This document describes all REST endpoints and SignalR events exposed by the Wrk
 - [Raffles](#raffles)
 - [Timers](#timers)
 - [Counters](#counters)
+- [Quotes](#quotes)
+- [Notifications](#notifications)
+- [Overlays](#overlays)
 - [Spam Filter](#spam-filter)
 - [SignalR — Real-Time Events](#signalr--real-time-events)
 
@@ -322,7 +325,7 @@ Returns all settings as a flat key-value map.
 {
   "Bot.Channel": "yourchannel",
   "Bot.BotUsername": "",
-  "Bot.Port": "5000",
+  "Bot.Port": "5050",
   "Points.PerMinute": "10",
   "Points.SubMultiplier": "1.5",
   "Points.FollowBonus": "100",
@@ -630,6 +633,114 @@ Resets the counter to 0. **Response `200 OK`** with updated counter.
 
 ---
 
+## Quotes
+
+### `GET /api/quotes`
+
+Returns all quotes. Supports optional `search` query parameter.
+
+### `GET /api/quotes/{id}`
+
+Returns a single quote by ID.
+
+### `GET /api/quotes/random`
+
+Returns a random quote. Returns `404` if no quotes exist.
+
+### `POST /api/quotes`
+
+Creates a new quote.
+
+**Request Body:**
+
+```json
+{
+  "text": "This is a memorable moment!",
+  "addedBy": "username"
+}
+```
+
+Game name is auto-detected from the live stream if the broadcaster is live.
+
+**Response `201 Created`**
+
+### `DELETE /api/quotes/{id}`
+
+**Response `204 No Content`**
+
+---
+
+## Notifications
+
+### `GET /api/notifications/settings`
+
+Returns notification settings for all event types (follow, subscribe, giftsub, resub, raid).
+
+### `PUT /api/notifications/settings`
+
+Updates notification settings. Each event type has `enabled` (bool) and `template` (string with variables).
+
+### `POST /api/notifications/test/{eventType}`
+
+Sends a test notification to chat. Valid event types: `follow`, `subscribe`, `giftsub`, `resub`, `raid`.
+
+**Response `200 OK`**
+
+---
+
+## Overlays
+
+All overlay endpoints are accessible **without authentication** (for OBS Browser Source compatibility).
+
+### `GET /overlay/health`
+
+Health check for overlay reconnect polling. Returns `200 OK` when the server is running.
+
+### `GET /api/overlays/settings`
+
+Returns all overlay settings grouped by overlay type.
+
+### `GET /api/overlays/settings/{type}`
+
+Returns settings for a specific overlay type. Valid types: `alerts`, `chat`, `poll`, `raffle`, `counter`, `events`.
+
+### `PUT /api/overlays/settings/{type}`
+
+Updates settings for a specific overlay type.
+
+### `GET /api/overlays/url/{type}`
+
+Returns the OBS Browser Source URL and recommended dimensions for an overlay type.
+
+**Response `200 OK`:**
+
+```json
+{
+  "url": "http://localhost:5050/overlay/alerts",
+  "width": 400,
+  "height": 200,
+  "instructions": "Add as Browser Source in OBS. Set width to 400 and height to 200."
+}
+```
+
+### `GET /api/overlays/data/poll/active`
+
+Returns the currently active poll data for the poll overlay.
+
+### `GET /api/overlays/data/counters`
+
+Returns all counters for the counter overlay.
+
+### `GET /api/overlays/data/counter/{id}`
+
+Returns a single counter by ID for the counter overlay.
+
+### `POST /api/overlays/test/{eventType}`
+
+Sends a test event to overlay clients via SignalR. Valid types: `follow`, `subscribe`, `raid`, `giftsub`, `resub`.
+
+---
+
 ## Spam Filter
 
 ### `GET /api/spam-filter`
@@ -646,16 +757,30 @@ Updates the spam filter configuration.
 
 ## SignalR — Real-Time Events
 
-Connect to the SignalR hub at `/hubs/chat` for live dashboard updates.
+Connect to the SignalR hub at `/hubs/chat` for live updates. The hub supports two client groups:
 
-### Connecting (TypeScript)
+- **Dashboard** — Authenticated with `X-Wrkzg-Token` or `access_token` query param
+- **Overlay** — No authentication required, connect with `?source=overlay` query param
+
+### Connecting — Dashboard (TypeScript)
 
 ```typescript
 import { HubConnectionBuilder } from "@microsoft/signalr";
 
 const connection = new HubConnectionBuilder()
-  .withUrl("/hubs/chat")
+  .withUrl("/hubs/chat", { accessTokenFactory: () => apiToken })
   .withAutomaticReconnect()
+  .build();
+
+await connection.start();
+```
+
+### Connecting — Overlay (TypeScript)
+
+```typescript
+const connection = new HubConnectionBuilder()
+  .withUrl("/hubs/chat?source=overlay")
+  .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
   .build();
 
 await connection.start();

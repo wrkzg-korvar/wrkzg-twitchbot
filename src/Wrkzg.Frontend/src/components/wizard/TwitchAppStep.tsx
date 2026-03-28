@@ -11,7 +11,7 @@ export function TwitchAppStep({ onNext, onBack }: TwitchAppStepProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const redirectUri = `http://localhost:${window.location.port || "5000"}/auth/callback`;
+  const redirectUri = `http://localhost:${window.location.port || "5050"}/auth/callback`;
 
   const handleSave = async () => {
     if (!clientId.trim() || !clientSecret.trim()) return;

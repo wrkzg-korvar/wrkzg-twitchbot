@@ -4,7 +4,13 @@ export class ApiError extends Error {
   body?: unknown;
 
   constructor(status: number, statusText: string, body?: unknown) {
-    super(`API Error ${status}: ${statusText}`);
+    // Extract error message from body if available (backend returns { error: "..." })
+    const bodyMessage =
+      body && typeof body === "object" && "error" in body
+        ? String((body as Record<string, unknown>).error)
+        : null;
+
+    super(bodyMessage ?? `API Error ${status}: ${statusText}`);
     this.name = "ApiError";
     this.status = status;
     this.statusText = statusText;
@@ -27,7 +33,12 @@ async function handleResponse<T>(response: Response): Promise<T> {
     return undefined as T;
   }
 
-  return response.json();
+  const text = await response.text();
+  if (!text) {
+    return undefined as T;
+  }
+
+  return JSON.parse(text);
 }
 
 export const api = {
@@ -37,20 +48,22 @@ export const api = {
   },
 
   async post<T>(url: string, body?: unknown): Promise<T> {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: body ? { "Content-Type": "application/json" } : undefined,
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    const options: RequestInit = { method: "POST" };
+    if (body !== undefined && body !== null) {
+      options.headers = { "Content-Type": "application/json" };
+      options.body = JSON.stringify(body);
+    }
+    const res = await fetch(url, options);
     return handleResponse<T>(res);
   },
 
   async put<T>(url: string, body?: unknown): Promise<T> {
-    const res = await fetch(url, {
-      method: "PUT",
-      headers: body ? { "Content-Type": "application/json" } : undefined,
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    const options: RequestInit = { method: "PUT" };
+    if (body !== undefined && body !== null) {
+      options.headers = { "Content-Type": "application/json" };
+      options.body = JSON.stringify(body);
+    }
+    const res = await fetch(url, options);
     return handleResponse<T>(res);
   },
 

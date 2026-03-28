@@ -8,6 +8,7 @@ import {
   Hash,
   Clock,
   Bell,
+  Monitor,
   Shield,
   Users,
   Settings,
@@ -48,6 +49,12 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
     items: [
       { to: "/timers", label: "Timers", icon: Clock },
       { to: "/notifications", label: "Notifications", icon: Bell },
+    ],
+  },
+  {
+    label: "Stream",
+    items: [
+      { to: "/overlays", label: "Overlays", icon: Monitor },
     ],
   },
   {

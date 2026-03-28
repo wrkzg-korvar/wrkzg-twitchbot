@@ -39,7 +39,7 @@ export function RafflesPage() {
         description="Create raffles, draw winners, and browse history."
       />
 
-      <RaffleForm />
+      {!liveRaffle && <RaffleForm />}
 
       {liveRaffle && !liveRaffle.pendingWinner && !hasAcceptedDraws && (
         <ActiveRafflePanel raffle={liveRaffle} participants={participants} />
@@ -51,6 +51,7 @@ export function RafflesPage() {
           participants={participants}
           onAccept={handleAccept}
           onRedraw={handleRedraw}
+          onCancel={() => rafflesApi.cancel()}
         />
       )}
 

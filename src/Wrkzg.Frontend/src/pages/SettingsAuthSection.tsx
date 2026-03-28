@@ -89,7 +89,7 @@ function TwitchCredentialsSection() {
           </a>{" "}
           — set redirect URI to{" "}
           <code className="rounded bg-[var(--color-elevated)] px-1 text-sm">
-            http://localhost:5000/auth/callback
+            http://localhost:5050/auth/callback
           </code>
         </p>
       </div>

@@ -10,7 +10,7 @@ using Wrkzg.Core.Services;
 namespace Wrkzg.Api.Services;
 
 /// <summary>
-/// Broadcasts chat events and bot status to dashboard clients via SignalR.
+/// Broadcasts chat events and bot status to dashboard and overlay clients via SignalR.
 /// </summary>
 public class SignalRChatBroadcaster : IChatEventBroadcaster
 {
@@ -23,11 +23,22 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
         _buffer = buffer;
     }
 
+    /// <summary>
+    /// Sends a SignalR event to both the "dashboard" and "overlay" groups.
+    /// </summary>
+    private Task BroadcastToAllAsync(string method, object payload, CancellationToken ct)
+    {
+        return Task.WhenAll(
+            _hub.Clients.Group("dashboard").SendAsync(method, payload, ct),
+            _hub.Clients.Group("overlay").SendAsync(method, payload, ct)
+        );
+    }
+
     public Task BroadcastChatMessageAsync(ChatMessage message, CancellationToken ct = default)
     {
         _buffer.Add(message);
 
-        return _hub.Clients.Group("dashboard").SendAsync("ChatMessage", new
+        return BroadcastToAllAsync("ChatMessage", new
         {
             userId = message.UserId,
             username = message.Username,
@@ -36,18 +47,19 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
             isMod = message.IsModerator,
             isSubscriber = message.IsSubscriber,
             isBroadcaster = message.IsBroadcaster,
-            timestamp = message.Timestamp
+            timestamp = message.Timestamp,
+            emotes = message.Emotes
         }, ct);
     }
 
     public Task BroadcastViewerCountAsync(int count, CancellationToken ct = default)
     {
-        return _hub.Clients.Group("dashboard").SendAsync("ViewerCount", count, ct);
+        return BroadcastToAllAsync("ViewerCount", count, ct);
     }
 
     public Task BroadcastFollowEventAsync(string username, CancellationToken ct = default)
     {
-        return _hub.Clients.Group("dashboard").SendAsync("FollowEvent", new
+        return BroadcastToAllAsync("FollowEvent", new
         {
             username,
             timestamp = DateTimeOffset.UtcNow
@@ -56,7 +68,7 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
 
     public Task BroadcastSubscribeEventAsync(string username, int tier, CancellationToken ct = default)
     {
-        return _hub.Clients.Group("dashboard").SendAsync("SubscribeEvent", new
+        return BroadcastToAllAsync("SubscribeEvent", new
         {
             username,
             tier,
@@ -66,12 +78,12 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
 
     public Task BroadcastBotStatusAsync(object status, CancellationToken ct = default)
     {
-        return _hub.Clients.Group("dashboard").SendAsync("BotStatus", status, ct);
+        return BroadcastToAllAsync("BotStatus", status, ct);
     }
 
     public Task BroadcastPollCreatedAsync(Poll poll, CancellationToken ct = default)
     {
-        return _hub.Clients.Group("dashboard").SendAsync("PollCreated", new
+        return BroadcastToAllAsync("PollCreated", new
         {
             poll.Id,
             poll.Question,
@@ -85,7 +97,7 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
 
     public Task BroadcastPollVoteAsync(int pollId, int optionIndex, CancellationToken ct = default)
     {
-        return _hub.Clients.Group("dashboard").SendAsync("PollVote", new
+        return BroadcastToAllAsync("PollVote", new
         {
             pollId,
             optionIndex
@@ -94,12 +106,12 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
 
     public Task BroadcastPollEndedAsync(object results, CancellationToken ct = default)
     {
-        return _hub.Clients.Group("dashboard").SendAsync("PollEnded", results, ct);
+        return BroadcastToAllAsync("PollEnded", results, ct);
     }
 
     public Task BroadcastRaffleCreatedAsync(Raffle raffle, CancellationToken ct = default)
     {
-        return _hub.Clients.Group("dashboard").SendAsync("RaffleCreated", new
+        return BroadcastToAllAsync("RaffleCreated", new
         {
             raffle.Id,
             raffle.Title,
@@ -114,7 +126,7 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
 
     public Task BroadcastRaffleEntryAsync(int raffleId, string username, int entryCount, CancellationToken ct = default)
     {
-        return _hub.Clients.Group("dashboard").SendAsync("RaffleEntry", new
+        return BroadcastToAllAsync("RaffleEntry", new
         {
             raffleId,
             username,
@@ -124,7 +136,7 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
 
     public Task BroadcastRaffleDrawnAsync(int raffleId, string winnerName, int totalEntries, CancellationToken ct = default)
     {
-        return _hub.Clients.Group("dashboard").SendAsync("RaffleDrawn", new
+        return BroadcastToAllAsync("RaffleDrawn", new
         {
             raffleId,
             winnerName,
@@ -134,12 +146,12 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
 
     public Task BroadcastRaffleCancelledAsync(int raffleId, CancellationToken ct = default)
     {
-        return _hub.Clients.Group("dashboard").SendAsync("RaffleCancelled", new { raffleId }, ct);
+        return BroadcastToAllAsync("RaffleCancelled", new { raffleId }, ct);
     }
 
     public Task BroadcastRaffleDrawPendingAsync(int raffleId, string winnerName, string winnerTwitchId, int totalEntries, int drawNumber, CancellationToken ct = default)
     {
-        return _hub.Clients.Group("dashboard").SendAsync("RaffleDrawPending", new
+        return BroadcastToAllAsync("RaffleDrawPending", new
         {
             raffleId,
             winnerName,
@@ -151,7 +163,7 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
 
     public Task BroadcastRaffleWinnerAcceptedAsync(int raffleId, string winnerName, int drawNumber, CancellationToken ct = default)
     {
-        return _hub.Clients.Group("dashboard").SendAsync("RaffleWinnerAccepted", new
+        return BroadcastToAllAsync("RaffleWinnerAccepted", new
         {
             raffleId,
             winnerName,
@@ -161,17 +173,17 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
 
     public Task BroadcastRaffleEndedAsync(int raffleId, CancellationToken ct = default)
     {
-        return _hub.Clients.Group("dashboard").SendAsync("RaffleEnded", new { raffleId }, ct);
+        return BroadcastToAllAsync("RaffleEnded", new { raffleId }, ct);
     }
 
     public Task BroadcastCounterUpdatedAsync(int counterId, string name, int value, CancellationToken ct = default)
     {
-        return _hub.Clients.Group("dashboard").SendAsync("CounterUpdated", new { counterId, name, value }, ct);
+        return BroadcastToAllAsync("CounterUpdated", new { counterId, name, value }, ct);
     }
 
     public Task BroadcastRaidEventAsync(string username, int viewers, CancellationToken ct = default)
     {
-        return _hub.Clients.Group("dashboard").SendAsync("RaidEvent", new
+        return BroadcastToAllAsync("RaidEvent", new
         {
             username,
             viewers,
@@ -181,7 +193,7 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
 
     public Task BroadcastGiftSubEventAsync(string gifter, int count, int tier, CancellationToken ct = default)
     {
-        return _hub.Clients.Group("dashboard").SendAsync("GiftSubEvent", new
+        return BroadcastToAllAsync("GiftSubEvent", new
         {
             username = gifter,
             count,
@@ -192,7 +204,7 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
 
     public Task BroadcastResubEventAsync(string username, int months, int tier, string? message, CancellationToken ct = default)
     {
-        return _hub.Clients.Group("dashboard").SendAsync("ResubEvent", new
+        return BroadcastToAllAsync("ResubEvent", new
         {
             username,
             months,

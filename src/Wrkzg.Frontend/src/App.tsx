@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useSetupStatus } from "./hooks/useSetupStatus";
 import { DashboardLayout } from "./components/layout/DashboardLayout";
 import { ToastContainer } from "./components/ui/Toast";
@@ -14,8 +14,36 @@ import { CountersPage } from "./pages/CountersPage";
 import { QuotesPage } from "./pages/QuotesPage";
 import { SpamFilterPage } from "./pages/SpamFilterPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
+import { OverlaysPage } from "./pages/OverlaysPage";
+import { AlertOverlay } from "./components/overlay/AlertOverlay";
+import { ChatOverlay } from "./components/overlay/ChatOverlay";
+import { PollOverlay } from "./components/overlay/PollOverlay";
+import { RaffleOverlay } from "./components/overlay/RaffleOverlay";
+import { CounterOverlay } from "./components/overlay/CounterOverlay";
+import { EventListOverlay } from "./components/overlay/EventListOverlay";
 
 export default function App() {
+  const location = useLocation();
+
+  // Overlay routes bypass ALL app logic (no setup check, no auth, no layout)
+  // They run standalone in OBS Browser Sources
+  if (location.pathname.startsWith("/overlay/")) {
+    return (
+      <Routes>
+        <Route path="/overlay/alerts" element={<AlertOverlay />} />
+        <Route path="/overlay/chat" element={<ChatOverlay />} />
+        <Route path="/overlay/poll" element={<PollOverlay />} />
+        <Route path="/overlay/raffle" element={<RaffleOverlay />} />
+        <Route path="/overlay/counter" element={<CounterOverlay />} />
+        <Route path="/overlay/events" element={<EventListOverlay />} />
+      </Routes>
+    );
+  }
+
+  return <AppShell />;
+}
+
+function AppShell() {
   const { setupComplete, isLoading } = useSetupStatus();
 
   if (isLoading) {
@@ -29,7 +57,6 @@ export default function App() {
     );
   }
 
-  // If setup is not complete, show the wizard -- no other routes available
   if (!setupComplete) {
     return (
       <Routes>
@@ -39,7 +66,6 @@ export default function App() {
     );
   }
 
-  // Setup complete -- show the full dashboard
   return (
     <>
       <Routes>
@@ -54,9 +80,9 @@ export default function App() {
           <Route path="quotes" element={<QuotesPage />} />
           <Route path="spam-filter" element={<SpamFilterPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="overlays" element={<OverlaysPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
-        {/* Redirect unknown routes to dashboard */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <ToastContainer />

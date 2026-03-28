@@ -41,12 +41,12 @@ export function PollHistory({ items }: PollHistoryProps) {
           <tbody>
             {closedItems.map((poll) => (
               <tr key={poll.id} className="border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--color-elevated)] transition-colors">
-                <td className="px-4 py-2.5 text-[var(--color-text)]">{poll.question}</td>
-                <td className="px-4 py-2.5">
+                <td className="max-w-[200px] truncate px-4 py-2.5 text-[var(--color-text)]" title={poll.question}>{poll.question}</td>
+                <td className="max-w-[150px] truncate px-4 py-2.5">
                   {poll.winnerIndex !== null && poll.options[poll.winnerIndex] ? (
                     <span className="flex items-center gap-1 text-[var(--color-text)]">
-                      <Trophy className="h-3 w-3 text-yellow-500" />
-                      {poll.options[poll.winnerIndex]}
+                      <Trophy className="h-3 w-3 text-yellow-500 shrink-0" />
+                      <span className="truncate">{poll.options[poll.winnerIndex]}</span>
                     </span>
                   ) : (
                     <span className="text-[var(--color-text-muted)]">No votes</span>
