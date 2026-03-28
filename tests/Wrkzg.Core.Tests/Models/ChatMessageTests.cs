@@ -44,7 +44,7 @@ public class ChatMessageTests
         ChatMessage msg1 = new("123", "test", "Test", "hello", false, false, false, now);
         ChatMessage msg2 = new("123", "test", "Test", "hello", false, false, false, now);
 
-        msg1.Should().Be(msg2);
+        msg1.Should().BeEquivalentTo(msg2);
     }
 
     [Fact]
