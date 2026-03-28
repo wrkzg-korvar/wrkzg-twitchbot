@@ -28,16 +28,16 @@ export function initApiToken(): void {
     window.history.replaceState({}, "", cleanUrl);
   }
 
-  // Patch window.fetch to include the token header on all requests
+  // Patch window.fetch to include the token header on all requests.
+  // Creates a new init object to avoid mutating the caller's original.
   const originalFetch = window.fetch;
   window.fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     if (apiToken) {
-      init = init || {};
-      const headers = new Headers(init.headers);
+      const headers = new Headers(init?.headers);
       headers.set("X-Wrkzg-Token", apiToken);
-      init.headers = headers;
+      init = { ...init, headers };
     }
-    return originalFetch(input, init);
+    return originalFetch.call(window, input, init);
   };
 }
 

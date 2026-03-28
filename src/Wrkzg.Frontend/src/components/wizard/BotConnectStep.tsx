@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useAuthStatus } from "../../hooks/useAuthStatus";
-import { startOAuthFlow } from "../../api/auth";
+import { startOAuthFlow, disconnect } from "../../api/auth";
 
 interface BotConnectStepProps {
   onNext: () => void;
@@ -7,7 +8,18 @@ interface BotConnectStepProps {
 }
 
 export function BotConnectStep({ onNext, onBack }: BotConnectStepProps) {
-  const { bot } = useAuthStatus();
+  const { bot, refetch } = useAuthStatus();
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+
+  const handleDisconnect = async () => {
+    setIsDisconnecting(true);
+    try {
+      await disconnect("bot");
+      await refetch();
+    } finally {
+      setIsDisconnecting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -49,16 +61,33 @@ export function BotConnectStep({ onNext, onBack }: BotConnectStepProps) {
       {/* ─── Connection Status ──────────────────────────────── */}
       <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
         {bot.isAuthenticated ? (
-          <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500/20 text-lg">
-              ✓
-            </span>
-            <div>
-              <p className="text-sm font-semibold text-green-400">Bot account connected</p>
-              <p className="text-xs text-[var(--color-text-secondary)]">
-                Logged in as{" "}
-                <span className="text-[var(--color-twitch)] font-medium">{bot.twitchUsername}</span>
-              </p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500/20 text-lg">
+                ✓
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-green-400">Bot account connected</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">
+                  Logged in as{" "}
+                  <span className="text-[var(--color-twitch)] font-medium">{bot.twitchUsername}</span>
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => startOAuthFlow("bot")}
+                className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-elevated)] transition-colors"
+              >
+                Reconnect
+              </button>
+              <button
+                onClick={handleDisconnect}
+                disabled={isDisconnecting}
+                className="rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-40"
+              >
+                {isDisconnecting ? "..." : "Disconnect"}
+              </button>
             </div>
           </div>
         ) : (

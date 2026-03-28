@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
@@ -46,12 +47,21 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
 
     public Task BroadcastFollowEventAsync(string username, CancellationToken ct = default)
     {
-        return _hub.Clients.Group("dashboard").SendAsync("FollowEvent", new { username }, ct);
+        return _hub.Clients.Group("dashboard").SendAsync("FollowEvent", new
+        {
+            username,
+            timestamp = DateTimeOffset.UtcNow
+        }, ct);
     }
 
     public Task BroadcastSubscribeEventAsync(string username, int tier, CancellationToken ct = default)
     {
-        return _hub.Clients.Group("dashboard").SendAsync("SubscribeEvent", new { username, tier }, ct);
+        return _hub.Clients.Group("dashboard").SendAsync("SubscribeEvent", new
+        {
+            username,
+            tier,
+            timestamp = DateTimeOffset.UtcNow
+        }, ct);
     }
 
     public Task BroadcastBotStatusAsync(object status, CancellationToken ct = default)
@@ -157,5 +167,38 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
     public Task BroadcastCounterUpdatedAsync(int counterId, string name, int value, CancellationToken ct = default)
     {
         return _hub.Clients.Group("dashboard").SendAsync("CounterUpdated", new { counterId, name, value }, ct);
+    }
+
+    public Task BroadcastRaidEventAsync(string username, int viewers, CancellationToken ct = default)
+    {
+        return _hub.Clients.Group("dashboard").SendAsync("RaidEvent", new
+        {
+            username,
+            viewers,
+            timestamp = DateTimeOffset.UtcNow
+        }, ct);
+    }
+
+    public Task BroadcastGiftSubEventAsync(string gifter, int count, int tier, CancellationToken ct = default)
+    {
+        return _hub.Clients.Group("dashboard").SendAsync("GiftSubEvent", new
+        {
+            username = gifter,
+            count,
+            tier,
+            timestamp = DateTimeOffset.UtcNow
+        }, ct);
+    }
+
+    public Task BroadcastResubEventAsync(string username, int months, int tier, string? message, CancellationToken ct = default)
+    {
+        return _hub.Clients.Group("dashboard").SendAsync("ResubEvent", new
+        {
+            username,
+            months,
+            tier,
+            message,
+            timestamp = DateTimeOffset.UtcNow
+        }, ct);
     }
 }

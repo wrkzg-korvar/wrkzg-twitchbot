@@ -49,4 +49,13 @@ public interface IChatEventBroadcaster
 
     /// <summary>Notifies dashboard that a counter value changed.</summary>
     Task BroadcastCounterUpdatedAsync(int counterId, string name, int value, CancellationToken ct = default);
+
+    /// <summary>Notifies dashboard that a raid occurred.</summary>
+    Task BroadcastRaidEventAsync(string username, int viewers, CancellationToken ct = default);
+
+    /// <summary>Notifies dashboard of a gift sub event.</summary>
+    Task BroadcastGiftSubEventAsync(string gifter, int count, int tier, CancellationToken ct = default);
+
+    /// <summary>Notifies dashboard of a resub event.</summary>
+    Task BroadcastResubEventAsync(string username, int months, int tier, string? message, CancellationToken ct = default);
 }

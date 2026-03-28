@@ -12,6 +12,7 @@ import { Timers } from "./pages/Timers";
 import { Counters } from "./pages/Counters";
 import { Quotes } from "./pages/Quotes";
 import { SpamFilter } from "./pages/SpamFilter";
+import { Notifications } from "./pages/Notifications";
 
 export default function App() {
   const { setupComplete, isLoading } = useSetupStatus();
@@ -50,6 +51,7 @@ export default function App() {
         <Route path="counters" element={<Counters />} />
         <Route path="quotes" element={<Quotes />} />
         <Route path="spam-filter" element={<SpamFilter />} />
+        <Route path="notifications" element={<Notifications />} />
         <Route path="settings" element={<Settings />} />
       </Route>
       {/* Redirect unknown routes to dashboard */}

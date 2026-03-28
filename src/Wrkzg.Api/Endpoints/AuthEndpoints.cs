@@ -239,18 +239,22 @@ public static class AuthEndpoints
 
     private static async Task<IResult> GetSetupStatus(
         ISecureStorage storage,
+        ISettingsRepository settings,
         CancellationToken ct)
     {
         bool hasCredentials = await storage.HasCredentialsAsync(ct);
         TwitchTokens? botToken = await storage.LoadTokensAsync(TokenType.Bot, ct);
         TwitchTokens? broadcasterToken = await storage.LoadTokensAsync(TokenType.Broadcaster, ct);
+        string? channel = await settings.GetAsync("Bot.Channel", ct);
+        bool hasChannel = !string.IsNullOrWhiteSpace(channel);
 
         return Results.Ok(new
         {
             hasCredentials,
             hasBotToken = botToken is not null,
             hasBroadcasterToken = broadcasterToken is not null,
-            setupComplete = hasCredentials && botToken is not null && broadcasterToken is not null
+            hasChannel,
+            setupComplete = hasCredentials && botToken is not null && broadcasterToken is not null && hasChannel
         });
     }
 

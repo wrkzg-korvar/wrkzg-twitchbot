@@ -39,6 +39,7 @@ public class TwitchOAuthService : ITwitchOAuthService
         "channel:manage:polls " +
         "bits:read " +
         "channel:read:subscriptions " +
+        "moderator:manage:shoutouts " +
         "user:write:chat";
 
     private static readonly JsonSerializerOptions _jsonOptions = new()

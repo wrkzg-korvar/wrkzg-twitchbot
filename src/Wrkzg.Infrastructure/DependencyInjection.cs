@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
+using TwitchLib.EventSub.Websockets.Extensions;
 using Wrkzg.Core.Interfaces;
 using Wrkzg.Infrastructure.Data;
 using Wrkzg.Infrastructure.Repositories;
@@ -76,6 +77,10 @@ public static class DependencyInjection
         services.AddSingleton<BotConnectionService>();
         services.AddHostedService<BotConnectionService>(sp => sp.GetRequiredService<BotConnectionService>());
         services.AddSingleton<IBotConnectionService>(sp => sp.GetRequiredService<BotConnectionService>());
+
+        // EventSub WebSocket (TwitchLib — manages WebSocket, keepalive, reconnect)
+        services.AddTwitchLibEventSubWebsockets();
+        services.AddHostedService<EventSubConnectionService>();
 
         return services;
     }

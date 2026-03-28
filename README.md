@@ -321,9 +321,16 @@ For questions or ideas, open a **[GitHub Discussion](https://github.com/wrkzg-ko
 
 </details>
 
-### v1.3.0 — Live Events
-- Follow / Sub / Raid notifications via EventSub WebSocket
-- Chat announcements with customizable templates
+<details>
+<summary><strong>v1.3.0 — Live Events ✅</strong></summary>
+
+- EventSub WebSocket integration (TwitchLib.EventSub.Websockets)
+- Follow / Subscribe / Gift Sub / Resub / Raid notifications with customizable templates
+- Dashboard notification settings page with per-event toggles and test buttons
+- Dashboard activity feed with real-time event display
+- Auto-shoutout for raiders via Twitch Helix API
+
+</details>
 
 ### Future
 - Chat Games (Heist, Duel, Slots, Trivia, Roulette)

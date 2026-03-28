@@ -13,6 +13,13 @@ interface ChatMsg {
   timestamp: string;
 }
 
+interface LiveEvent {
+  type: "follow" | "subscribe" | "gift" | "resub" | "raid";
+  username: string;
+  detail?: string;
+  timestamp: string;
+}
+
 interface StatusResponse {
   bot: { isConnected: boolean; channel: string | null };
   stream: {
@@ -45,6 +52,7 @@ export function Dashboard() {
 
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [recentLoaded, setRecentLoaded] = useState(false);
+  const [events, setEvents] = useState<LiveEvent[]>([]);
 
   // Auto-scroll state
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -95,10 +103,40 @@ export function Dashboard() {
       queryClient.invalidateQueries({ queryKey: ["status"] });
     });
 
+    // Live event notifications
+    const addEvent = (event: LiveEvent) => {
+      setEvents((prev) => [event, ...prev].slice(0, 20));
+    };
+
+    on<{ username: string; timestamp: string }>("FollowEvent", (e) => {
+      addEvent({ type: "follow", username: e.username, timestamp: e.timestamp });
+    });
+
+    on<{ username: string; tier: number; timestamp: string }>("SubscribeEvent", (e) => {
+      addEvent({ type: "subscribe", username: e.username, detail: `Tier ${e.tier}`, timestamp: e.timestamp });
+    });
+
+    on<{ username: string; count: number; tier: number; timestamp: string }>("GiftSubEvent", (e) => {
+      addEvent({ type: "gift", username: e.username, detail: `${e.count}x Tier ${e.tier}`, timestamp: e.timestamp });
+    });
+
+    on<{ username: string; months: number; tier: number; timestamp: string }>("ResubEvent", (e) => {
+      addEvent({ type: "resub", username: e.username, detail: `${e.months} months`, timestamp: e.timestamp });
+    });
+
+    on<{ username: string; viewers: number; timestamp: string }>("RaidEvent", (e) => {
+      addEvent({ type: "raid", username: e.username, detail: `${e.viewers} viewers`, timestamp: e.timestamp });
+    });
+
     return () => {
       off("ChatMessage");
       off("BotStatus");
       off("ViewerCount");
+      off("FollowEvent");
+      off("SubscribeEvent");
+      off("GiftSubEvent");
+      off("ResubEvent");
+      off("RaidEvent");
     };
   }, [signalRConnected, on, off, queryClient]);
 
@@ -174,6 +212,34 @@ export function Dashboard() {
           color={status?.stream.isLive ? "purple" : "gray"}
         />
       </div>
+
+      {/* ─── Recent Events ──────────────────────────────────── */}
+      {events.length > 0 && (
+        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+          <h2 className="text-sm font-semibold text-[var(--color-text)] mb-2">Recent Events</h2>
+          <div className="space-y-1">
+            {events.slice(0, 5).map((event, i) => {
+              const icons: Record<string, string> = {
+                follow: "🎉", subscribe: "⭐", gift: "🎁", resub: "⭐", raid: "🚀",
+              };
+              const labels: Record<string, string> = {
+                follow: "followed", subscribe: "subscribed", gift: "gifted subs",
+                resub: "resubscribed", raid: "raided",
+              };
+              const ago = formatTimeAgo(event.timestamp);
+              return (
+                <div key={i} className="flex items-center justify-between text-xs">
+                  <span className="text-[var(--color-text-secondary)]">
+                    {icons[event.type]} <strong>{event.username}</strong> {labels[event.type]}
+                    {event.detail && <span className="text-[var(--color-text-muted)]"> ({event.detail})</span>}
+                  </span>
+                  <span className="text-[var(--color-text-muted)]">{ago}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ─── Live Chat Feed ─────────────────────────────────── */}
       <div className="flex flex-1 min-h-0 flex-col rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
@@ -277,4 +343,13 @@ function getUserColor(msg: ChatMsg): string {
   if (msg.isMod) return "#00cc00";
   if (msg.isSubscriber) return "#a970ff";
   return "#9ca3af";
+}
+
+function formatTimeAgo(timestamp: string): string {
+  const seconds = Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h ago`;
 }

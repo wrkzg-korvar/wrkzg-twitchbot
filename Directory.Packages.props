@@ -41,6 +41,7 @@
   <ItemGroup Label="Twitch">
     <PackageVersion Include="TwitchLib.Client"                         Version="3.4.0" />
     <PackageVersion Include="TwitchLib.Api"                            Version="3.10.1" />
+    <PackageVersion Include="TwitchLib.EventSub.Websockets"            Version="0.8.0" />
   </ItemGroup>
 
   <ItemGroup Label="HTTP / Resilience">

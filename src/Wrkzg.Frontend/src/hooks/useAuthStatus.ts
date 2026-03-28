@@ -7,7 +7,7 @@ export function useAuthStatus() {
   const queryClient = useQueryClient();
   const { isConnected, on, off } = useSignalR("/hubs/chat");
 
-  const { data, isLoading, error } = useQuery<AuthStatusResponse>({
+  const { data, isLoading, error, refetch } = useQuery<AuthStatusResponse>({
     queryKey: ["authStatus"],
     queryFn: getAuthStatus,
     refetchInterval: 5 * 60 * 1000,
@@ -43,5 +43,6 @@ export function useAuthStatus() {
     },
     isLoading,
     error,
+    refetch,
   };
 }

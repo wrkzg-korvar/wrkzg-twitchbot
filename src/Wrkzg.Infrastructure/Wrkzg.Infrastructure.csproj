@@ -43,6 +43,7 @@
     <ItemGroup Label="Twitch">
         <PackageReference Include="TwitchLib.Client" />
         <PackageReference Include="TwitchLib.Api" />
+        <PackageReference Include="TwitchLib.EventSub.Websockets" />
     </ItemGroup>
 
     <ItemGroup Label="HTTP / Resilience">

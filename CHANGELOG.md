@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] — 2026-03-28
+
+### Added
+
+- **EventSub WebSocket Integration** — real-time Twitch event notifications via EventSub WebSocket (TwitchLib.EventSub.Websockets); automatic connection lifecycle with exponential backoff reconnect; token validation and refresh
+- **Follow Notifications** — configurable chat message when someone follows; `{user}` template variable
+- **Subscribe Notifications** — new sub, gift sub, and resub events; `{user}`, `{tier}`, `{count}`, `{months}`, `{message}` template variables
+- **Raid Notifications** — chat message on incoming raids with `{user}` and `{viewers}` variables; optional auto-shoutout via Twitch Helix API
+- **Notification Settings Dashboard** — per-event-type enable/disable toggle, custom template editor, test button to preview in chat; available variables shown per event type
+- **Dashboard Activity Feed** — real-time "Recent Events" section showing follows, subs, raids via SignalR with relative timestamps
+- **Notification API** — GET/PUT settings per event type, POST test endpoint
+- **Broadcaster Scope** — added `moderator:manage:shoutouts` for auto-shoutout on raids
+
 ## [1.2.0] — 2026-03-28
 
 ### Added

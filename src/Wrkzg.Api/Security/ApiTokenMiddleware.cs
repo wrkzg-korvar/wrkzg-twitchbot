@@ -29,7 +29,10 @@ public sealed class ApiTokenMiddleware
         string path = context.Request.Path.Value ?? string.Empty;
 
         // Exempt: OAuth callback (called from external browser, not the Photino window)
-        if (path.StartsWith("/auth/callback", StringComparison.OrdinalIgnoreCase))
+        // Exempt: OAuth redirect and browser-open endpoints (initiated from setup wizard,
+        //         the redirect URL is opened in the system browser which doesn't have the token)
+        if (path.StartsWith("/auth/callback", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/auth/twitch/", StringComparison.OrdinalIgnoreCase))
         {
             await _next(context);
             return;
