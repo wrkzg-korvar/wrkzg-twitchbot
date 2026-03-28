@@ -91,6 +91,22 @@ public class TwitchHelixClient : ITwitchHelixClient
         }
     }
 
+    public async Task<ChannelInfo?> GetChannelInfoAsync(string broadcasterId, CancellationToken ct = default)
+    {
+        try
+        {
+            HelixResponse<ChannelInfo>? response = await _http.GetFromJsonAsync<HelixResponse<ChannelInfo>>(
+                $"channels?broadcaster_id={Uri.EscapeDataString(broadcasterId)}", _jsonOptions, ct);
+
+            return response?.Data?.FirstOrDefault();
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "Failed to get channel info for {BroadcasterId}", broadcasterId);
+            return null;
+        }
+    }
+
     public async Task<bool> TimeoutUserAsync(string userId, int durationSeconds, string reason, CancellationToken ct = default)
     {
         try

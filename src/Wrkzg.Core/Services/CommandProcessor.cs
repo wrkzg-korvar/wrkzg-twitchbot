@@ -362,8 +362,6 @@ public class CommandProcessor : ICommandProcessor
             return match.Value; // Leave unresolved if invalid
         });
 
-        // TODO: {uptime} — requires stream status from Helix API (future step)
-
         return result;
     }
 

@@ -311,11 +311,15 @@ For questions or ideas, open a **[GitHub Discussion](https://github.com/wrkzg-ko
 
 </details>
 
-### v1.2.0 — Chat Tools *(Next)*
-- Quotes System (`!quote add`, `!quote`, `!quote #`, dashboard page)
-- Shoutout Command (`!so @user` with Helix game lookup)
-- Uptime Command (`!uptime`)
-- Command Aliases
+<details>
+<summary><strong>v1.2.0 — Chat Tools ✅</strong></summary>
+
+- Quotes System (`!quote add`, `!quote`, `!quote #`, `!quote delete #`, dashboard page)
+- Shoutout Command (`!so @user` with Helix game/channel lookup)
+- Uptime Command (`!uptime` / `!live`)
+- Command Aliases (frontend editor, badge display in command table)
+
+</details>
 
 ### v1.3.0 — Live Events
 - Follow / Sub / Raid notifications via EventSub WebSocket

@@ -67,3 +67,7 @@ WrkzgUpdate.zip
 
 # --- AI Specific Files ---
 CLAUDE.md
+.claude
+.claude-flow
+.mcp.json
+schema.sql

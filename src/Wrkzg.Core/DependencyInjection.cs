@@ -27,6 +27,9 @@ public static class DependencyInjection
         services.AddSingleton<ISystemCommand, JoinRaffleCommand>();
         services.AddSingleton<ISystemCommand, DrawRaffleCommand>();
         services.AddSingleton<ISystemCommand, CancelRaffleCommand>();
+        services.AddSingleton<ISystemCommand, UptimeCommand>();
+        services.AddSingleton<ISystemCommand, ShoutoutCommand>();
+        services.AddSingleton<ISystemCommand, QuoteCommand>();
 
         // Poll System
         services.AddScoped<PollService>();

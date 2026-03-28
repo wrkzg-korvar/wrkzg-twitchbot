@@ -22,6 +22,7 @@ public class BotDbContext : DbContext
     public DbSet<SystemCommandOverride> SystemCommandOverrides => Set<SystemCommandOverride>();
     public DbSet<TimedMessage> TimedMessages => Set<TimedMessage>();
     public DbSet<Counter> Counters => Set<Counter>();
+    public DbSet<Quote> Quotes => Set<Quote>();
 
     public BotDbContext(DbContextOptions<BotDbContext> options) : base(options)
     {

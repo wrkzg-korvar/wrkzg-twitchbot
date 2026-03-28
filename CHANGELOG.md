@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] — 2026-03-28
+
+### Added
+
+- **Quotes System** — save memorable chat moments with `!quote add <text>`; retrieve random quotes with `!quote` or specific quotes with `!quote <number>`; delete with `!quote delete <number>` (mod only); game auto-detection from live stream; dashboard page with search, create, and delete; `!q` and `!addquote` aliases
+- **Shoutout Command** — `!so @username` posts a shoutout with the target's last played game via Helix API; strips `@` prefix; mod/broadcaster only; `!shoutout` alias; handles unknown users gracefully
+- **Uptime Command** — `!uptime` shows how long the stream has been live with smart formatting (days/hours/minutes/seconds); offline detection; `!live` alias
+- **Command Aliases (Frontend)** — aliases can now be created and edited in the dashboard command forms; alias badges displayed in the command table; comma-separated input field
+
 ## [1.1.0] — 2026-03-22
 
 ### Added

@@ -315,8 +315,15 @@ function CustomCommandRow({
         <td className="px-4 py-3">
           <code className="text-[var(--color-brand-text)]">{cmd.trigger}</code>
           {cmd.aliases.length > 0 && (
-            <span className="ml-2 text-xs text-[var(--color-text-muted)]">
-              +{cmd.aliases.length} alias{cmd.aliases.length > 1 ? "es" : ""}
+            <span className="ml-2 inline-flex flex-wrap gap-1">
+              {cmd.aliases.map((alias) => (
+                <span
+                  key={alias}
+                  className="rounded bg-[var(--color-elevated)] px-1.5 py-0.5 text-[10px] text-[var(--color-text-muted)] border border-[var(--color-border)]"
+                >
+                  {alias}
+                </span>
+              ))}
             </span>
           )}
         </td>
@@ -364,6 +371,7 @@ function CustomCommandRow({
 function EditCommandRow({ cmd, onDone }: { cmd: Command; onDone: () => void }) {
   const queryClient = useQueryClient();
   const [response, setResponse] = useState(cmd.responseTemplate);
+  const [aliases, setAliases] = useState(cmd.aliases.join(", "));
   const [permission, setPermission] = useState(cmd.permissionLevel);
   const [globalCooldown, setGlobalCooldown] = useState(cmd.globalCooldownSeconds);
   const [userCooldown, setUserCooldown] = useState(cmd.userCooldownSeconds);
@@ -373,12 +381,19 @@ function EditCommandRow({ cmd, onDone }: { cmd: Command; onDone: () => void }) {
   const handleSave = async () => {
     setIsSaving(true);
     setError(null);
+
+    const parsedAliases = aliases
+      .split(",")
+      .map((a) => a.trim().toLowerCase())
+      .filter((a) => a.length > 0);
+
     try {
       const res = await fetch(`/api/commands/${cmd.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           responseTemplate: response.trim(),
+          aliases: parsedAliases,
           permissionLevel: permission,
           globalCooldownSeconds: globalCooldown,
           userCooldownSeconds: userCooldown,
@@ -415,6 +430,19 @@ function EditCommandRow({ cmd, onDone }: { cmd: Command; onDone: () => void }) {
                 className={inputClass}
               />
             </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Aliases</label>
+            <input
+              type="text"
+              value={aliases}
+              onChange={(e) => setAliases(e.target.value)}
+              placeholder="!dc, !disc"
+              className={inputClass}
+            />
+            <span className="text-[10px] text-[var(--color-text-muted)] mt-1 block">
+              Comma-separated alternative triggers.
+            </span>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
@@ -462,6 +490,7 @@ function EditCommandRow({ cmd, onDone }: { cmd: Command; onDone: () => void }) {
 
 function CreateCommandForm({ onCreated }: { onCreated: () => void }) {
   const [trigger, setTrigger] = useState("!");
+  const [aliases, setAliases] = useState("");
   const [response, setResponse] = useState("");
   const [permission, setPermission] = useState(0);
   const [globalCooldown, setGlobalCooldown] = useState(5);
@@ -473,12 +502,18 @@ function CreateCommandForm({ onCreated }: { onCreated: () => void }) {
     setIsSaving(true);
     setError(null);
 
+    const parsedAliases = aliases
+      .split(",")
+      .map((a) => a.trim().toLowerCase())
+      .filter((a) => a.length > 0);
+
     try {
       const res = await fetch("/api/commands", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           trigger: trigger.trim().toLowerCase(),
+          aliases: parsedAliases.length > 0 ? parsedAliases : undefined,
           responseTemplate: response.trim(),
           permissionLevel: permission,
           globalCooldownSeconds: globalCooldown,
@@ -524,6 +559,20 @@ function CreateCommandForm({ onCreated }: { onCreated: () => void }) {
             className={inputClass}
           />
         </div>
+      </div>
+
+      <div>
+        <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Aliases</label>
+        <input
+          type="text"
+          value={aliases}
+          onChange={(e) => setAliases(e.target.value)}
+          placeholder="!dc, !disc"
+          className={inputClass}
+        />
+        <span className="text-[10px] text-[var(--color-text-muted)] mt-1 block">
+          Comma-separated alternative triggers for this command.
+        </span>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

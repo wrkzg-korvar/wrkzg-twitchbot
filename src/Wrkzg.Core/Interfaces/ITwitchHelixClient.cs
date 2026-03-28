@@ -25,6 +25,12 @@ public interface ITwitchHelixClient
     /// </summary>
     Task<bool> SendChatMessageAsync(string broadcasterId, string senderId, string message, CancellationToken ct = default);
 
+    /// <summary>
+    /// Gets channel information including the game/category.
+    /// Helix API: GET /channels?broadcaster_id={id}
+    /// </summary>
+    Task<ChannelInfo?> GetChannelInfoAsync(string broadcasterId, CancellationToken ct = default);
+
     /// <summary>Timeouts a user in the channel via Helix API (POST /moderation/bans).</summary>
     Task<bool> TimeoutUserAsync(string userId, int durationSeconds, string reason, CancellationToken ct = default);
 
@@ -76,4 +82,15 @@ public sealed class HelixUserInfo
     public string Id { get; init; } = string.Empty;
     public string Login { get; init; } = string.Empty;
     public string DisplayName { get; init; } = string.Empty;
+}
+
+/// <summary>
+/// Channel information from the Helix "Get Channel Information" endpoint.
+/// </summary>
+public sealed class ChannelInfo
+{
+    public string BroadcasterId { get; init; } = string.Empty;
+    public string BroadcasterName { get; init; } = string.Empty;
+    public string GameName { get; init; } = string.Empty;
+    public string Title { get; init; } = string.Empty;
 }
