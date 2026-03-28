@@ -111,10 +111,11 @@ public class TwitchOAuthService : ITwitchOAuthService
         if (!response.IsSuccessStatusCode)
         {
             string errorBody = await response.Content.ReadAsStringAsync(ct);
+            string sanitizedBody = errorBody.Length > 200 ? errorBody[..200] + "…" : errorBody;
             _logger.LogError("Token exchange failed: {StatusCode} — {Body}",
-                response.StatusCode, errorBody);
+                response.StatusCode, sanitizedBody);
             throw new HttpRequestException(
-                $"Twitch token exchange failed ({response.StatusCode}): {errorBody}");
+                $"Twitch token exchange failed ({response.StatusCode})");
         }
 
         TwitchTokens? tokens = await response.Content.ReadFromJsonAsync<TwitchTokens>(
@@ -151,10 +152,11 @@ public class TwitchOAuthService : ITwitchOAuthService
         if (!response.IsSuccessStatusCode)
         {
             string errorBody = await response.Content.ReadAsStringAsync(ct);
+            string sanitizedBody = errorBody.Length > 200 ? errorBody[..200] + "…" : errorBody;
             _logger.LogWarning("Token refresh failed: {StatusCode} — {Body}",
-                response.StatusCode, errorBody);
+                response.StatusCode, sanitizedBody);
             throw new HttpRequestException(
-                $"Twitch token refresh failed ({response.StatusCode}): {errorBody}");
+                $"Twitch token refresh failed ({response.StatusCode})");
         }
 
         TwitchTokens? tokens = await response.Content.ReadFromJsonAsync<TwitchTokens>(

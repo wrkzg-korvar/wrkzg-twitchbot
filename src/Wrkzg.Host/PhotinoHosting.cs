@@ -4,8 +4,10 @@ using System.Linq;
 using System.Net.Http;
 using System.Runtime.Versioning;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Photino.NET;
+using Wrkzg.Api.Security;
 
 namespace Wrkzg.Host;
 
@@ -34,16 +36,20 @@ public static class PhotinoHosting
 
             // URL bestimmen
             string kestrelUrl = app.Urls.First();
-            string url;
+            string baseUrl;
 
             if (app.Environment.IsDevelopment() && IsViteRunning())
             {
-                url = ViteDevUrl;
+                baseUrl = ViteDevUrl;
             }
             else
             {
-                url = kestrelUrl;
+                baseUrl = kestrelUrl;
             }
+
+            // Append the per-session API token so the frontend can authenticate requests
+            ApiTokenService tokenService = app.Services.GetRequiredService<ApiTokenService>();
+            string url = $"{baseUrl}?__wrkzg_token={Uri.EscapeDataString(tokenService.Token)}";
 
             // Resolve icon path (relative to the executable)
             string iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "icon.png");

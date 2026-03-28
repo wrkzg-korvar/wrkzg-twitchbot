@@ -1,13 +1,18 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import * as signalR from "@microsoft/signalr";
+import { getApiToken } from "../lib/apiToken";
 
 export function useSignalR(hubUrl: string) {
   const connectionRef = useRef<signalR.HubConnection | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
+    // Include API token as access_token query param for WebSocket authentication
+    const token = getApiToken();
+    const authenticatedUrl = token ? `${hubUrl}?access_token=${encodeURIComponent(token)}` : hubUrl;
+
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(hubUrl)
+      .withUrl(authenticatedUrl)
       .withAutomaticReconnect()
       .build();
 

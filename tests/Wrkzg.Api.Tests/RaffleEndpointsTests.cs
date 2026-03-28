@@ -13,7 +13,7 @@ public class RaffleEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
     public RaffleEndpointsTests(CustomWebApplicationFactory factory)
     {
-        _client = factory.CreateClient();
+        _client = factory.CreateAuthenticatedClient();
     }
 
     [Fact]

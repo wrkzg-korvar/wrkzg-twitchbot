@@ -13,7 +13,7 @@ public class CounterEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
     public CounterEndpointsTests(CustomWebApplicationFactory factory)
     {
-        _client = factory.CreateClient();
+        _client = factory.CreateAuthenticatedClient();
     }
 
     [Fact]

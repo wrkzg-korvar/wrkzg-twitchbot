@@ -15,7 +15,7 @@ public class CommandEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
     public CommandEndpointsTests(CustomWebApplicationFactory factory)
     {
-        _client = factory.CreateClient();
+        _client = factory.CreateAuthenticatedClient();
     }
 
     [Fact]

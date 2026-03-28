@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -296,6 +297,7 @@ public static class AuthEndpoints
     {
         if (OperatingSystem.IsWindows())
         {
+            // Windows: UseShellExecute with a URL is safe (shell handles it directly)
             Process.Start(new ProcessStartInfo
             {
                 FileName = url,
@@ -304,11 +306,17 @@ public static class AuthEndpoints
         }
         else if (OperatingSystem.IsMacOS())
         {
-            Process.Start("open", url);
+            // macOS: use ArgumentList to prevent argument injection
+            ProcessStartInfo psi = new() { FileName = "open", UseShellExecute = false };
+            psi.ArgumentList.Add(url);
+            Process.Start(psi);
         }
         else if (OperatingSystem.IsLinux())
         {
-            Process.Start("xdg-open", url);
+            // Linux: use ArgumentList to prevent argument injection
+            ProcessStartInfo psi = new() { FileName = "xdg-open", UseShellExecute = false };
+            psi.ArgumentList.Add(url);
+            Process.Start(psi);
         }
         else
         {
@@ -376,6 +384,9 @@ public static class AuthEndpoints
         string bgColor = success ? "#10b981" : "#ef4444";
         string icon = success ? "✓" : "✗";
         string title = success ? "Connected!" : "Connection Failed";
+        // HTML-encode to prevent XSS via error_description or other user-controlled values
+        string safeMessage = WebUtility.HtmlEncode(message);
+        string safeTitle = WebUtility.HtmlEncode(title);
 
         return $$"""
             <!DOCTYPE html>
@@ -383,7 +394,7 @@ public static class AuthEndpoints
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Wrkzg — {{title}}</title>
+                <title>Wrkzg — {{safeTitle}}</title>
                 <style>
                     * { margin: 0; padding: 0; box-sizing: border-box; }
                     body {
@@ -405,8 +416,8 @@ public static class AuthEndpoints
             <body>
                 <div class="card">
                     <div class="icon">{{icon}}</div>
-                    <h1>{{title}}</h1>
-                    <p>{{message}}</p>
+                    <h1>{{safeTitle}}</h1>
+                    <p>{{safeMessage}}</p>
                     <p class="hint">
                         {{(success
                             ? "You can close this browser tab and return to the Wrkzg app."

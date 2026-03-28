@@ -14,7 +14,7 @@ public class SettingsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
     public SettingsEndpointsTests(CustomWebApplicationFactory factory)
     {
-        _client = factory.CreateClient();
+        _client = factory.CreateAuthenticatedClient();
     }
 
     [Fact]

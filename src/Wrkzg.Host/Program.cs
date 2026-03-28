@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Wrkzg.Api;
 using Wrkzg.Api.Endpoints;
 using Wrkzg.Api.Hubs;
+using Wrkzg.Api.Security;
 using Wrkzg.Core;
 using Wrkzg.Core.Interfaces;
 using Wrkzg.Host;
@@ -46,6 +47,15 @@ if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
 }
+
+// ─── Security ────────────────────────────────────────────────────────
+// Security headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy)
+app.UseMiddleware<SecurityHeadersMiddleware>();
+
+// API token validation: all /api, /auth, /hubs routes require the session token.
+// The Photino WebView receives the token via URL query parameter on startup.
+app.UseMiddleware<ApiTokenMiddleware>();
+app.UseCors();
 
 // ─── Static Files ─────────────────────────────────────────────────────
 // The React SPA build output lives in Wrkzg.Api/wwwroot/ (built by Vite).

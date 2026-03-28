@@ -113,8 +113,8 @@ public class MacOsSecureStorage : ISecureStorage
         try
         {
             // Delete existing entry first (add fails if entry exists)
-            await RunSecurityAsync($"delete-generic-password -s \"{ServiceName}\" -a \"{account}\"", throwOnError: false);
-            await RunSecurityAsync($"add-generic-password -s \"{ServiceName}\" -a \"{account}\" -w \"{EscapeForShell(value)}\" -U");
+            await RunSecurityAsync(new[] { "delete-generic-password", "-s", ServiceName, "-a", account }, throwOnError: false);
+            await RunSecurityAsync(new[] { "add-generic-password", "-s", ServiceName, "-a", account, "-w", value, "-U" });
         }
         finally
         {
@@ -128,7 +128,7 @@ public class MacOsSecureStorage : ISecureStorage
         try
         {
             return await RunSecurityAsync(
-                $"find-generic-password -s \"{ServiceName}\" -a \"{account}\" -w",
+                new[] { "find-generic-password", "-s", ServiceName, "-a", account, "-w" },
                 throwOnError: false);
         }
         finally
@@ -143,7 +143,7 @@ public class MacOsSecureStorage : ISecureStorage
         try
         {
             await RunSecurityAsync(
-                $"delete-generic-password -s \"{ServiceName}\" -a \"{account}\"",
+                new[] { "delete-generic-password", "-s", ServiceName, "-a", account },
                 throwOnError: false);
         }
         finally
@@ -152,17 +152,25 @@ public class MacOsSecureStorage : ISecureStorage
         }
     }
 
-    private async Task<string?> RunSecurityAsync(string arguments, bool throwOnError = true)
+    /// <summary>
+    /// Runs the macOS <c>security</c> CLI using ArgumentList (not shell-interpolated Arguments)
+    /// to prevent shell injection attacks.
+    /// </summary>
+    private async Task<string?> RunSecurityAsync(string[] args, bool throwOnError = true)
     {
         ProcessStartInfo psi = new()
         {
             FileName = "/usr/bin/security",
-            Arguments = arguments,
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             CreateNoWindow = true
         };
+
+        foreach (string arg in args)
+        {
+            psi.ArgumentList.Add(arg);
+        }
 
         using Process? process = Process.Start(psi);
         if (process is null)
@@ -193,14 +201,5 @@ public class MacOsSecureStorage : ISecureStorage
         }
 
         return stdout;
-    }
-
-    private static string EscapeForShell(string value)
-    {
-        return value
-            .Replace("\\", "\\\\")
-            .Replace("\"", "\\\"")
-            .Replace("$", "\\$")
-            .Replace("`", "\\`");
     }
 }

@@ -12,7 +12,7 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
     public AuthEndpointsTests(CustomWebApplicationFactory factory)
     {
-        _client = factory.CreateClient();
+        _client = factory.CreateAuthenticatedClient();
     }
 
     [Fact]

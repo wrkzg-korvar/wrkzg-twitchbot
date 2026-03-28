@@ -1,10 +1,12 @@
 using System;
+using System.Net.Http;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
+using Wrkzg.Api.Security;
 using Wrkzg.Api.Tests.Fakes;
 using Wrkzg.Core.Interfaces;
 using Wrkzg.Infrastructure.Data;
@@ -77,6 +79,18 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IDisp
                 services.RemoveAt(i);
             }
         }
+    }
+
+    /// <summary>
+    /// Creates an HttpClient with the API session token pre-configured as a default header.
+    /// All test clients must use this to pass the ApiTokenMiddleware.
+    /// </summary>
+    public HttpClient CreateAuthenticatedClient()
+    {
+        HttpClient client = CreateClient();
+        ApiTokenService tokenService = Services.GetRequiredService<ApiTokenService>();
+        client.DefaultRequestHeaders.Add("X-Wrkzg-Token", tokenService.Token);
+        return client;
     }
 
     protected override void Dispose(bool disposing)

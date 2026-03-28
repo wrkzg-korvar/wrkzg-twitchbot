@@ -42,8 +42,13 @@ public static class DependencyInjection
         {
             services.AddSingleton<ISecureStorage, MacOsSecureStorage>();
         }
-        // else: No ISecureStorage on unsupported platforms.
-        // Tests provide their own fake; the runtime app only runs on Windows/macOS.
+        else
+        {
+            // Explicit fallback: throws PlatformNotSupportedException at usage time
+            // instead of silently failing with a DI resolution crash.
+            // Tests provide their own fake via DI override.
+            services.AddSingleton<ISecureStorage, UnsupportedPlatformSecureStorage>();
+        }
 
         // Twitch OAuth Service (own HttpClient with resilience pipeline)
         services.AddHttpClient<ITwitchOAuthService, TwitchOAuthService>(client =>

@@ -8,6 +8,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': 'http://localhost:5000',      // zur Kestrel API
+      '/auth': 'http://localhost:5000',     // OAuth + setup endpoints
       '/hubs': {
         target: 'http://localhost:5000',
         ws: true                            // WebSocket für SignalR

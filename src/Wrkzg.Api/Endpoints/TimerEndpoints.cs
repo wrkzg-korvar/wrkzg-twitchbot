@@ -78,6 +78,11 @@ public static class TimerEndpoints
             }
             if (request.IntervalMinutes.HasValue)
             {
+                if (request.IntervalMinutes.Value < 1 || request.IntervalMinutes.Value > 1440)
+                {
+                    return Results.BadRequest(new { error = "Interval must be between 1 and 1440 minutes." });
+                }
+
                 timer.IntervalMinutes = request.IntervalMinutes.Value;
             }
             if (request.MinChatLines.HasValue)
