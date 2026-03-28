@@ -152,19 +152,23 @@ interface RaffleVerificationProps {
   participants: string[];
   onAccept: () => Promise<void>;
   onRedraw: () => Promise<void>;
+  onCancel?: () => Promise<void>;
 }
 
-export function RaffleVerification({ raffle, participants, onAccept, onRedraw }: RaffleVerificationProps) {
+export function RaffleVerification({ raffle, participants, onAccept, onRedraw, onCancel }: RaffleVerificationProps) {
+  const queryClient = useQueryClient();
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [acceptPending, setAcceptPending] = useState(false);
   const [redrawPending, setRedrawPending] = useState(false);
+  const [cancelPending, setCancelPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   const pendingWinner = raffle.pendingWinner;
   const draws = raffle.draws || [];
   const currentDraw = draws.length > 0 ? draws[draws.length - 1] : null;
-  const actionPending = acceptPending || redrawPending;
+  const actionPending = acceptPending || redrawPending || cancelPending;
 
   const pendingWinnerRef = useRef(pendingWinner);
   pendingWinnerRef.current = pendingWinner;
@@ -186,6 +190,11 @@ export function RaffleVerification({ raffle, participants, onAccept, onRedraw }:
     const interval = setInterval(fetchMessages, 3000);
     return () => clearInterval(interval);
   }, [pendingWinner, fetchMessages]);
+
+  // Auto-scroll chat to bottom when new messages arrive
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const handleAcceptClick = async () => {
     setAcceptPending(true);
@@ -246,15 +255,17 @@ export function RaffleVerification({ raffle, participants, onAccept, onRedraw }:
         ) : messages.length === 0 ? (
           <p className="text-xs text-[var(--color-text-muted)]">No recent messages found</p>
         ) : (
-          <div className="max-h-32 overflow-y-auto space-y-1">
+          <div className="max-h-40 overflow-y-auto space-y-1">
             {messages.map((msg, i) => (
               <div key={i} className="flex gap-2 text-xs">
                 <span className="shrink-0 text-[var(--color-text-muted)]">
                   {new Date(msg.timestamp).toLocaleTimeString()}
                 </span>
+                <span className="font-semibold text-[var(--color-brand-text)] shrink-0">{msg.displayName}:</span>
                 <span className="text-[var(--color-text)]">{msg.content}</span>
               </div>
             ))}
+            <div ref={chatEndRef} />
           </div>
         )}
       </div>
@@ -276,6 +287,29 @@ export function RaffleVerification({ raffle, participants, onAccept, onRedraw }:
           <RotateCcw className="h-4 w-4" />
           {redrawPending ? "Redrawing..." : "Redraw"}
         </button>
+        {onCancel && (
+          <button
+            onClick={async () => {
+              setCancelPending(true);
+              setError(null);
+              try {
+                await onCancel();
+                showToast("info", "Raffle cancelled");
+                queryClient.invalidateQueries({ queryKey: ["raffleActive"] });
+                queryClient.invalidateQueries({ queryKey: ["raffleHistory"] });
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Cancel failed");
+              } finally {
+                setCancelPending(false);
+              }
+            }}
+            disabled={actionPending}
+            className="flex items-center gap-1.5 rounded-lg border border-red-500/30 px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors ml-auto"
+          >
+            <X className="h-4 w-4" />
+            {cancelPending ? "Cancelling..." : "Cancel Raffle"}
+          </button>
+        )}
       </div>
 
       {error && (

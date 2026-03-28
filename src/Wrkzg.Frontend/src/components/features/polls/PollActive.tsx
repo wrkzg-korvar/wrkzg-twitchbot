@@ -32,7 +32,10 @@ export function PollActive({ poll }: PollActiveProps) {
       queryClient.invalidateQueries({ queryKey: ["pollActive"] });
       queryClient.invalidateQueries({ queryKey: ["pollHistory"] });
     },
-    onError: (err: Error) => showToast("error", err.message),
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : "Failed to cancel poll";
+      showToast("error", msg.replace("API Error 400: Bad Request", "No active poll to cancel"));
+    },
   });
 
   return (

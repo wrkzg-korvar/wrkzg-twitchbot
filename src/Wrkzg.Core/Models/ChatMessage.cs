@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Wrkzg.Core.Models;
 
@@ -19,4 +20,10 @@ public sealed record ChatMessage(
 {
     /// <summary>The channel the message was received in.</summary>
     public string Channel { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Emotes in this message. Key: emote ID, Value: list of "startIndex-endIndex" positions.
+    /// Used by overlays to render Twitch emote images.
+    /// </summary>
+    public Dictionary<string, List<string>> Emotes { get; init; } = new();
 }

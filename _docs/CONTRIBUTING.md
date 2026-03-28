@@ -12,7 +12,7 @@ Thank you for your interest in contributing! This document covers everything you
 - [Coding Conventions](#coding-conventions)
 - [Commit Messages](#commit-messages)
 - [Pull Request Process](#pull-request-process)
-- [How to Add a Chat Game](#how-to-add-a-chat-game)
+- [How to Add a System Command](#how-to-add-a-system-command)
 - [How to Add an API Endpoint](#how-to-add-an-api-endpoint)
 
 ---
@@ -59,7 +59,7 @@ You need your own Twitch Developer Application to test OAuth and API calls:
 1. Go to [dev.twitch.tv/console](https://dev.twitch.tv/console)
 2. Register a new application:
     - Name: `Wrkzg-Dev`
-    - OAuth Redirect URL: `http://localhost:5000/auth/callback`
+    - OAuth Redirect URL: `http://localhost:5050/auth/callback`
     - Category: `Chat Bot`
     - Client Type: `Confidential`
 3. Click "New Secret" to generate a Client Secret
@@ -72,7 +72,7 @@ You need your own Twitch Developer Application to test OAuth and API calls:
     "ClientSecret": "your_client_secret_here"
   },
   "Bot": {
-    "Port": 5000
+    "Port": 5050
   }
 }
 ```
@@ -103,7 +103,7 @@ cd src/Wrkzg.Frontend && npm run build && cd ../..
 dotnet run --project src/Wrkzg.Host
 ```
 
-Photino opens the built SPA from `Wrkzg.Api/wwwroot/`. The console shows `[Photino] Using Kestrel at http://localhost:5000`.
+Photino opens the built SPA from `Wrkzg.Api/wwwroot/`. The console shows `[Photino] Using Kestrel at http://localhost:5050`.
 
 ### Theme Development
 
@@ -242,36 +242,35 @@ docs: update CONTRIBUTING setup instructions
 
 ---
 
-## How to Add a Chat Game
+## How to Add a System Command
 
-Chat games live in `Wrkzg.Core/ChatGames/`. They are auto-discovered via assembly scan — no manual registration needed.
+System commands live in `Wrkzg.Core/SystemCommands/`. They are auto-discovered via assembly scan — no manual registration needed.
 
-**Step 1:** Create a new class implementing `IChatGame`:
+**Step 1:** Create a new class implementing `ISystemCommand`:
 
 ```csharp
-namespace Wrkzg.Core.ChatGames;
+namespace Wrkzg.Core.SystemCommands;
 
-public class MyGame : IChatGame
+public class MyCommand : ISystemCommand
 {
-    public string Name => "MyGame";
-    public string TriggerCommand => "!mygame";
-    public string Description => "A short description shown in the dashboard.";
-    public bool IsActive => false;
+    public string Trigger => "!mycommand";
+    public string[] Aliases => [];
+    public string Description => "A short description for the dashboard.";
+    public PermissionLevel RequiredPermission => PermissionLevel.Everyone;
 
-    public Task<bool> StartAsync(ChatMessage initiator, CancellationToken ct = default)
-        => Task.FromResult(true);
-
-    public Task StopAsync(CancellationToken ct = default)
-        => Task.CompletedTask;
-
-    public Task<bool> HandleMessageAsync(ChatMessage message, CancellationToken ct = default)
-        => Task.FromResult(false);
+    public async Task<string?> ExecuteAsync(
+        ChatMessage message,
+        IServiceProvider services,
+        CancellationToken ct = default)
+    {
+        return $"Hello, {message.DisplayName}!";
+    }
 }
 ```
 
-**Step 2:** Add unit tests in `Wrkzg.Core.Tests/ChatGames/MyGameTests.cs`.
+**Step 2:** Add unit tests in `Wrkzg.Core.Tests/SystemCommands/MyCommandTests.cs`.
 
-**Step 3:** That's it. The game is automatically registered in DI.
+**Step 3:** That's it. The command is automatically registered in DI and shows up in the dashboard under System Commands (with enable/disable toggle and custom response override).
 
 ---
 

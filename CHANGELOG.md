@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] — 2026-03-28
+
+### Added
+
+- **OBS Overlay Browser Sources** — 6 real-time overlay types for OBS Studio:
+  - Alert Box: animated follow/sub/raid notifications with configurable animations (slideDown, fadeIn, bounceIn, zoomIn) and event queue
+  - Chat Box: live chat display with role-colored usernames, text shadows, and auto-fade
+  - Poll Overlay: animated bar chart with live vote updates and countdown timer
+  - Raffle Overlay: winner reveal animation with confetti effect
+  - Counter Overlay: single counter display with animated value changes (URL param: ?id=)
+  - Event List: scrolling recent events feed with slide-in animation
+- **Overlays Dashboard Page** — configure all overlay types with live iframe preview, Copy URL button, and settings modal (font size, colors, animations, message templates)
+- **SignalR Dual Groups** — dashboard and overlay clients in separate groups; overlays connect without auth token (`?source=overlay`)
+- **Overlay Settings API** — GET/PUT per overlay type with defaults, read-only accessible without auth for OBS Browser Sources
+- **Frontend Reorganization** — component library (PageHeader, Button, Card, Modal, Toggle, Badge, EmptyState, DataTable, SearchInput, FormField, Toast, ConfirmDialog, UpdateBanner), grouped sidebar, slim page shells, centralized API client
+- **GitHub Update Check** — banner notification when new release is available, dismissable per version
+
+### Changed
+
+- **Default port changed from 5000 to 5050** — avoids conflict with macOS AirPlay Receiver (ControlCenter) which listens on port 5000; port is configurable via `Bot:Port` in appsettings.json
+- All pages decomposed into feature subcomponents (max 150 lines per page shell)
+- All browser `confirm()` dialogs replaced with custom ConfirmDialog component
+- All tables wrapped in DataTable component with horizontal scroll on narrow viewports
+- Dashboard StatusCards: replaced "SignalR" with "Stream" info (live/offline + game + uptime)
+- Sidebar navigation grouped into logical sections (Chat, Engagement, Automation, Stream, Moderation)
+- Overlay URL generator now uses dynamic host from request (no hardcoded port)
+- API client uses `response.text()` + `JSON.parse()` instead of `response.json()` for WKWebView compatibility
+
+### Fixed
+
+- **WKWebView Headers error** — "The string did not match the expected pattern" when cancelling raffles; caused by WKWebView rejecting the `Headers` class constructor; fetch patch now uses plain `Record<string, string>` objects
+- **Empty response body parsing** — `response.json()` failed in WKWebView on endpoints returning `Results.Ok()` without a body (e.g. raffle cancel, raffle end)
+- **Overlay config key mismatches** — AlertOverlay used `"alert"` (singular) and EventListOverlay used `"eventlist"`, but backend expects `"alerts"` and `"events"`
+- **Browser caching of error responses** — Added `Cache-Control: no-cache` to overlay routes; prevents browsers from serving stale 403/error responses after bot restart
+- **Overlay reconnect reliability** — Health poll uses cache-busting timestamps (`?_=${Date.now()}`) to prevent browser caching; polls every 10 seconds
+
 ## [1.3.0] — 2026-03-28
 
 ### Added

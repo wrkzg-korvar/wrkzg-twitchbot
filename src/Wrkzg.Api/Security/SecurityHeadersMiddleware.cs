@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
@@ -5,7 +6,7 @@ namespace Wrkzg.Api.Security;
 
 /// <summary>
 /// Adds standard security headers to all responses.
-/// Defense-in-depth for the Photino desktop WebView.
+/// Overlay routes get relaxed headers to allow iframe embedding and OBS Browser Source usage.
 /// </summary>
 public sealed class SecurityHeadersMiddleware
 {
@@ -19,26 +20,49 @@ public sealed class SecurityHeadersMiddleware
     public async Task InvokeAsync(HttpContext context)
     {
         IHeaderDictionary headers = context.Response.Headers;
+        string path = context.Request.Path.Value ?? string.Empty;
+
+        bool isOverlayRoute = path.StartsWith("/overlay/", StringComparison.OrdinalIgnoreCase);
 
         // Prevent MIME-type sniffing
         headers["X-Content-Type-Options"] = "nosniff";
 
-        // Prevent clickjacking — app should never be embedded in a frame
-        headers["X-Frame-Options"] = "DENY";
-
         // Never send Referrer to external sites
         headers["Referrer-Policy"] = "no-referrer";
 
-        // Content Security Policy — restrict script/style/connect sources
-        headers["Content-Security-Policy"] =
-            "default-src 'self'; " +
-            "script-src 'self'; " +
-            "style-src 'self' 'unsafe-inline'; " +
-            "connect-src 'self' ws://localhost:5000 ws://localhost:5173; " +
-            "img-src 'self' data:; " +
-            "font-src 'self'; " +
-            "object-src 'none'; " +
-            "frame-ancestors 'none';";
+        if (isOverlayRoute)
+        {
+            // Overlays must always revalidate — prevents browsers from caching
+            // error responses (e.g. 403 when server was briefly down).
+            headers["Cache-Control"] = "no-cache";
+
+            // Overlays: allow embedding in iframes (dashboard preview + OBS Browser Source)
+            // No X-Frame-Options header → allow framing from same origin
+            headers["Content-Security-Policy"] =
+                "default-src 'self'; " +
+                "script-src 'self'; " +
+                "style-src 'self' 'unsafe-inline'; " +
+                "connect-src 'self' ws://localhost:5050 ws://localhost:5173; " +
+                "img-src 'self' data: https://static-cdn.jtvnw.net; " +
+                "font-src 'self'; " +
+                "object-src 'none'; " +
+                "frame-ancestors 'self';";
+        }
+        else
+        {
+            // Dashboard + API: strict security headers
+            headers["X-Frame-Options"] = "DENY";
+
+            headers["Content-Security-Policy"] =
+                "default-src 'self'; " +
+                "script-src 'self'; " +
+                "style-src 'self' 'unsafe-inline'; " +
+                "connect-src 'self' ws://localhost:5050 ws://localhost:5173; " +
+                "img-src 'self' data: https://static-cdn.jtvnw.net; " +
+                "font-src 'self'; " +
+                "object-src 'none'; " +
+                "frame-ancestors 'none';";
+        }
 
         await _next(context);
     }

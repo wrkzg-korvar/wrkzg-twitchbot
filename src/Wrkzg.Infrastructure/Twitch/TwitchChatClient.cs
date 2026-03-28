@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -278,6 +279,25 @@ public class TwitchChatClient : ITwitchChatClient
 
     private static ChatMessage MapMessage(TwitchLib.Client.Models.ChatMessage msg)
     {
+        // Extract emote data: emoteId → list of "startIndex-endIndex" positions
+        Dictionary<string, List<string>> emotes = new();
+        if (msg.EmoteSet?.Emotes is not null)
+        {
+            foreach (TwitchLib.Client.Models.Emote emote in msg.EmoteSet.Emotes)
+            {
+                string emoteId = emote.Id;
+                string range = $"{emote.StartIndex}-{emote.EndIndex}";
+
+                if (!emotes.TryGetValue(emoteId, out List<string>? ranges))
+                {
+                    ranges = new List<string>();
+                    emotes[emoteId] = ranges;
+                }
+
+                ranges.Add(range);
+            }
+        }
+
         return new ChatMessage(
             UserId: msg.UserId,
             Username: msg.Username,
@@ -288,7 +308,8 @@ public class TwitchChatClient : ITwitchChatClient
             IsBroadcaster: msg.IsBroadcaster,
             Timestamp: DateTimeOffset.UtcNow)
         {
-            Channel = msg.Channel
+            Channel = msg.Channel,
+            Emotes = emotes
         };
     }
 }

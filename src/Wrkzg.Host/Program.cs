@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Wrkzg.Api;
 using Wrkzg.Api.Endpoints;
@@ -26,6 +27,10 @@ if (OperatingSystem.IsWindows())
 
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Bind Kestrel to the configured port (default 5050, avoids macOS AirPlay on 5000)
+string port = builder.Configuration["Bot:Port"] ?? "5050";
+builder.WebHost.UseUrls($"http://localhost:{port}");
 
 PhotinoWindowController windowController = new();
 builder.Services.AddSingleton<IWindowController>(windowController);
@@ -91,6 +96,7 @@ if (wwwrootPath is not null && Directory.Exists(wwwrootPath))
     app.MapSpamFilterEndpoints();
     app.MapQuoteEndpoints();
     app.MapNotificationEndpoints();
+    app.MapOverlayEndpoints();
 
     // SPA fallback: unmatched routes serve index.html for React Router
     app.MapFallbackToFile("index.html", new StaticFileOptions
@@ -119,6 +125,7 @@ else
     app.MapSpamFilterEndpoints();
     app.MapQuoteEndpoints();
     app.MapNotificationEndpoints();
+    app.MapOverlayEndpoints();
 }
 
 PhotinoHosting.Start(app, windowController);

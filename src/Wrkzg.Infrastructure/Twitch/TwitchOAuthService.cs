@@ -268,7 +268,7 @@ public class TwitchOAuthService : ITwitchOAuthService
 
     private string GetRedirectUri()
     {
-        string port = _config["Bot:Port"] ?? "5000";
+        string port = _config["Bot:Port"] ?? "5050";
         return $"http://localhost:{port}/auth/callback";
     }
 }

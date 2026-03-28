@@ -74,8 +74,8 @@ Wrkzg is different:
 
 **Chat & Commands**
 - **Custom Commands** — Create commands like `!discord`, `!socials` with variables: `{user}`, `{points}`, `{random:1:6}`
-- **13 System Commands** — Built-in `!poll`, `!vote`, `!raffle`, `!join`, `!draw`, `!editcmd` and more — all with enable/disable toggle and custom response templates
-- **Command Aliases** — Coming in v1.2
+- **16 System Commands** — Built-in `!poll`, `!vote`, `!raffle`, `!join`, `!draw`, `!editcmd`, `!quote`, `!so`, `!uptime` and more — all with enable/disable toggle and custom response templates
+- **Command Aliases** — Multiple triggers per command with badge display
 
 **Community Engagement**
 - **Points System** — Automatic rewards per minute while live, with subscriber multiplier
@@ -87,13 +87,25 @@ Wrkzg is different:
 - **Spam Filter** — Links, caps, banned words, emote spam, repetition detection — mods and subs exempt
 - **Timed Messages** — Recurring messages with cycling, minimum chat line threshold, online/offline modes
 
+**Quotes & Chat Tools**
+- **Quotes System** — Save memorable chat moments with `!quote add`, retrieve with `!quote` or `!quote #`, dashboard management
+- **Shoutout Command** — `!so @user` with live game/channel lookup via Twitch Helix API
+- **Uptime Command** — `!uptime` / `!live` with smart time formatting
+
+**OBS Overlays**
+- **6 Browser Source Overlays** — Alert Box, Chat Box, Poll, Raffle, Counter, Event List — all real-time via SignalR
+- **Auto-Reconnect** — Overlays detect when the bot restarts and reload automatically within 10 seconds
+- **Customizable** — Font size, colors, animations, duration — configurable per overlay type from the dashboard
+- **Copy URL** — One-click copy of the OBS Browser Source URL for each overlay
+
 **Dashboard & UX**
-- **Live Dashboard** — Real-time chat feed, bot status, viewer count, command management
-- **Live Chat** — Send messages as bot or broadcaster, auto-scroll, message history
+- **Live Dashboard** — Real-time chat feed, bot status, viewer count, activity feed, command management
+- **Live Chat** — Send messages as bot or broadcaster, auto-scroll, message history, Twitch emote rendering
 - **User Tracking** — Message count, watch time, points, mod/sub/broadcaster status sync
 - **Setup Wizard** — Guided first-time setup with direct links to Twitch Developer Console
 - **Design System** — Light and Dark theme with consistent CSS custom properties
 - **Cross-Platform** — Native desktop app on Windows 10/11 and macOS 12+ with platform-specific title bars
+- **Update Check** — Automatic check for new releases with dismissable banner
 
 ### 🚧 Coming Soon
 
@@ -248,7 +260,7 @@ Contributors can optionally use `appsettings.Development.json` as a **fallback**
 ```json
 {
   "Bot": {
-    "Port": 5000
+    "Port": 5050
   }
 }
 ```
@@ -330,10 +342,22 @@ For questions or ideas, open a **[GitHub Discussion](https://github.com/wrkzg-ko
 
 </details>
 
+<details>
+<summary><strong>v1.4.1 — OBS Overlays ✅</strong></summary>
+
+- OBS Browser Source overlays (Alert Box, Chat, Poll, Raffle, Counter, Event List)
+- Overlay settings dashboard with live preview and customizable properties
+- SignalR dual groups (dashboard + overlay), overlay auto-reconnect with health polling
+- Twitch emote rendering via CDN in live chat and chat overlay
+- Frontend component library and full reorganization
+- Port changed from 5000 to 5050 (avoids macOS AirPlay Receiver conflict)
+- Multiple WKWebView compatibility fixes (Headers, empty response bodies)
+
+</details>
+
 ### Future
 - Chat Games (Heist, Duel, Slots, Trivia, Roulette)
-- OBS overlay browser sources
-- Automatic updater (GitHub Releases check)
+- Automatic updater (GitHub Releases download + install)
 - Song request queue
 - Analytics & Charts
 - Linux support

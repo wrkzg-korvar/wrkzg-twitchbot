@@ -26,7 +26,7 @@
 
     <PropertyGroup Label="Dev Proxy">
         <!--
-          Im Debug-Modus: Kestrel-Port fest auf 5000 setzen,
+          Im Debug-Modus: Kestrel-Port fest auf 5050 setzen,
           damit der Vite-Proxy (vite.config.ts) immer die richtige
           Zieladresse hat.
         -->

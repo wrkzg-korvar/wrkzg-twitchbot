@@ -29,13 +29,26 @@ public sealed class ApiTokenMiddleware
         string path = context.Request.Path.Value ?? string.Empty;
 
         // Exempt: OAuth callback (called from external browser, not the Photino window)
-        // Exempt: OAuth redirect and browser-open endpoints (initiated from setup wizard,
-        //         the redirect URL is opened in the system browser which doesn't have the token)
+        // Exempt: OAuth redirect endpoints (system browser, no token)
+        // Exempt: OBS overlay routes (localhost only, no auth needed)
         if (path.StartsWith("/auth/callback", StringComparison.OrdinalIgnoreCase)
-            || path.StartsWith("/auth/twitch/", StringComparison.OrdinalIgnoreCase))
+            || path.StartsWith("/auth/twitch/", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/overlay/", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/api/overlays/", StringComparison.OrdinalIgnoreCase))
         {
             await _next(context);
             return;
+        }
+
+        // Exempt: SignalR connections from overlay clients (source=overlay query param)
+        if (path.StartsWith("/hubs/", StringComparison.OrdinalIgnoreCase))
+        {
+            string? source = context.Request.Query["source"];
+            if (string.Equals(source, "overlay", StringComparison.OrdinalIgnoreCase))
+            {
+                await _next(context);
+                return;
+            }
         }
 
         // Only protect API, hub, and auth routes
