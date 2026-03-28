@@ -128,7 +128,16 @@ else
     app.MapOverlayEndpoints();
 }
 
-PhotinoHosting.Start(app, windowController);
+// In test environment, WebApplicationFactory manages the server lifecycle.
+// In all other environments, Photino manages Kestrel + the browser window.
+if (app.Environment.IsEnvironment("Testing"))
+{
+    await app.RunAsync();
+}
+else
+{
+    PhotinoHosting.Start(app, windowController);
+}
 
 // ─── Helper ───────────────────────────────────────────────────────────
 
