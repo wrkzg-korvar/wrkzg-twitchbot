@@ -99,9 +99,7 @@ Wrkzg is different:
 
 | Version | Features |
 |---|---|
-| **v1.2** | Quotes system, Shoutout command (`!so @user`), Stream uptime (`!uptime`), Command aliases |
-| **v1.3** | Follow / Sub / Raid notifications via EventSub WebSocket |
-| **Future** | Chat games, OBS overlay sources, auto-updater, song requests, analytics, Linux support |
+| **Future** | Chat games, song requests, auto-updater, Linux support |
 
 ---
 
