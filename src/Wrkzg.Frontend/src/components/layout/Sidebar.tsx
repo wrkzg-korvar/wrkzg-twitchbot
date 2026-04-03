@@ -17,6 +17,7 @@ import {
   Gamepad2,
   Music,
   Keyboard,
+  Workflow,
 } from "lucide-react";
 import { SidebarGroup } from "./SidebarGroup";
 import { ThemeToggle } from "./ThemeToggle";
@@ -58,6 +59,7 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
       { to: "/timers", label: "Timers", icon: Clock },
       { to: "/notifications", label: "Notifications", icon: Bell },
       { to: "/hotkeys", label: "Hotkeys", icon: Keyboard },
+      { to: "/effects", label: "Automations", icon: Workflow },
     ],
   },
   {

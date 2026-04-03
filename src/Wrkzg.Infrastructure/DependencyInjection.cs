@@ -39,6 +39,7 @@ public static class DependencyInjection
         services.AddScoped<IStreamAnalyticsRepository, StreamAnalyticsRepository>();
         services.AddScoped<ISongRequestRepository, SongRequestRepository>();
         services.AddScoped<IHotkeyBindingRepository, HotkeyBindingRepository>();
+        services.AddScoped<IEffectListRepository, EffectListRepository>();
 
         // Secure Storage + Hotkey Listener (platform-specific)
         if (OperatingSystem.IsWindows())

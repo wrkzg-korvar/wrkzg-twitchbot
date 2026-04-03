@@ -300,6 +300,23 @@ export const helpContent: Record<string, HelpEntry> = {
     handbookSection: "#hotkey-triggers",
   },
 
+  // --- Effects ---
+  "effects": {
+    title: "Effect System (Automations)",
+    description: "Create custom automations with Trigger → Conditions → Effect chains. Combine any trigger (commands, events, hotkeys) with any effect (chat messages, counter updates, alerts).",
+    howToUse: [
+      "Click 'New Automation' to create a chain",
+      "Choose a Trigger — when should this activate? (chat command, Twitch event, hotkey, keyword, channel point)",
+      "Add optional Conditions — gates that must pass (role check, points check, random chance, stream status)",
+      "Add Effects in order — actions that execute sequentially (send message, wait, update counter, show alert, set variable)",
+      "Set a cooldown to prevent spam",
+      "Use the Test button to simulate the trigger",
+      "Toggle automations on/off without deleting them",
+      "Config uses JSON — see parameter keys in the editor for each type",
+    ],
+    handbookSection: "#effect-system",
+  },
+
   // --- Analytics ---
   "analytics": {
     title: "Stream Analytics",

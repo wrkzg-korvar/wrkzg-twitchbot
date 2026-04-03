@@ -103,6 +103,7 @@ if (wwwrootPath is not null && Directory.Exists(wwwrootPath))
     app.MapAnalyticsEndpoints();
     app.MapSongRequestEndpoints();
     app.MapHotkeyEndpoints();
+    app.MapEffectEndpoints();
 
     // SPA fallback: unmatched routes serve index.html for React Router
     app.MapFallbackToFile("index.html", new StaticFileOptions

@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Wrkzg.Core.Effects;
 using Wrkzg.Core.Interfaces;
 using Wrkzg.Core.Models;
 
@@ -33,6 +34,7 @@ public class ChatMessagePipeline
     private readonly IUserTrackingService _tracking;
     private readonly TimedMessageService _timedMessageService;
     private readonly ChatGameManager _chatGameManager;
+    private readonly EffectEngine _effectEngine;
     private readonly IChatEventBroadcaster _broadcaster;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ChatMessagePipeline> _logger;
@@ -42,6 +44,7 @@ public class ChatMessagePipeline
         IUserTrackingService tracking,
         TimedMessageService timedMessageService,
         ChatGameManager chatGameManager,
+        EffectEngine effectEngine,
         IChatEventBroadcaster broadcaster,
         IServiceScopeFactory scopeFactory,
         ILogger<ChatMessagePipeline> logger)
@@ -50,6 +53,7 @@ public class ChatMessagePipeline
         _tracking = tracking;
         _timedMessageService = timedMessageService;
         _chatGameManager = chatGameManager;
+        _effectEngine = effectEngine;
         _broadcaster = broadcaster;
         _scopeFactory = scopeFactory;
         _logger = logger;
@@ -174,6 +178,30 @@ public class ChatMessagePipeline
             if (gameHandled)
             {
                 return;
+            }
+
+            // 10. Effect Engine — evaluate all EffectLists against this chat message
+            try
+            {
+                EffectTriggerContext effectContext = new()
+                {
+                    EventType = "chat_message",
+                    UserId = message.UserId,
+                    Username = message.DisplayName,
+                    MessageContent = message.Content,
+                    Data = new System.Collections.Generic.Dictionary<string, string>
+                    {
+                        ["channel"] = message.Channel ?? "",
+                        ["isMod"] = message.IsModerator.ToString(),
+                        ["isSub"] = message.IsSubscriber.ToString(),
+                        ["isBroadcaster"] = message.IsBroadcaster.ToString(),
+                    }
+                };
+                await _effectEngine.ProcessAsync(effectContext, ct);
+            }
+            catch (Exception effectEx)
+            {
+                _logger.LogWarning(effectEx, "Effect engine error for message from {User}", message.Username);
             }
         }
         catch (Exception ex)
