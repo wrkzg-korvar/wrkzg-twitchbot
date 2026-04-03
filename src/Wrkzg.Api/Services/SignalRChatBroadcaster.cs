@@ -225,4 +225,12 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
             timestamp = DateTimeOffset.UtcNow
         }, ct);
     }
+
+    public Task BroadcastSongQueueUpdatedAsync(CancellationToken ct = default)
+    {
+        return BroadcastToAllAsync("SongQueueUpdated", new
+        {
+            timestamp = DateTimeOffset.UtcNow
+        }, ct);
+    }
 }

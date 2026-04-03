@@ -43,7 +43,7 @@ public sealed class SecurityHeadersMiddleware
                 "script-src 'self'; " +
                 "style-src 'self' 'unsafe-inline'; " +
                 "connect-src 'self' ws://localhost:5050 ws://localhost:5173; " +
-                "img-src 'self' data: https://static-cdn.jtvnw.net; " +
+                "img-src 'self' data: https://static-cdn.jtvnw.net https://img.youtube.com https://i.ytimg.com; " +
                 "font-src 'self'; " +
                 "object-src 'none'; " +
                 "frame-ancestors 'self';";
@@ -58,7 +58,7 @@ public sealed class SecurityHeadersMiddleware
                 "script-src 'self'; " +
                 "style-src 'self' 'unsafe-inline'; " +
                 "connect-src 'self' ws://localhost:5050 ws://localhost:5173; " +
-                "img-src 'self' data: https://static-cdn.jtvnw.net; " +
+                "img-src 'self' data: https://static-cdn.jtvnw.net https://img.youtube.com https://i.ytimg.com; " +
                 "font-src 'self'; " +
                 "object-src 'none'; " +
                 "frame-ancestors 'none';";

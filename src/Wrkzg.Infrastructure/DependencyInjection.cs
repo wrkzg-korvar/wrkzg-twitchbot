@@ -37,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<ITriviaQuestionRepository, TriviaQuestionRepository>();
         services.AddScoped<IStreamAnalyticsRepository, StreamAnalyticsRepository>();
+        services.AddScoped<ISongRequestRepository, SongRequestRepository>();
 
         // Secure Storage (platform-specific)
         if (OperatingSystem.IsWindows())

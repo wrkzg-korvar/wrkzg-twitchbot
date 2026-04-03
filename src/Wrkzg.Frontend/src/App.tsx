@@ -19,12 +19,14 @@ import { ChannelPointsPage } from "./pages/ChannelPointsPage";
 import { RolesPage } from "./pages/RolesPage";
 import { ChatGamesPage } from "./pages/ChatGamesPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
+import { SongRequestsPage } from "./pages/SongRequestsPage";
 import { AlertOverlay } from "./components/overlay/AlertOverlay";
 import { ChatOverlay } from "./components/overlay/ChatOverlay";
 import { PollOverlay } from "./components/overlay/PollOverlay";
 import { RaffleOverlay } from "./components/overlay/RaffleOverlay";
 import { CounterOverlay } from "./components/overlay/CounterOverlay";
 import { EventListOverlay } from "./components/overlay/EventListOverlay";
+import { SongPlayerOverlay } from "./components/overlay/SongPlayerOverlay";
 
 export default function App() {
   const location = useLocation();
@@ -40,6 +42,7 @@ export default function App() {
         <Route path="/overlay/raffle" element={<RaffleOverlay />} />
         <Route path="/overlay/counter" element={<CounterOverlay />} />
         <Route path="/overlay/events" element={<EventListOverlay />} />
+        <Route path="/overlay/song-player" element={<SongPlayerOverlay />} />
       </Routes>
     );
   }
@@ -85,6 +88,7 @@ function AppShell() {
           <Route path="roles" element={<RolesPage />} />
           <Route path="games" element={<ChatGamesPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="song-requests" element={<SongRequestsPage />} />
           <Route path="quotes" element={<QuotesPage />} />
           <Route path="spam-filter" element={<SpamFilterPage />} />
           <Route path="notifications" element={<NotificationsPage />} />

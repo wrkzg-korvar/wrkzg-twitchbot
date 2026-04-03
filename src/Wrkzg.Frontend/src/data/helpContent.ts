@@ -259,6 +259,30 @@ export const helpContent: Record<string, HelpEntry> = {
     handbookSection: "#chat-games",
   },
 
+  // --- Song Requests ---
+  "song-requests": {
+    title: "Song Requests",
+    description: "Viewers request songs via !sr with a YouTube URL. Songs are queued and can be played through the OBS Song Player overlay. The queue is closed by default — open it when you're ready.",
+    howToUse: [
+      "Open the queue first — it's closed by default (use the toggle or !sr open)",
+      "Viewers type !sr <YouTube URL> in chat to request a song",
+      "The queue shows all pending songs in order",
+      "Use the toolbar to skip, play next, or clear the queue",
+      "Customize all bot messages via the Messages button",
+      "Configure max duration, per-user limits, and points cost via Settings",
+      "Add the Song Player overlay in OBS — use ?mode=slim for a compact bar",
+    ],
+    chatCommands: [
+      { command: "!sr <YouTube URL>", description: "Request a song" },
+      { command: "!sr open", description: "Open the queue", permission: "Mod" },
+      { command: "!sr close", description: "Close the queue", permission: "Mod" },
+      { command: "!skip", description: "Skip the current song", permission: "Mod" },
+      { command: "!queue", description: "Show the next 5 songs" },
+      { command: "!currentsong", description: "Show what's currently playing" },
+    ],
+    handbookSection: "#song-requests",
+  },
+
   // --- Analytics ---
   "analytics": {
     title: "Stream Analytics",

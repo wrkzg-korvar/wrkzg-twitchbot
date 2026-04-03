@@ -20,6 +20,7 @@
    - [4.4 Channel Point Rewards](#44-channel-point-rewards)
    - [4.5 Roles & Ranks](#45-roles--ranks)
    - [4.6 Chat Games](#46-chat-games)
+   - [4.7 Song Requests](#47-song-requests)
 5. [Automation](#5-automation)
    - [5.1 Timed Messages](#51-timed-messages)
    - [5.2 Event Notifications](#52-event-notifications)
@@ -33,6 +34,7 @@
    - [8.4 Raffle Overlay](#84-raffle-overlay)
    - [8.5 Counter Overlay](#85-counter-overlay)
    - [8.6 Event List](#86-event-list)
+   - [8.7 Song Player](#87-song-player)
 9. [Settings & Configuration](#9-settings--configuration)
 10. [Troubleshooting & FAQ](#10-troubleshooting--faq)
 
@@ -145,6 +147,12 @@ Built-in commands that come with Wrkzg. You can customize their response text an
 | `!quote` | `!q` | Everyone | Show a random or specific quote |
 | `!quote add` | — | Moderator | Save a new quote |
 | `!editcmd` | — | Moderator | Edit a command response on the fly |
+| `!sr` | `!songrequest` | Everyone | Request a song (`!sr <YouTube URL>`) |
+| `!sr open` | — | Moderator | Open the song request queue |
+| `!sr close` | — | Moderator | Close the song request queue |
+| `!skip` | — | Moderator | Skip the current song |
+| `!queue` | `!songlist` | Everyone | Show the next songs in the queue |
+| `!currentsong` | `!song`, `!nowplaying` | Everyone | Show what's currently playing |
 
 ### 3.3 Quotes
 
@@ -313,6 +321,46 @@ Wrkzg comes with built-in trivia questions. You can also add your own:
 - **Trivia rewards** should be balanced — not too high or viewers only play trivia
 - **Customize messages** in your language — all bot responses are fully translatable
 
+### 4.7 Song Requests
+
+Viewers request songs via YouTube URLs. Songs are queued and can be played through the OBS Song Player overlay.
+
+> **Note:** The song request queue is **closed by default**. Open it from the Song Requests page or with `!sr open` in chat before viewers can request songs.
+
+#### Chat Commands
+
+| Command | Description | Permission |
+|---|---|---|
+| `!sr <YouTube URL>` | Request a song | Everyone |
+| `!sr open` | Open the request queue | Moderator |
+| `!sr close` | Close the request queue | Moderator |
+| `!skip` | Skip the current song | Moderator |
+| `!queue` | Show the next 5 songs in the queue | Everyone |
+| `!currentsong` | Show what's currently playing | Everyone |
+
+#### Dashboard
+
+The **Song Requests** page shows:
+- **Now Playing** — Current song with skip button
+- **Queue** — All pending songs with remove buttons
+- **Queue Toggle** — Open/close the queue for new requests
+- **Clear Queue** — Remove all pending songs at once
+
+#### OBS Overlay
+
+Add the **Song Player** overlay as a Browser Source in OBS:
+1. Go to **Overlays** and copy the Song Player URL
+2. In OBS: Sources > + > Browser > paste the URL
+3. Recommended size: 480 x 270 (16:9 video)
+
+The overlay auto-plays songs from the queue and advances automatically.
+
+#### Settings
+
+- **Max Duration** — Maximum song length in seconds (default: 600 = 10 minutes)
+- **Max Per User** — Maximum songs one viewer can have in the queue (default: 3)
+- **Points Cost** — Points required per request (default: 0 = free)
+
 ---
 
 ## 5. Automation
@@ -449,6 +497,16 @@ Displays a single counter value. Updates in real-time via SignalR.
 Scrolling feed of recent events (follows, subs, raids, etc.) with icons for each event type.
 
 **Recommended size:** 400 x 500
+
+### 8.7 Song Player
+
+Displays the currently playing or next queued song with thumbnail, title, and requester name. Apple Music inspired design with animated music bars.
+
+**Two modes:**
+- **Full** (default) — Thumbnail, title, requester, queue count. 440 x 100.
+- **Slim** — Compact bar. Add `?mode=slim` to the overlay URL. 380 x 48.
+
+**Recommended size:** 440 x 100 (full) or 380 x 48 (slim)
 
 ---
 

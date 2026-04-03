@@ -31,6 +31,10 @@ public static class DependencyInjection
         services.AddSingleton<ISystemCommand, UptimeCommand>();
         services.AddSingleton<ISystemCommand, ShoutoutCommand>();
         services.AddSingleton<ISystemCommand, QuoteCommand>();
+        services.AddSingleton<ISystemCommand, SongRequestCommand>();
+        services.AddSingleton<ISystemCommand, SkipSongCommand>();
+        services.AddSingleton<ISystemCommand, QueueCommand>();
+        services.AddSingleton<ISystemCommand, CurrentSongCommand>();
 
         // Poll System
         services.AddScoped<PollService>();
@@ -59,6 +63,9 @@ public static class DependencyInjection
         services.AddSingleton<IChatGame, SlotsGame>();
         services.AddSingleton<IChatGame, RouletteGame>();
         services.AddSingleton<IChatGame, TriviaGame>();
+
+        // Song Request Service (Singleton — manages song queue)
+        services.AddSingleton<SongRequestService>();
 
         // Chat Game Manager (Singleton — manages all chat games)
         services.AddSingleton<ChatGameManager>();

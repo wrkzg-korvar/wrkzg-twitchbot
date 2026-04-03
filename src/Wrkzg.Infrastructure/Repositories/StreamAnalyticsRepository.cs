@@ -52,7 +52,7 @@ public class StreamAnalyticsRepository : IStreamAnalyticsRepository
         return await _db.StreamSessions
             .Include(s => s.CategorySegments)
             .Include(s => s.ViewerSnapshots)
-            .OrderByDescending(s => s.StartedAt)
+            .OrderByDescending(s => s.Id)
             .FirstOrDefaultAsync(ct);
     }
 
@@ -60,7 +60,7 @@ public class StreamAnalyticsRepository : IStreamAnalyticsRepository
     {
         return await _db.StreamSessions
             .Include(s => s.CategorySegments)
-            .OrderByDescending(s => s.StartedAt)
+            .OrderByDescending(s => s.Id)
             .Skip(offset)
             .Take(limit)
             .ToListAsync(ct);
@@ -71,7 +71,7 @@ public class StreamAnalyticsRepository : IStreamAnalyticsRepository
         return await _db.StreamSessions
             .Include(s => s.CategorySegments)
             .Where(s => s.StartedAt >= since)
-            .OrderByDescending(s => s.StartedAt)
+            .OrderByDescending(s => s.Id)
             .ToListAsync(ct);
     }
 
@@ -98,7 +98,7 @@ public class StreamAnalyticsRepository : IStreamAnalyticsRepository
     {
         return await _db.ViewerSnapshots
             .Where(v => v.StreamSessionId == sessionId)
-            .OrderBy(v => v.Timestamp)
+            .OrderBy(v => v.Id)
             .ToListAsync(ct);
     }
 }

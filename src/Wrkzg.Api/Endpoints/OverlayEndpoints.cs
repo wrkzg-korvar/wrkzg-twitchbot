@@ -285,5 +285,12 @@ public static class OverlayEndpoints
                     return Results.BadRequest(new { error = $"Unknown test event: '{safeType}'. Use: follow, subscribe, giftsub, resub, raid, counter." });
             }
         });
+
+        // Song request queue for overlay (no auth needed)
+        group.MapGet("/data/song-queue", async (ISongRequestRepository repo, CancellationToken ct) =>
+        {
+            IReadOnlyList<SongRequest> queue = await repo.GetQueueAsync(ct);
+            return Results.Ok(queue);
+        });
     }
 }

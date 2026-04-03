@@ -1,4 +1,4 @@
-import { Bell, MessageSquare, BarChart3, Gift, Hash, List } from "lucide-react";
+import { Bell, MessageSquare, BarChart3, Gift, Hash, List, Music } from "lucide-react";
 import { PageHeader } from "../components/ui/PageHeader";
 import { OverlayCard } from "../components/features/overlays/OverlayCard";
 import type { OverlayDefinition } from "../components/features/overlays/OverlayCard";
@@ -54,6 +54,14 @@ const OVERLAYS: OverlayDefinition[] = [
     width: 350,
     height: 400,
     testEvents: ["follow", "subscribe", "raid"],
+  },
+  {
+    type: "song-player",
+    title: "Song Player",
+    description: "Now-playing overlay for song requests. Add ?mode=slim to the URL for a compact bar.",
+    icon: Music,
+    width: 440,
+    height: 100,
   },
 ];
 

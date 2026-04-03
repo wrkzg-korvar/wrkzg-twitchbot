@@ -15,6 +15,7 @@ import {
   Gem,
   Crown,
   Gamepad2,
+  Music,
 } from "lucide-react";
 import { SidebarGroup } from "./SidebarGroup";
 import { ThemeToggle } from "./ThemeToggle";
@@ -47,6 +48,7 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
       { to: "/counters", label: "Counters", icon: Hash },
       { to: "/channel-points", label: "Channel Points", icon: Gem },
       { to: "/games", label: "Chat Games", icon: Gamepad2 },
+      { to: "/song-requests", label: "Song Requests", icon: Music },
     ],
   },
   {

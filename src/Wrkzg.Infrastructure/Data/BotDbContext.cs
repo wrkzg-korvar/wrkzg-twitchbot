@@ -30,6 +30,7 @@ public class BotDbContext : DbContext
     public DbSet<StreamSession> StreamSessions => Set<StreamSession>();
     public DbSet<CategorySegment> CategorySegments => Set<CategorySegment>();
     public DbSet<ViewerSnapshot> ViewerSnapshots => Set<ViewerSnapshot>();
+    public DbSet<SongRequest> SongRequests => Set<SongRequest>();
 
     public BotDbContext(DbContextOptions<BotDbContext> options) : base(options)
     {
