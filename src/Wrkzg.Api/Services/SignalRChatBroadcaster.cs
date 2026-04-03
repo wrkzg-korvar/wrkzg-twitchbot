@@ -233,4 +233,13 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
             timestamp = DateTimeOffset.UtcNow
         }, ct);
     }
+
+    public Task BroadcastStreamOnlineAsync(string broadcasterName, CancellationToken ct = default)
+    {
+        return BroadcastToAllAsync("StreamOnline", new
+        {
+            broadcaster = broadcasterName,
+            timestamp = DateTimeOffset.UtcNow
+        }, ct);
+    }
 }

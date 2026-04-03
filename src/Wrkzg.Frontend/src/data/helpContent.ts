@@ -346,6 +346,20 @@ export const helpContent: Record<string, HelpEntry> = {
     handbookSection: "#7-obs-overlays",
   },
 
+  // --- Integrations ---
+  "integrations": {
+    title: "Integrations",
+    description: "Connect external services to your bot. Currently supports Discord via webhooks — send messages and rich embeds to any Discord channel without needing a Discord bot token.",
+    howToUse: [
+      "Go to the Integrations page and paste your Discord Webhook URL",
+      "Use 'Test' to verify the connection sends a message to your channel",
+      "Once configured, use discord.send_message and discord.send_embed effects in your Automations",
+      "The webhook URL is stored encrypted — only you can access it",
+      "Remove the webhook at any time to disconnect Discord",
+    ],
+    handbookSection: "#integrations",
+  },
+
   // --- Settings ---
   "settings": {
     title: "Settings",

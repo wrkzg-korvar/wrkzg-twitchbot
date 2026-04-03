@@ -11,7 +11,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using TwitchLib.EventSub.Websockets;
 using TwitchLib.EventSub.Core.EventArgs.Channel;
+using TwitchLib.EventSub.Core.EventArgs.Stream;
 using TwitchLib.EventSub.Websockets.Core.EventArgs;
+using Wrkzg.Core.Effects;
 using Wrkzg.Core.Interfaces;
 using Wrkzg.Core.Models;
 
@@ -30,6 +32,7 @@ public class EventSubConnectionService : IHostedService
     private readonly ISecureStorage _storage;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IChatEventBroadcaster _broadcaster;
+    private readonly EffectEngine _effectEngine;
     private readonly ILogger<EventSubConnectionService> _logger;
     private readonly HttpClient _http;
 
@@ -43,6 +46,7 @@ public class EventSubConnectionService : IHostedService
         ISecureStorage storage,
         IServiceScopeFactory scopeFactory,
         IChatEventBroadcaster broadcaster,
+        EffectEngine effectEngine,
         IHttpClientFactory httpClientFactory,
         ILogger<EventSubConnectionService> logger)
     {
@@ -51,6 +55,7 @@ public class EventSubConnectionService : IHostedService
         _storage = storage;
         _scopeFactory = scopeFactory;
         _broadcaster = broadcaster;
+        _effectEngine = effectEngine;
         _http = httpClientFactory.CreateClient();
         _logger = logger;
     }
@@ -71,6 +76,7 @@ public class EventSubConnectionService : IHostedService
         _eventSub.ChannelSubscriptionMessage += OnChannelSubscriptionMessage;
         _eventSub.ChannelRaid += OnChannelRaid;
         _eventSub.ChannelPointsCustomRewardRedemptionAdd += OnChannelPointsRedemption;
+        _eventSub.StreamOnline += OnStreamOnline;
 
         await TryConnectAsync(ct);
     }
@@ -86,6 +92,7 @@ public class EventSubConnectionService : IHostedService
         _eventSub.ChannelSubscriptionMessage -= OnChannelSubscriptionMessage;
         _eventSub.ChannelRaid -= OnChannelRaid;
         _eventSub.ChannelPointsCustomRewardRedemptionAdd -= OnChannelPointsRedemption;
+        _eventSub.StreamOnline -= OnStreamOnline;
 
         _eventSub.WebsocketConnected -= OnWebsocketConnected;
         _eventSub.WebsocketDisconnected -= OnWebsocketDisconnected;
@@ -242,6 +249,10 @@ public class EventSubConnectionService : IHostedService
             new { broadcaster_user_id = _broadcasterId },
             sessionId, clientId);
 
+        await CreateSubscriptionAsync("stream.online", "1",
+            new { broadcaster_user_id = _broadcasterId },
+            sessionId, clientId);
+
         _logger.LogInformation("All EventSub subscriptions registered successfully");
     }
 
@@ -306,6 +317,9 @@ public class EventSubConnectionService : IHostedService
         });
 
         await _broadcaster.BroadcastFollowEventAsync(username);
+
+        await DispatchToEffectEngineAsync("event.follow", username, null,
+            new Dictionary<string, string> { { "user", username } });
     }
 
     private async Task OnChannelSubscribe(object? sender, ChannelSubscribeArgs e)
@@ -323,6 +337,13 @@ public class EventSubConnectionService : IHostedService
         });
 
         await _broadcaster.BroadcastSubscribeEventAsync(username, tierNumber);
+
+        await DispatchToEffectEngineAsync("event.subscribe", username, null,
+            new Dictionary<string, string>
+            {
+                { "user", username },
+                { "tier", tierNumber.ToString() }
+            });
     }
 
     private async Task OnChannelSubscriptionGift(object? sender, ChannelSubscriptionGiftArgs e)
@@ -343,6 +364,14 @@ public class EventSubConnectionService : IHostedService
         });
 
         await _broadcaster.BroadcastGiftSubEventAsync(gifter, total, tierNumber);
+
+        await DispatchToEffectEngineAsync("event.gift", gifter, null,
+            new Dictionary<string, string>
+            {
+                { "user", gifter },
+                { "count", total.ToString() },
+                { "tier", tierNumber.ToString() }
+            });
     }
 
     private async Task OnChannelSubscriptionMessage(object? sender, ChannelSubscriptionMessageArgs e)
@@ -365,6 +394,15 @@ public class EventSubConnectionService : IHostedService
         });
 
         await _broadcaster.BroadcastResubEventAsync(username, months, tierNumber, message);
+
+        await DispatchToEffectEngineAsync("event.resub", username, null,
+            new Dictionary<string, string>
+            {
+                { "user", username },
+                { "months", months.ToString() },
+                { "tier", tierNumber.ToString() },
+                { "message", message ?? "" }
+            });
     }
 
     private async Task OnChannelRaid(object? sender, ChannelRaidArgs e)
@@ -381,6 +419,13 @@ public class EventSubConnectionService : IHostedService
         });
 
         await _broadcaster.BroadcastRaidEventAsync(raider, viewers);
+
+        await DispatchToEffectEngineAsync("event.raid", raider, null,
+            new Dictionary<string, string>
+            {
+                { "user", raider },
+                { "viewers", viewers.ToString() }
+            });
 
         // Auto-Shoutout check
         try
@@ -403,6 +448,20 @@ public class EventSubConnectionService : IHostedService
         {
             _logger.LogWarning(ex, "Auto-shoutout failed for raider {Raider}", raider);
         }
+    }
+
+    private async Task OnStreamOnline(object? sender, StreamOnlineArgs e)
+    {
+        string broadcasterName = e.Payload.Event.BroadcasterUserName;
+        _logger.LogInformation("Stream went online: {Broadcaster}", broadcasterName);
+
+        await _broadcaster.BroadcastStreamOnlineAsync(broadcasterName);
+
+        await DispatchToEffectEngineAsync("event.stream_online", broadcasterName, null,
+            new Dictionary<string, string>
+            {
+                { "broadcaster", broadcasterName }
+            });
     }
 
     // ─── Notification Dispatch ────────────────────────────────────────
@@ -556,6 +615,33 @@ public class EventSubConnectionService : IHostedService
                 _logger.LogDebug("Reward action type {ActionType} not yet implemented",
                     reward.ActionType);
                 break;
+        }
+    }
+
+    // ─── Effect Engine Dispatch ─────────────────────────────────────
+
+    private async Task DispatchToEffectEngineAsync(
+        string eventType, string? username, string? userId,
+        Dictionary<string, string> data)
+    {
+        try
+        {
+            using IServiceScope scope = _scopeFactory.CreateScope();
+
+            EffectTriggerContext context = new()
+            {
+                EventType = eventType,
+                Username = username,
+                UserId = userId,
+                Data = data,
+                Scope = scope
+            };
+
+            await _effectEngine.ProcessAsync(context);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to dispatch {EventType} to Effect Engine", eventType);
         }
     }
 

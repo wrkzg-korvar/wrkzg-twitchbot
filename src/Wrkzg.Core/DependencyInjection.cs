@@ -85,6 +85,10 @@ public static class DependencyInjection
         services.AddSingleton<IEffectType, Effects.EffectTypes.AlertEffect>();
         services.AddSingleton<IEffectType, Effects.EffectTypes.VariableEffect>();
 
+        // Effect System — Integration Effect Types (v2.1.0)
+        services.AddSingleton<IEffectType, Effects.EffectTypes.DiscordSendMessageEffect>();
+        services.AddSingleton<IEffectType, Effects.EffectTypes.DiscordSendEmbedEffect>();
+
         // Effect Engine (Singleton — evaluates Trigger → Condition → Effect chains)
         services.AddSingleton<EffectEngine>();
 

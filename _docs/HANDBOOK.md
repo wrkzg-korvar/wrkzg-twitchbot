@@ -25,6 +25,8 @@
    - [5.1 Timed Messages](#51-timed-messages)
    - [5.2 Event Notifications](#52-event-notifications)
    - [5.3 Hotkey Triggers](#53-hotkey-triggers)
+   - [5.4 Effect System (Automations)](#54-effect-system-automations)
+   - [5.5 Integrations](#55-integrations)
 6. [Moderation](#6-moderation)
    - [6.1 Spam Filter](#61-spam-filter)
 7. [Stream Analytics](#7-stream-analytics)
@@ -440,6 +442,135 @@ Global keyboard hotkeys on macOS require Accessibility permission. If the permis
 5. Click "Check Again" to verify
 
 > **Tip:** The API trigger method (`POST /api/hotkeys/{id}/trigger`) works without any permissions and is recommended for Stream Deck users on macOS.
+
+### 5.4 Effect System (Automations)
+
+Create custom automations with Trigger → Conditions → Effects chains. Combine any trigger with any effect to build powerful workflows.
+
+#### How It Works
+
+1. **Trigger** — What starts the automation (chat command, Twitch event, keyword, hotkey, channel point redemption)
+2. **Conditions** (optional) — Gates that must pass before effects run (role check, points check, random chance, stream status)
+3. **Effects** — Actions that execute sequentially (send chat message, wait, update counter, show alert, set variable, send Discord message/embed)
+
+#### Creating an Automation
+
+1. Go to **Automations** in the sidebar
+2. Click **New Automation**
+3. Choose a trigger type and configure it
+4. Optionally add conditions
+5. Add one or more effects in the desired order
+6. Set a cooldown to prevent spam
+7. Save and enable
+
+#### Trigger Types
+
+| Trigger | Config Key | Description |
+|---|---|---|
+| **Chat Command** | `trigger` | Fires when a specific command is used (e.g. `!welcome`) |
+| **Twitch Event** | `event_type` | Fires on follow, sub, raid, gift sub, resub, or stream online |
+| **Chat Keyword** | `keyword` | Fires when a keyword appears anywhere in a message |
+| **Hotkey** | `hotkey_id` | Fires when a specific hotkey is pressed |
+| **Channel Point** | `reward_id` | Fires on a channel point redemption |
+
+#### Available Event Types
+
+| Event Type | When it fires |
+|---|---|
+| `event.follow` | Someone follows the channel |
+| `event.subscribe` | Someone subscribes |
+| `event.gift` | Someone gifts subscriptions |
+| `event.resub` | Someone resubscribes |
+| `event.raid` | Someone raids the channel |
+| `event.stream_online` | The stream goes live |
+
+#### Condition Types
+
+| Condition | Config Keys | Description |
+|---|---|---|
+| **Role Check** | `role_id` | User must have a specific community role |
+| **Points Check** | `min_points` | User must have at least X points |
+| **Random Chance** | `percent` | Only fires X% of the time |
+| **Stream Status** | `required_status` | Only fires when stream is online or offline |
+
+#### Effect Types
+
+| Effect | Config Keys | Description |
+|---|---|---|
+| **Chat Message** | `message` | Send a message in chat. Use `{user}` for the viewer's name |
+| **Wait** | `seconds` | Pause before the next effect (max 60 seconds) |
+| **Counter** | `counter_id`, `action`, `amount` | Increment, decrement, or reset a counter |
+| **Alert** | `title`, `message` | Show an alert in the OBS Alert Box overlay |
+| **Variable** | `name`, `value` | Set a variable for use in later effects with `{variable_name}` |
+| **Discord Message** | `message` | Send a text message to the configured Discord webhook |
+| **Discord Embed** | `title`, `description`, `color` | Send a rich embed to Discord |
+
+#### Variables in Effects
+
+All effect templates support these variables:
+
+| Variable | Description |
+|---|---|
+| `{user}` | Display name of the user who triggered the automation |
+| Any trigger data | Event-specific data like `{viewers}`, `{tier}`, `{months}` |
+| Custom variables | Variables set by earlier effects in the same chain |
+
+#### Quick-Start Examples
+
+The Automations page includes ready-to-use examples you can create with one click:
+
+- **Welcome New Followers** — Send a personalized welcome message on follow
+- **Lucky Viewer (50% Chance)** — Random chance to give bonus points on `!lucky`
+- **Raid Alert Combo** — Wait 2 seconds, then send a welcome message on raid
+- **Discord Live Notification** — Send a Discord message when the stream goes live
+
+#### Tips
+
+- **Use conditions to gate effects** — e.g. only allow `!lucky` for subscribers
+- **Chain multiple effects** — wait + message creates a delayed response
+- **Use the Test button** to simulate any automation without waiting for the real trigger
+- **Set cooldowns** to prevent spam — especially important for event-triggered automations
+
+### 5.5 Integrations
+
+Connect external services to your bot. Currently supports Discord via webhooks.
+
+#### Discord Webhook
+
+Send messages and rich embeds to any Discord channel — no Discord bot token or OAuth needed. Just a webhook URL.
+
+**Setup:**
+
+1. Go to **Integrations** in the sidebar
+2. Follow the step-by-step instructions to create a Discord webhook:
+   - Open Discord and go to the target channel
+   - Click the gear icon (Edit Channel)
+   - Go to **Integrations** > **Webhooks**
+   - Click **New Webhook**, name it (e.g. "Wrkzg Bot")
+   - Click **Copy Webhook URL**
+3. Paste the URL and click **Save**
+4. Click **Test** to verify the connection
+
+**Using Discord in Automations:**
+
+Once configured, two new effect types are available in the Effect System:
+
+| Effect | Description |
+|---|---|
+| `discord.send_message` | Send a plain text message to Discord |
+| `discord.send_embed` | Send a rich embed with title, description, and color |
+
+**Example: Discord Live Notification**
+
+Create an automation with:
+- **Trigger:** Twitch Event → `event.stream_online`
+- **Effect:** Discord Message → "The stream is now LIVE! Come hang out!"
+
+This sends a message to your Discord channel every time your stream goes live.
+
+**Removing the Webhook:**
+
+Click the trash icon on the Integrations page to remove the webhook URL. The webhook is stored encrypted — only you can access it.
 
 ---
 

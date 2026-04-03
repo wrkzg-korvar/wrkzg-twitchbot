@@ -65,6 +65,13 @@ const EXAMPLE_AUTOMATIONS = [
     triggerConfig: '{"event_type": "event.raid"}',
     effects: '[{"type":"wait","params":{"seconds":"2"}},{"type":"chat_message","params":{"message":"Welcome raiders! Thanks for the raid, {user}!"}}]',
   },
+  {
+    name: "Discord Live Notification",
+    description: "Send a Discord message when the stream goes live",
+    trigger: "event",
+    triggerConfig: '{"event_type": "event.stream_online"}',
+    effects: '[{"type":"discord.send_message","params":{"message":"The stream is now LIVE! Come hang out!"}}]',
+  },
 ];
 
 export function EffectsPage() {

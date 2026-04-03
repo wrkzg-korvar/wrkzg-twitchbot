@@ -18,6 +18,7 @@ import {
   Music,
   Keyboard,
   Workflow,
+  Plug,
 } from "lucide-react";
 import { SidebarGroup } from "./SidebarGroup";
 import { ThemeToggle } from "./ThemeToggle";
@@ -60,6 +61,7 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
       { to: "/notifications", label: "Notifications", icon: Bell },
       { to: "/hotkeys", label: "Hotkeys", icon: Keyboard },
       { to: "/effects", label: "Automations", icon: Workflow },
+      { to: "/integrations", label: "Integrations", icon: Plug },
     ],
   },
   {
