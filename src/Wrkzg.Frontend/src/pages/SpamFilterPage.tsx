@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Shield, Save, Check } from "lucide-react";
+import { Save, Check } from "lucide-react";
 import { spamFilterApi } from "../api/spamFilter";
 import { showToast } from "../hooks/useToast";
 import { PageHeader } from "../components/ui/PageHeader";
@@ -77,7 +77,7 @@ export function SpamFilterPage() {
       <PageHeader
         title="Spam Filter"
         description="Configure chat moderation filters."
-        badge={<Shield className="h-6 w-6 text-[var(--color-brand)]" />}
+        helpKey="spam-filter"
       />
 
       <FilterCard title="Link Filter" enabled={config.linksEnabled} onToggle={(v) => update("linksEnabled", v)}>

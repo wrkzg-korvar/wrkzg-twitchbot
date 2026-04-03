@@ -37,6 +37,7 @@ export function RafflesPage() {
       <PageHeader
         title="Raffles"
         description="Create raffles, draw winners, and browse history."
+        helpKey="raffles"
       />
 
       {!liveRaffle && <RaffleForm />}

@@ -25,6 +25,7 @@ export function CommandsPage() {
       <PageHeader
         title="Commands"
         description="Manage custom chat commands for your channel."
+        helpKey="commands"
         actions={
           <button
             onClick={() => setShowCreate(!showCreate)}

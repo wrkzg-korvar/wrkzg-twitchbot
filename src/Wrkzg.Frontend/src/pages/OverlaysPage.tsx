@@ -63,6 +63,7 @@ export function OverlaysPage() {
       <PageHeader
         title="Overlays"
         description="Add browser sources in OBS to display overlays on your stream."
+        helpKey="overlays"
       />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

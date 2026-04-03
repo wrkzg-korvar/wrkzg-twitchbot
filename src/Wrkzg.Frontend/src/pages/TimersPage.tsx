@@ -21,6 +21,7 @@ export function TimersPage() {
       <PageHeader
         title="Timers"
         description="Schedule recurring messages to keep your chat active."
+        helpKey="timed-messages"
         actions={
           !showCreate && !editingTimer ? (
             <button

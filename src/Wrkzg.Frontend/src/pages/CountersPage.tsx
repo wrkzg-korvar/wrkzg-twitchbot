@@ -38,6 +38,7 @@ export function CountersPage() {
       <PageHeader
         title="Counters"
         description="Track deaths, wins, and more with chat commands."
+        helpKey="counters"
         actions={
           !showCreate ? (
             <button

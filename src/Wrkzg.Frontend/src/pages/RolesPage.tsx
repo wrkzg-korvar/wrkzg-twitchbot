@@ -45,6 +45,7 @@ export function RolesPage() {
       <PageHeader
         title="Roles & Ranks"
         description="Create community roles with automatic assignment based on activity."
+        helpKey="roles"
         actions={
           <div className="flex gap-2">
             <button

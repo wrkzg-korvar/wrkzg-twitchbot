@@ -50,7 +50,14 @@ public class ChatMessagePipelineTests
 
         TimedMessageService timedService = new(scopeFactory, chatClient, Substitute.For<ILogger<TimedMessageService>>());
 
-        _sut = new ChatMessagePipeline(_commandProcessor, _trackingService, timedService, broadcaster, scopeFactory, _logger);
+        // ChatGameManager with no games registered (empty list)
+        ChatGameManager gameManager = new(
+            System.Array.Empty<IChatGame>(),
+            scopeFactory,
+            chatClient,
+            Substitute.For<ILogger<ChatGameManager>>());
+
+        _sut = new ChatMessagePipeline(_commandProcessor, _trackingService, timedService, gameManager, broadcaster, scopeFactory, _logger);
     }
 
     private static ChatMessage CreateMessage(

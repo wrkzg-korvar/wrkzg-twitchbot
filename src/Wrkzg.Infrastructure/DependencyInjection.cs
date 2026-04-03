@@ -35,6 +35,7 @@ public static class DependencyInjection
         services.AddScoped<IQuoteRepository, QuoteRepository>();
         services.AddScoped<IChannelPointRewardRepository, ChannelPointRewardRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddScoped<ITriviaQuestionRepository, TriviaQuestionRepository>();
 
         // Secure Storage (platform-specific)
         if (OperatingSystem.IsWindows())

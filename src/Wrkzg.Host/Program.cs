@@ -99,6 +99,7 @@ if (wwwrootPath is not null && Directory.Exists(wwwrootPath))
     app.MapOverlayEndpoints();
     app.MapChannelPointEndpoints();
     app.MapRoleEndpoints();
+    app.MapGameEndpoints();
 
     // SPA fallback: unmatched routes serve index.html for React Router
     app.MapFallbackToFile("index.html", new StaticFileOptions
@@ -130,6 +131,7 @@ else
     app.MapOverlayEndpoints();
     app.MapChannelPointEndpoints();
     app.MapRoleEndpoints();
+    app.MapGameEndpoints();
 }
 
 // In test environment, WebApplicationFactory manages the server lifecycle.

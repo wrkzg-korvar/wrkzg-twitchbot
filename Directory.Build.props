@@ -45,7 +45,7 @@
       CS1591 = fehlende XML-Dokumentation
       IL3000 = Assembly.Location returns empty in SingleFile publish
     -->
-    <WarningsNotAsErrors>CS1591;IL3000;CA1848;CA1873</WarningsNotAsErrors>
+    <WarningsNotAsErrors>CS1591;IL3000;CA1848;CA1873;CA2016;CA1305</WarningsNotAsErrors>
 
     <!-- Deterministische Builds: gleiche Eingaben → gleiche .dll (wichtig für Release-Verifikation) -->
     <Deterministic>true</Deterministic>

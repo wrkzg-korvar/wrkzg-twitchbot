@@ -32,6 +32,7 @@ public class ChatMessagePipeline
     private readonly ICommandProcessor _commandProcessor;
     private readonly IUserTrackingService _tracking;
     private readonly TimedMessageService _timedMessageService;
+    private readonly ChatGameManager _chatGameManager;
     private readonly IChatEventBroadcaster _broadcaster;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ChatMessagePipeline> _logger;
@@ -40,6 +41,7 @@ public class ChatMessagePipeline
         ICommandProcessor commandProcessor,
         IUserTrackingService tracking,
         TimedMessageService timedMessageService,
+        ChatGameManager chatGameManager,
         IChatEventBroadcaster broadcaster,
         IServiceScopeFactory scopeFactory,
         ILogger<ChatMessagePipeline> logger)
@@ -47,6 +49,7 @@ public class ChatMessagePipeline
         _commandProcessor = commandProcessor;
         _tracking = tracking;
         _timedMessageService = timedMessageService;
+        _chatGameManager = chatGameManager;
         _broadcaster = broadcaster;
         _scopeFactory = scopeFactory;
         _logger = logger;
@@ -159,8 +162,19 @@ public class ChatMessagePipeline
                 return;
             }
 
-            // 3. Future: try chat games
-            // bool gameHandled = await _chatGameManager.HandleMessageAsync(message, ct);
+            // 8. Check active game rounds (e.g. trivia answers, duel !accept)
+            bool gameRoundHandled = await _chatGameManager.HandleActiveRoundMessageAsync(message, ct);
+            if (gameRoundHandled)
+            {
+                return;
+            }
+
+            // 9. Check game triggers (e.g. !heist 100, !slots 50)
+            bool gameHandled = await _chatGameManager.HandleMessageAsync(message, ct);
+            if (gameHandled)
+            {
+                return;
+            }
         }
         catch (Exception ex)
         {

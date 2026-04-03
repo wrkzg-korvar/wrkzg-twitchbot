@@ -26,6 +26,7 @@ public class BotDbContext : DbContext
     public DbSet<ChannelPointReward> ChannelPointRewards => Set<ChannelPointReward>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<TriviaQuestion> TriviaQuestions => Set<TriviaQuestion>();
 
     public BotDbContext(DbContextOptions<BotDbContext> options) : base(options)
     {

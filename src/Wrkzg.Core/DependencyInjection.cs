@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Wrkzg.Core.ChatGames;
 using Wrkzg.Core.Interfaces;
 using Wrkzg.Core.Services;
 using Wrkzg.Core.SystemCommands;
@@ -51,6 +52,16 @@ public static class DependencyInjection
 
         // Command Processor (Singleton — maintains cooldown state in-memory)
         services.AddSingleton<ICommandProcessor, CommandProcessor>();
+
+        // Chat Games (Singleton — each game manages its own state)
+        services.AddSingleton<IChatGame, HeistGame>();
+        services.AddSingleton<IChatGame, DuelGame>();
+        services.AddSingleton<IChatGame, SlotsGame>();
+        services.AddSingleton<IChatGame, RouletteGame>();
+        services.AddSingleton<IChatGame, TriviaGame>();
+
+        // Chat Game Manager (Singleton — manages all chat games)
+        services.AddSingleton<ChatGameManager>();
 
         // Chat Message Pipeline (Singleton — orchestrates message processing)
         services.AddSingleton<ChatMessagePipeline>();

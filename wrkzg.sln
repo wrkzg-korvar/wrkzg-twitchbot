@@ -23,6 +23,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_docs", "_docs", "{3BAD9235
 		_docs\CONTRIBUTING.md = _docs\CONTRIBUTING.md
 		README.md = README.md
 		CHANGELOG.md = CHANGELOG.md
+		_docs\HANDBOOK.md = _docs\HANDBOOK.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{22F94070-00AD-481C-9455-E5E0E758C61D}"

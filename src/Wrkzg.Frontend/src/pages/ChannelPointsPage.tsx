@@ -58,6 +58,7 @@ export function ChannelPointsPage() {
       <PageHeader
         title="Channel Point Rewards"
         description="React to Twitch reward redemptions with configurable actions."
+        helpKey="channel-points"
         actions={
           <div className="flex gap-2">
             <button
