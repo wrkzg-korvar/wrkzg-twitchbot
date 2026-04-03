@@ -24,6 +24,7 @@
 5. [Automation](#5-automation)
    - [5.1 Timed Messages](#51-timed-messages)
    - [5.2 Event Notifications](#52-event-notifications)
+   - [5.3 Hotkey Triggers](#53-hotkey-triggers)
 6. [Moderation](#6-moderation)
    - [6.1 Spam Filter](#61-spam-filter)
 7. [Stream Analytics](#7-stream-analytics)
@@ -394,6 +395,51 @@ Automatic chat announcements for Twitch events.
 | Raid | `{user} is raiding with {viewers} viewers! Welcome raiders!` | `{user}`, `{viewers}` |
 
 Each event type can be toggled on/off and has a customizable message template. Enable **Auto Shoutout** for raids to automatically run `!so` for the raider.
+
+### 5.3 Hotkey Triggers
+
+Map keyboard shortcuts to bot actions. Each hotkey has a unique ID that can be used for API triggers.
+
+**Creating a Hotkey:**
+1. Go to **Hotkeys** in the sidebar
+2. Click **Add Hotkey**
+3. Click **Record** and press your desired key combination
+4. Choose an action and configure the payload:
+   - **Send Chat Message** — enter the message text
+   - **Counter +1 / -1 / Reset** — select a counter from the dropdown
+5. Optionally add a description
+6. Click **Create**
+
+**Testing:**
+Use the **Play button** next to each hotkey to trigger it immediately without pressing the keys.
+
+**API Trigger (No Auth Required):**
+Each hotkey shows its ID in the list. Trigger any hotkey via HTTP — no authentication token needed:
+
+```
+POST http://localhost:5050/api/hotkeys/{id}/trigger
+```
+
+Example with curl:
+```bash
+curl -X POST http://localhost:5050/api/hotkeys/3/trigger
+```
+
+This is the most reliable method and works on all platforms.
+
+**Stream Deck Integration:**
+- **Option A (Recommended):** Use Stream Deck's "Website" action or the "API Ninja" plugin to send the POST request above
+- **Option B:** Use Stream Deck's built-in "Hotkey" action with the same key combination (Windows only, macOS requires Accessibility permission)
+
+**macOS Accessibility Permission:**
+Global keyboard hotkeys on macOS require Accessibility permission. If the permission is missing:
+1. A yellow "Permission Required" badge appears on the Hotkeys page
+2. Click it to open the permission dialog
+3. Click "Open System Settings" to go directly to the Accessibility settings
+4. Enable Wrkzg in the list
+5. Click "Check Again" to verify
+
+> **Tip:** The API trigger method (`POST /api/hotkeys/{id}/trigger`) works without any permissions and is recommended for Stream Deck users on macOS.
 
 ---
 

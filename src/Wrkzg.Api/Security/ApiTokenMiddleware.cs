@@ -34,7 +34,9 @@ public sealed class ApiTokenMiddleware
         if (path.StartsWith("/auth/callback", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/auth/twitch/", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/overlay/", StringComparison.OrdinalIgnoreCase)
-            || path.StartsWith("/api/overlays/", StringComparison.OrdinalIgnoreCase))
+            || path.StartsWith("/api/overlays/", StringComparison.OrdinalIgnoreCase)
+            || (path.StartsWith("/api/hotkeys/", StringComparison.OrdinalIgnoreCase)
+                && path.EndsWith("/trigger", StringComparison.OrdinalIgnoreCase)))
         {
             await _next(context);
             return;

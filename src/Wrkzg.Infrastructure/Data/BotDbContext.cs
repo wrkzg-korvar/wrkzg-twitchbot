@@ -31,6 +31,7 @@ public class BotDbContext : DbContext
     public DbSet<CategorySegment> CategorySegments => Set<CategorySegment>();
     public DbSet<ViewerSnapshot> ViewerSnapshots => Set<ViewerSnapshot>();
     public DbSet<SongRequest> SongRequests => Set<SongRequest>();
+    public DbSet<HotkeyBinding> HotkeyBindings => Set<HotkeyBinding>();
 
     public BotDbContext(DbContextOptions<BotDbContext> options) : base(options)
     {

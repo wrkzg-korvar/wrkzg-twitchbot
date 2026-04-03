@@ -20,6 +20,7 @@ import { RolesPage } from "./pages/RolesPage";
 import { ChatGamesPage } from "./pages/ChatGamesPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { SongRequestsPage } from "./pages/SongRequestsPage";
+import { HotkeysPage } from "./pages/HotkeysPage";
 import { AlertOverlay } from "./components/overlay/AlertOverlay";
 import { ChatOverlay } from "./components/overlay/ChatOverlay";
 import { PollOverlay } from "./components/overlay/PollOverlay";
@@ -89,6 +90,7 @@ function AppShell() {
           <Route path="games" element={<ChatGamesPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="song-requests" element={<SongRequestsPage />} />
+          <Route path="hotkeys" element={<HotkeysPage />} />
           <Route path="quotes" element={<QuotesPage />} />
           <Route path="spam-filter" element={<SpamFilterPage />} />
           <Route path="notifications" element={<NotificationsPage />} />

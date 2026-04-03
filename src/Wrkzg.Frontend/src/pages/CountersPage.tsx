@@ -16,6 +16,7 @@ export function CountersPage() {
   const { data: counters } = useQuery<Counter[]>({
     queryKey: ["counters"],
     queryFn: countersApi.getAll,
+    refetchOnMount: "always",
   });
 
   // Live counter updates via SignalR

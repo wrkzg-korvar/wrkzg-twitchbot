@@ -283,6 +283,23 @@ export const helpContent: Record<string, HelpEntry> = {
     handbookSection: "#song-requests",
   },
 
+  // --- Hotkeys ---
+  "hotkeys": {
+    title: "Hotkey Triggers",
+    description: "Map keyboard shortcuts to bot actions. Each hotkey has an ID shown next to its name — use this ID for API triggers from Stream Deck or other tools.",
+    howToUse: [
+      "Click 'Add Hotkey' and press 'Record' to capture your key combination",
+      "Choose an action: send chat message, or select a counter to modify",
+      "Use the play button to test-trigger a hotkey immediately",
+      "Each hotkey shows its ID — use it for API triggers",
+      "API trigger: POST http://localhost:5050/api/hotkeys/{id}/trigger",
+      "Stream Deck: use 'Website' action or 'API Ninja' plugin to send the POST request",
+      "macOS: Accessibility permission is requested on first start",
+      "Windows: Global hotkeys work automatically",
+    ],
+    handbookSection: "#hotkey-triggers",
+  },
+
   // --- Analytics ---
   "analytics": {
     title: "Stream Analytics",

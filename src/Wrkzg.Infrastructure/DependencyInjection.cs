@@ -38,15 +38,18 @@ public static class DependencyInjection
         services.AddScoped<ITriviaQuestionRepository, TriviaQuestionRepository>();
         services.AddScoped<IStreamAnalyticsRepository, StreamAnalyticsRepository>();
         services.AddScoped<ISongRequestRepository, SongRequestRepository>();
+        services.AddScoped<IHotkeyBindingRepository, HotkeyBindingRepository>();
 
-        // Secure Storage (platform-specific)
+        // Secure Storage + Hotkey Listener (platform-specific)
         if (OperatingSystem.IsWindows())
         {
             services.AddSingleton<ISecureStorage, WindowsSecureStorage>();
+            services.AddSingleton<IHotkeyListener, Wrkzg.Infrastructure.Hotkeys.WindowsHotkeyListener>();
         }
         else if (OperatingSystem.IsMacOS())
         {
             services.AddSingleton<ISecureStorage, MacOsSecureStorage>();
+            services.AddSingleton<IHotkeyListener, Wrkzg.Infrastructure.Hotkeys.MacOsHotkeyListener>();
         }
         else
         {
@@ -54,7 +57,13 @@ public static class DependencyInjection
             // instead of silently failing with a DI resolution crash.
             // Tests provide their own fake via DI override.
             services.AddSingleton<ISecureStorage, UnsupportedPlatformSecureStorage>();
+            services.AddSingleton<IHotkeyListener, Wrkzg.Infrastructure.Hotkeys.NoOpHotkeyListener>();
         }
+
+        // Hotkey Services
+        services.AddSingleton<Wrkzg.Core.Services.HotkeyActionExecutor>();
+        services.AddSingleton<Wrkzg.Infrastructure.Hotkeys.HotkeyListenerService>();
+        services.AddHostedService(sp => sp.GetRequiredService<Wrkzg.Infrastructure.Hotkeys.HotkeyListenerService>());
 
         // Twitch OAuth Service (own HttpClient with resilience pipeline)
         services.AddHttpClient<ITwitchOAuthService, TwitchOAuthService>(client =>
