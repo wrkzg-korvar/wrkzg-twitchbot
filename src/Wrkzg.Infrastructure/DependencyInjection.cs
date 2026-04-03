@@ -33,6 +33,8 @@ public static class DependencyInjection
         services.AddScoped<ITimedMessageRepository, TimedMessageRepository>();
         services.AddScoped<ICounterRepository, CounterRepository>();
         services.AddScoped<IQuoteRepository, QuoteRepository>();
+        services.AddScoped<IChannelPointRewardRepository, ChannelPointRewardRepository>();
+        services.AddScoped<IRoleRepository, RoleRepository>();
 
         // Secure Storage (platform-specific)
         if (OperatingSystem.IsWindows())

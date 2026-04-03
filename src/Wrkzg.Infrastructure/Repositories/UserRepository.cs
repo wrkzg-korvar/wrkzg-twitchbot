@@ -71,4 +71,9 @@ public class UserRepository : IUserRepository
         _db.Users.Update(user);
         await _db.SaveChangesAsync(ct);
     }
+
+    public async Task<IReadOnlyList<User>> GetAllAsync(CancellationToken ct = default)
+    {
+        return await _db.Users.OrderBy(u => u.DisplayName).ToListAsync(ct);
+    }
 }

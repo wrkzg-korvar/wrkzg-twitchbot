@@ -70,6 +70,7 @@ public class EventSubConnectionService : IHostedService
         _eventSub.ChannelSubscriptionGift += OnChannelSubscriptionGift;
         _eventSub.ChannelSubscriptionMessage += OnChannelSubscriptionMessage;
         _eventSub.ChannelRaid += OnChannelRaid;
+        _eventSub.ChannelPointsCustomRewardRedemptionAdd += OnChannelPointsRedemption;
 
         await TryConnectAsync(ct);
     }
@@ -84,6 +85,7 @@ public class EventSubConnectionService : IHostedService
         _eventSub.ChannelSubscriptionGift -= OnChannelSubscriptionGift;
         _eventSub.ChannelSubscriptionMessage -= OnChannelSubscriptionMessage;
         _eventSub.ChannelRaid -= OnChannelRaid;
+        _eventSub.ChannelPointsCustomRewardRedemptionAdd -= OnChannelPointsRedemption;
 
         _eventSub.WebsocketConnected -= OnWebsocketConnected;
         _eventSub.WebsocketDisconnected -= OnWebsocketDisconnected;
@@ -234,6 +236,10 @@ public class EventSubConnectionService : IHostedService
 
         await CreateSubscriptionAsync("channel.raid", "1",
             new { to_broadcaster_user_id = _broadcasterId },
+            sessionId, clientId);
+
+        await CreateSubscriptionAsync("channel.channel_points_custom_reward_redemption.add", "1",
+            new { broadcaster_user_id = _broadcasterId },
             sessionId, clientId);
 
         _logger.LogInformation("All EventSub subscriptions registered successfully");
@@ -473,6 +479,85 @@ public class EventSubConnectionService : IHostedService
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────
+
+    private async Task OnChannelPointsRedemption(object? sender, ChannelPointsCustomRewardRedemptionArgs e)
+    {
+        string rewardId = e.Payload.Event.Reward.Id;
+        string username = e.Payload.Event.UserName;
+        string? userInput = e.Payload.Event.UserInput;
+
+        _logger.LogInformation("Channel Point Redemption: {Username} redeemed {RewardId}", username, rewardId);
+
+        try
+        {
+            using IServiceScope scope = _scopeFactory.CreateScope();
+            IChannelPointRewardRepository repo = scope.ServiceProvider
+                .GetRequiredService<IChannelPointRewardRepository>();
+
+            ChannelPointReward? reward = await repo.GetByTwitchRewardIdAsync(rewardId);
+            if (reward is null || !reward.IsEnabled)
+            {
+                return;
+            }
+
+            await ExecuteRewardActionAsync(reward, username, userInput, scope);
+            await _broadcaster.BroadcastChannelPointRedemptionAsync(
+                username, reward.Title, reward.Cost, userInput);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to handle channel point redemption for {RewardId}", rewardId);
+        }
+    }
+
+    private async Task ExecuteRewardActionAsync(
+        ChannelPointReward reward, string username, string? userInput, IServiceScope scope)
+    {
+        switch (reward.ActionType)
+        {
+            case RewardActionType.ChatMessage:
+                string message = reward.ActionPayload
+                    .Replace("{user}", username)
+                    .Replace("{input}", userInput ?? "");
+                await _chatClient.SendMessageAsync(message);
+                break;
+
+            case RewardActionType.CounterIncrement:
+            case RewardActionType.CounterDecrement:
+                if (int.TryParse(reward.ActionPayload, out int counterId))
+                {
+                    ICounterRepository counters = scope.ServiceProvider
+                        .GetRequiredService<ICounterRepository>();
+                    Counter? counter = await counters.GetByIdAsync(counterId);
+                    if (counter is not null)
+                    {
+                        if (reward.ActionType == RewardActionType.CounterIncrement)
+                        {
+                            counter.Value++;
+                        }
+                        else
+                        {
+                            counter.Value--;
+                        }
+                        await counters.UpdateAsync(counter);
+                        await _broadcaster.BroadcastCounterUpdatedAsync(
+                            counter.Id, counter.Name, counter.Value);
+                    }
+                }
+                break;
+
+            case RewardActionType.Highlight:
+                // Overlay alert is handled via the SignalR broadcast above
+                break;
+
+            case RewardActionType.Timeout:
+            case RewardActionType.SoundAlert:
+                // Future implementation
+                _logger.LogDebug("Reward action type {ActionType} not yet implemented",
+                    reward.ActionType);
+                break;
+        }
+    }
 
     internal static string GetDefaultTemplate(string eventType) => eventType switch
     {

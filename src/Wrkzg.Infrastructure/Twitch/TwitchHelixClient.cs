@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -193,6 +194,42 @@ public class TwitchHelixClient : ITwitchHelixClient
         }
     }
 
+    public async Task<IReadOnlyList<TwitchCustomReward>> GetCustomRewardsAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            HttpResponseMessage response = await _http.GetAsync("channel_points/custom_rewards", ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Failed to get custom rewards: {Status}", response.StatusCode);
+                return Array.Empty<TwitchCustomReward>();
+            }
+
+            HelixResponse<HelixCustomReward>? result =
+                await response.Content.ReadFromJsonAsync<HelixResponse<HelixCustomReward>>(_jsonOptions, ct);
+
+            if (result?.Data is null)
+            {
+                return Array.Empty<TwitchCustomReward>();
+            }
+
+            return result.Data.Select(r => new TwitchCustomReward
+            {
+                Id = r.Id ?? "",
+                Title = r.Title ?? "",
+                Cost = r.Cost,
+                IsEnabled = r.IsEnabled,
+                Prompt = r.Prompt,
+                IsUserInputRequired = r.IsUserInputRequired
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to get custom rewards");
+            return Array.Empty<TwitchCustomReward>();
+        }
+    }
+
     /// <summary>
     /// Generic Helix API response wrapper. Twitch wraps all responses in { "data": [...] }.
     /// </summary>
@@ -200,5 +237,26 @@ public class TwitchHelixClient : ITwitchHelixClient
     {
         [JsonPropertyName("data")]
         public T[]? Data { get; init; }
+    }
+
+    private sealed class HelixCustomReward
+    {
+        [JsonPropertyName("id")]
+        public string? Id { get; init; }
+
+        [JsonPropertyName("title")]
+        public string? Title { get; init; }
+
+        [JsonPropertyName("cost")]
+        public int Cost { get; init; }
+
+        [JsonPropertyName("is_enabled")]
+        public bool IsEnabled { get; init; }
+
+        [JsonPropertyName("prompt")]
+        public string? Prompt { get; init; }
+
+        [JsonPropertyName("is_user_input_required")]
+        public bool IsUserInputRequired { get; init; }
     }
 }

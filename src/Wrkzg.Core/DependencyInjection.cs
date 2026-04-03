@@ -46,6 +46,9 @@ public static class DependencyInjection
         // Spam Filter
         services.AddScoped<SpamFilterService>();
 
+        // Role Evaluation (Singleton — uses IServiceScopeFactory internally)
+        services.AddSingleton<RoleEvaluationService>();
+
         // Command Processor (Singleton — maintains cooldown state in-memory)
         services.AddSingleton<ICommandProcessor, CommandProcessor>();
 

@@ -23,6 +23,9 @@ public class BotDbContext : DbContext
     public DbSet<TimedMessage> TimedMessages => Set<TimedMessage>();
     public DbSet<Counter> Counters => Set<Counter>();
     public DbSet<Quote> Quotes => Set<Quote>();
+    public DbSet<ChannelPointReward> ChannelPointRewards => Set<ChannelPointReward>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<UserRole> UserRoles => Set<UserRole>();
 
     public BotDbContext(DbContextOptions<BotDbContext> options) : base(options)
     {

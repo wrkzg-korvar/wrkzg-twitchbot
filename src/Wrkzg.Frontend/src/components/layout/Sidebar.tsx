@@ -12,6 +12,8 @@ import {
   Shield,
   Users,
   Settings,
+  Gem,
+  Crown,
 } from "lucide-react";
 import { SidebarGroup } from "./SidebarGroup";
 import { ThemeToggle } from "./ThemeToggle";
@@ -42,6 +44,7 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
       { to: "/polls", label: "Polls", icon: BarChart3 },
       { to: "/raffles", label: "Raffles", icon: Gift },
       { to: "/counters", label: "Counters", icon: Hash },
+      { to: "/channel-points", label: "Channel Points", icon: Gem },
     ],
   },
   {
@@ -55,6 +58,12 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
     label: "Stream",
     items: [
       { to: "/overlays", label: "Overlays", icon: Monitor },
+    ],
+  },
+  {
+    label: "Community",
+    items: [
+      { to: "/roles", label: "Roles & Ranks", icon: Crown },
     ],
   },
   {

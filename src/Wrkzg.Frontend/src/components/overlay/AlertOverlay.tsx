@@ -10,6 +10,9 @@ interface AlertEvent {
   count?: number;
   viewers?: number;
   message?: string;
+  rewardTitle?: string;
+  cost?: number;
+  userInput?: string;
 }
 
 interface QueuedAlert {
@@ -23,6 +26,7 @@ const EventIcons: Record<string, string> = {
   GiftSubEvent: "\uD83C\uDF81",
   ResubEvent: "\uD83D\uDD01",
   RaidEvent: "\u2694\uFE0F",
+  ChannelPointRedemption: "\uD83D\uDC8E",
 };
 
 const DefaultMessages: Record<string, string> = {
@@ -31,6 +35,7 @@ const DefaultMessages: Record<string, string> = {
   GiftSubEvent: "{user} gifted {count} subs!",
   ResubEvent: "{user} resubscribed!",
   RaidEvent: "{user} is raiding with {viewers} viewers!",
+  ChannelPointRedemption: "{user} redeemed {rewardTitle}!",
 };
 
 function formatMessage(template: string, event: AlertEvent): string {
@@ -38,7 +43,9 @@ function formatMessage(template: string, event: AlertEvent): string {
     .replace("{user}", event.user)
     .replace("{tier}", event.tier ?? "1")
     .replace("{count}", String(event.count ?? 1))
-    .replace("{viewers}", String(event.viewers ?? 0));
+    .replace("{viewers}", String(event.viewers ?? 0))
+    .replace("{rewardTitle}", event.rewardTitle ?? "")
+    .replace("{cost}", String(event.cost ?? 0));
 }
 
 const AlertDefaults: Record<string, string> = {
@@ -54,6 +61,7 @@ const EventNames = [
   "GiftSubEvent",
   "ResubEvent",
   "RaidEvent",
+  "ChannelPointRedemption",
 ];
 
 export function AlertOverlay() {
@@ -91,8 +99,13 @@ export function AlertOverlay() {
     const handlers: Array<[string, (data: AlertEvent) => void]> = [];
 
     for (const eventName of EventNames) {
-      const handler = (data: AlertEvent) => {
-        enqueueAlert({ ...data, type: eventName });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const handler = (data: any) => {
+        enqueueAlert({
+          ...data,
+          type: eventName,
+          user: data.user ?? data.username ?? "",
+        });
       };
       on(eventName, handler);
       handlers.push([eventName, handler]);
