@@ -62,6 +62,11 @@ Wrkzg is different:
 | **Polls & raffles** | ✅ | ✅ Basic | ✅ | ✅ | ✅ |
 | **Spam filter** | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **Timed messages** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Chat games** | ✅ 5 games | ❌ | ✅ | ✅ | ❌ |
+| **Song requests** | ✅ YouTube | ❌ | ✅ | ✅ | ✅ |
+| **Automation system** | ✅ Visual | ❌ | ✅ | ❌ | ❌ |
+| **Discord integration** | ✅ Webhooks | ❌ | ❌ | ✅ | ❌ |
+| **Stream analytics** | ✅ | ❌ | ✅ | ✅ | ❌ |
 | **Open source** | ✅ MIT | ❌ | ✅ GPL-3 | ✅ GPL-3 | ❌ |
 | **No account required** | ✅ | ❌ | ✅ | ✅ | ❌ |
 | **Price** | **Free** | Free (limited) | **Free** | **Free** | Freemium |
@@ -93,10 +98,15 @@ Wrkzg is different:
 - **Uptime Command** — `!uptime` / `!live` with smart time formatting
 
 **OBS Overlays**
-- **6 Browser Source Overlays** — Alert Box, Chat Box, Poll, Raffle, Counter, Event List — all real-time via SignalR
+- **7 Browser Source Overlays** — Alert Box, Chat Box, Poll, Raffle, Counter, Event List, Song Player — all real-time via SignalR
 - **Auto-Reconnect** — Overlays detect when the bot restarts and reload automatically within 10 seconds
 - **Customizable** — Font size, colors, animations, duration — configurable per overlay type from the dashboard
 - **Copy URL** — One-click copy of the OBS Browser Source URL for each overlay
+
+**Automation & Integrations**
+- **Effect System** — Trigger → Conditions → Effects automation chains. Combine any trigger (commands, events, hotkeys, keywords, channel points) with any effect (chat messages, counter updates, alerts, variables, Discord messages)
+- **Discord Integration** — Send messages and rich embeds to Discord via webhooks — no bot token needed
+- **Stream Online Events** — All EventSub events (follow, sub, raid, stream online) are routed through the Effect System for custom automations
 
 **Dashboard & UX**
 - **Live Dashboard** — Real-time chat feed, bot status, viewer count, activity feed, command management
@@ -111,7 +121,10 @@ Wrkzg is different:
 
 | Version | Features |
 |---|---|
-| **Future** | Chat games, song requests, auto-updater, Linux support |
+| **v2.2.0** | Bot Import (migrate settings and data from other bots) |
+| **v2.3.0** | Overlay Editor (visual editor for each overlay type) |
+| **v2.4.0** | Linux support |
+| **v2.5.0** | Automatic updater |
 
 ---
 
@@ -355,12 +368,88 @@ For questions or ideas, open a **[GitHub Discussion](https://github.com/wrkzg-ko
 
 </details>
 
+<details>
+<summary><strong>v1.5.0 — Community & Rewards ✅</strong></summary>
+
+- Channel Point Rewards (sync from Twitch, configure actions: chat message, counter update, overlay alert)
+- Roles & Ranks (auto-assign by watch time, points, messages, subscriber status)
+- Priority-based role system with custom colors
+
+</details>
+
+<details>
+<summary><strong>v1.6.0 — Chat Games ✅</strong></summary>
+
+- 5 points-based games: Heist, Duel, Slots, Roulette, Trivia
+- Fully configurable settings per game (cooldowns, bet limits, multipliers)
+- Customizable bot messages with variable support
+- Custom trivia questions
+- Role-based access control
+
+</details>
+
+<details>
+<summary><strong>v1.7.0 — Stream Analytics ✅</strong></summary>
+
+- Automatic stream session tracking with minute-by-minute viewer snapshots
+- Category change detection with time segments
+- Overview dashboard with KPIs, viewer trend charts, stream hour charts
+- Individual session explorer with viewer charts and category timelines
+
+</details>
+
+<details>
+<summary><strong>v1.8.0 — Song Requests ✅</strong></summary>
+
+- YouTube song requests via `!sr <URL>`
+- Queue management (open/close, skip, clear)
+- OBS Song Player overlay (full and slim mode)
+- Points cost, max duration, per-user limits
+- Customizable bot messages
+
+</details>
+
+<details>
+<summary><strong>v1.9.0 — Hotkey Triggers ✅</strong></summary>
+
+- Global keyboard hotkeys with key recorder
+- Actions: chat message, counter increment/decrement/reset
+- Auth-free API trigger for Stream Deck integration
+- macOS Accessibility permission handling
+
+</details>
+
+<details>
+<summary><strong>v2.0.0 — Effect System ✅</strong></summary>
+
+- Visual automation editor: Trigger → Conditions → Effects chains
+- 5 trigger types: command, event, keyword, hotkey, channel point
+- 4 condition types: role check, points check, random chance, stream status
+- 5 effect types: chat message, wait, counter update, alert, variable
+- Quick-start examples and test button
+- JSON-based configuration with cooldown management
+
+</details>
+
+<details>
+<summary><strong>v2.1.0 — Third-Party Integrations ✅</strong></summary>
+
+- Discord webhook integration (send messages and rich embeds)
+- Discord effects in Effect System (`discord.send_message`, `discord.send_embed`)
+- All EventSub events routed to Effect System (follow, sub, raid, gift, resub, stream online)
+- `stream.online` EventSub subscription for live notifications
+- Integrations dashboard page with webhook management and test button
+
+</details>
+
 ### Future
-- Chat Games (Heist, Duel, Slots, Trivia, Roulette)
-- Automatic updater (GitHub Releases download + install)
-- Song request queue
-- Analytics & Charts
-- Linux support
+
+| Version | Features |
+|---|---|
+| **v2.2.0** | Bot Import — migrate settings and data from other bots |
+| **v2.3.0** | Overlay Editor — visual editor for each overlay type |
+| **v2.4.0** | Linux Support |
+| **v2.5.0** | Automatic Updater — GitHub Releases download + install |
 
 ---
 

@@ -40,6 +40,7 @@ Wrkzg is a **locally-run desktop application** that combines an embedded web ser
 │                          │       Core Services       │  │
 │                          │  CommandProcessor         │  │
 │                          │  ChatMessagePipeline      │  │
+│                          │  EffectEngine             │  │
 │                          └──────────────┬────────────┘  │
 │                                         │               │
 │                          ┌──────────────┴────────────┐  │
@@ -115,9 +116,10 @@ No standalone entry point — embedded into the Host.
 **Type:** Class Library (standard SDK)  
 The heart of the application. Has zero framework dependencies.
 
-- All business logic: `CommandProcessor`, `ChatMessagePipeline`, `PollService`, `RaffleService`, `SpamFilterService`, `TimedMessageService`
-- Domain models: `User`, `Command`, `Poll`, `PollVote`, `Raffle`, `RaffleEntry`, `RaffleDraw`, `TimedMessage`, `Counter`, `Setting`, `SystemCommandOverride`, `SpamFilterConfig`, `ChatMessage`, `BotStatus`
-- Service interfaces: `ICommandProcessor`, `ITwitchChatClient`, `IUserRepository`, `IPollRepository`, `IRaffleRepository`, `ITimedMessageRepository`, `ICounterRepository`, `ISettingsRepository`, etc.
+- All business logic: `CommandProcessor`, `ChatMessagePipeline`, `PollService`, `RaffleService`, `SpamFilterService`, `TimedMessageService`, `EffectEngine`
+- Effect System: Plugin-based automation with `ITriggerType`, `IConditionType`, `IEffectType` interfaces; 5 triggers, 4 conditions, 7 effects (including Discord webhook)
+- Domain models: `User`, `Command`, `Poll`, `PollVote`, `Raffle`, `RaffleEntry`, `RaffleDraw`, `TimedMessage`, `Counter`, `Setting`, `SystemCommandOverride`, `SpamFilterConfig`, `ChatMessage`, `BotStatus`, `EffectList`
+- Service interfaces: `ICommandProcessor`, `ITwitchChatClient`, `IUserRepository`, `IPollRepository`, `IRaffleRepository`, `ITimedMessageRepository`, `ICounterRepository`, `ISettingsRepository`, `IEffectListRepository`, etc.
 - System commands: 16 built-in commands implementing `ISystemCommand`
 - DI registration via `AddCoreServices()`
 
@@ -132,7 +134,7 @@ Implements all interfaces defined in Core using real external dependencies.
 - `TwitchOAuthService` — Authorization Code Flow, credential resolution (Keystore → Config fallback)
 - `TwitchAuthHandler` — DelegatingHandler for automatic Bearer token injection + 401 refresh
 - `BotConnectionService` — IHostedService managing IRC lifecycle
-- `EventSubConnectionService` — IHostedService managing Twitch EventSub WebSocket (follows, subs, raids, gifts, resubs)
+- `EventSubConnectionService` — IHostedService managing Twitch EventSub WebSocket (follows, subs, raids, gifts, resubs, stream online); dispatches events to EffectEngine
 - `WindowsSecureStorage` (DPAPI) / `MacOsSecureStorage` (Keychain) — encrypted credential storage
 
 ### `Wrkzg.Updater`
@@ -155,6 +157,14 @@ React 19 + TypeScript SPA with Tailwind CSS v4. Pages:
 - **Quotes** — save and browse memorable chat moments
 - **Timers** — timed message CRUD, multi-message editor, online/offline toggle
 - **Counters** — counter cards with +/- buttons, chat trigger display, create/edit
+- **Channel Points** — sync Twitch rewards, configure actions per reward
+- **Roles & Ranks** — create community roles with auto-assign criteria
+- **Chat Games** — 5 games with configurable settings and customizable messages
+- **Song Requests** — YouTube song queue with OBS overlay
+- **Analytics** — stream session tracking with viewer charts and category timelines
+- **Hotkeys** — global keyboard shortcuts with key recorder and API triggers
+- **Automations** — Effect System editor with quick-start examples
+- **Integrations** — Discord webhook setup with test button
 - **Spam Filter** — per-filter toggle + configuration (links, caps, banned words, emotes, repetition)
 - **Notifications** — EventSub event notifications with per-type toggle and templates
 - **Overlays** — OBS overlay configuration with live preview, copy URL, and settings
@@ -164,7 +174,7 @@ In development, runs on `:5173` with a proxy to Kestrel on `:5050`. In productio
 
 ### OBS Overlay System
 
-6 overlay types available as OBS Browser Sources at `http://localhost:5050/overlay/{type}`:
+7 overlay types available as OBS Browser Sources at `http://localhost:5050/overlay/{type}`:
 
 | Overlay | URL | Description |
 |---|---|---|
@@ -174,6 +184,7 @@ In development, runs on `:5173` with a proxy to Kestrel on `:5050`. In productio
 | Raffle | `/overlay/raffle` | Winner reveal with confetti |
 | Counter | `/overlay/counter?id=N` | Large counter display |
 | Event List | `/overlay/events` | Scrolling event feed |
+| Song Player | `/overlay/song-player` | Now playing with thumbnail (full or `?mode=slim`) |
 
 Overlays connect to SignalR without authentication (`?source=overlay`) and auto-reconnect when the bot restarts by polling `/overlay/health` every 10 seconds.
 
@@ -192,6 +203,7 @@ Every incoming chat message passes through the pipeline in this order:
 5. **SpamFilter.CheckAsync** — run spam checks (links, caps, banned words, emotes, repetition); if spam → timeout + return
 6. **Counter Commands** — check for dynamic counter triggers (`!trigger`, `!trigger+`, `!trigger-`)
 7. **CommandProcessor** — match against system commands and custom commands
+8. **EffectEngine.ProcessAsync** — match against automation triggers (commands, keywords)
 
 ### Chat Message → Command Response
 
@@ -216,6 +228,7 @@ ChatMessagePipeline.ProcessAsync
    ├── 5. SpamFilter.CheckAsync → return if spam
    ├── 6. Counter Commands (dynamic !trigger/!trigger+/!trigger-)
    ├── 7. CommandProcessor (System + Custom Commands)
+   ├── 8. EffectEngine (Automation triggers: commands, keywords)
    │
    ▼
 TwitchChatClient.SendMessageAsync → Twitch IRC
@@ -314,6 +327,7 @@ builder.Services.AddApiServices();           // Wrkzg.Api
 | `RaffleTimerService` | IHostedService | Auto-draws expired raffles |
 | `UserTrackingService` | Singleton (IHostedService) | Awards watch time and points |
 | `ISecureStorage` | Singleton | Stateless encrypted I/O |
+| `EffectEngine` | Singleton | Processes automation triggers against EffectLists |
 | `IChatEventBroadcaster` | Singleton | Wraps SignalR HubContext |
 | `IAuthStateNotifier` | Singleton | Wraps SignalR HubContext |
 | `PollService` | Scoped | Poll lifecycle (create, vote, end) |
@@ -362,6 +376,29 @@ Counters             — Id, Name, Trigger (unique), Value, ResponseTemplate, Cr
 Quotes               — Id, Text, AddedBy, GameName, CreatedAt
 
 Settings             — Key (PK), Value
+
+ChannelPointRewards  — Id, TwitchRewardId (unique), Title, Cost, ActionType, ActionPayload, IsEnabled
+
+Roles                — Id, Name, Priority, Color, AutoAssignEnabled, MinWatchTimeHours,
+                       MinPoints, MinMessages, RequireSubscriber
+
+UserRoles            — Id, UserId (FK), RoleId (FK)
+
+TriviaQuestions      — Id, Question, Answer, Category, IsCustom
+
+StreamSessions       — Id, StartedAt, EndedAt, PeakViewers, TotalSnapshots
+
+CategorySegments     — Id, SessionId (FK), CategoryName, StartedAt, EndedAt
+
+ViewerSnapshots      — Id, SessionId (FK), ViewerCount, RecordedAt
+
+SongRequests         — Id, YouTubeVideoId, Title, ThumbnailUrl, DurationSeconds,
+                       RequestedBy, Status, RequestedAt
+
+HotkeyBindings       — Id, Keys, ActionType, ActionPayload, Description, IsEnabled
+
+EffectLists          — Id, Name, Description, TriggerTypeId, TriggerConfig,
+                       ConditionsConfig, EffectsConfig, Cooldown, IsEnabled, CreatedAt
 ```
 
 ### Migrations
@@ -406,10 +443,10 @@ Both Client ID and Client Secret are resolved in this order:
 ```
 Vite Dev Server :5173
       │
-      │  proxy /api  →  :5000
-      │  proxy /hubs →  :5000 (WebSocket)
+      │  proxy /api  →  :5050
+      │  proxy /hubs →  :5050 (WebSocket)
       ▼
-Kestrel :5000
+Kestrel :5050
 
 Photino detects Vite on :5173 → opens Vite URL (HMR enabled)
 If Vite not running → falls back to Kestrel (static files from wwwroot/)
@@ -462,6 +499,9 @@ Both groups receive the same events. The `IChatEventBroadcaster` broadcasts to b
 | `RaffleEnded` | `{ raffleId }` | Raffle closed |
 | `RaffleCancelled` | `{ raffleId }` | Raffle cancelled |
 | `CounterUpdated` | `{ counterId, name, value }` | Counter value changed |
+| `ChannelPointRedemption` | `{ username, rewardTitle, cost, userInput }` | Channel point redeemed |
+| `SongQueueUpdated` | `{ timestamp }` | Song queue changed |
+| `StreamOnline` | `{ broadcaster, timestamp }` | Stream went live |
 
 ---
 
@@ -516,6 +556,8 @@ Each system command can be enabled/disabled and given a custom response override
 | `RaffleTimerService` | 2s | Checks if active raffle timer has expired, auto-draws winner |
 | `TimedMessageService` | 30s | Checks if any timed message should fire (interval + min chat lines + online/offline) |
 | `UserTrackingService` | 60s | Awards watch time minutes and points to active users |
+| `StreamAnalyticsService` | 60s | Records viewer snapshots, detects category changes |
+| `HotkeyListenerService` | — | Global keyboard hook for hotkey triggers |
 
 ---
 
