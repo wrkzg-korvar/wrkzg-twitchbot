@@ -79,6 +79,81 @@ Wrkzg is different:
 
 ## Features
 
+### Feature Highlights
+
+<div align="center">
+
+<table>
+    <tr>
+        <td align="center" width="50%">
+            <img src="_docs/screenshots/event-system.png" alt="Automations" width="100%">
+            <br>
+            <sub><b>Automations</b> — Visual Trigger → Conditions → Effects chains with Discord, Chat, Counters, and more</sub>
+        </td>
+            <td align="center" width="50%">
+            <img src="_docs/screenshots/standard-overlay-editor-split-view.png" alt="Overlay Editor" width="100%">
+            <br>
+            <sub><b>Overlay Editor</b> — Live preview, 14 animations, Google Fonts, per-event customization</sub>
+        </td>
+    </tr>
+    <tr>
+        <td align="center" width="50%">
+            <img src="_docs/screenshots/stream-analytics.png" alt="Stream Analytics" width="100%">
+            <br>
+            <sub><b>Stream Analytics</b> — Viewer trends, category tracking, session history</sub>
+        </td>
+        <td align="center" width="50%">
+            <img src="_docs/screenshots/import-data-wizard.png" alt="Bot Data Import" width="100%">
+            <br>
+            <sub><b>Bot Data Import</b> — Migrate from Deepbot, Streamlabs Chatbot, or any CSV</sub>
+        </td>
+    </tr>
+    <tr>
+        <td align="center" width="50%">
+            <img src="_docs/screenshots/chat-games-overview.png" alt="Chat Games" width="100%">
+            <br>
+            <sub><b>Chat Games</b> — Heist, Duel, Slots, Roulette, Trivia — all points-based</sub>
+        </td>
+            <td align="center" width="50%">
+            <img src="_docs/screenshots/integrations.png" alt="Discord Integration" width="100%">
+            <br>
+            <sub><b>Discord Integration</b> — Webhooks for go-live alerts, raid notifications, and more</sub>
+        </td>
+    </tr>
+</table>
+
+<details>
+<summary><b>More screenshots</b> — Automation Editor, Custom Overlays, Game Messages</summary>
+<br>
+<table>
+    <tr>
+        <td align="center" width="50%">
+            <img src="_docs/screenshots/event-system-detail.png" alt="Automation Editor" width="100%">
+            <br>
+            <sub><b>Automation Editor</b> — Configure triggers, conditions, and effect chains</sub>
+        </td>
+        <td align="center" width="50%">
+            <img src="_docs/screenshots/custom-overlay-editor-split-view.png" alt="Custom Overlays" width="100%">
+            <br>
+            <sub><b>Custom Overlays</b> — Write HTML/CSS/JS with full SignalR event access</sub>
+        </td>
+    </tr>
+    <tr>
+        <td align="center" width="50%">
+            <img src="_docs/screenshots/chat-games-custom-messages.png" alt="Custom Game Messages" width="100%">
+            <br>
+            <sub><b>Custom Messages</b> — Every bot response is fully customizable with variables</sub>
+        </td>
+        <td align="center" width="50%">
+        </td>
+    </tr>
+</table>
+</details>
+
+</div>
+
+---
+
 ### ✅ Implemented
 
 **Chat & Commands**
