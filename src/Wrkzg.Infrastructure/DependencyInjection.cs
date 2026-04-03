@@ -36,6 +36,7 @@ public static class DependencyInjection
         services.AddScoped<IChannelPointRewardRepository, ChannelPointRewardRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<ITriviaQuestionRepository, TriviaQuestionRepository>();
+        services.AddScoped<IStreamAnalyticsRepository, StreamAnalyticsRepository>();
 
         // Secure Storage (platform-specific)
         if (OperatingSystem.IsWindows())
@@ -84,6 +85,9 @@ public static class DependencyInjection
         // EventSub WebSocket (TwitchLib — manages WebSocket, keepalive, reconnect)
         services.AddTwitchLibEventSubWebsockets();
         services.AddHostedService<EventSubConnectionService>();
+
+        // Stream Analytics (IHostedService — polls viewer count + category every 60s)
+        services.AddHostedService<Wrkzg.Infrastructure.Services.StreamAnalyticsService>();
 
         return services;
     }

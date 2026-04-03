@@ -60,6 +60,7 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
     label: "Stream",
     items: [
       { to: "/overlays", label: "Overlays", icon: Monitor },
+      { to: "/analytics", label: "Analytics", icon: BarChart3 },
     ],
   },
   {

@@ -27,6 +27,9 @@ public class BotDbContext : DbContext
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<TriviaQuestion> TriviaQuestions => Set<TriviaQuestion>();
+    public DbSet<StreamSession> StreamSessions => Set<StreamSession>();
+    public DbSet<CategorySegment> CategorySegments => Set<CategorySegment>();
+    public DbSet<ViewerSnapshot> ViewerSnapshots => Set<ViewerSnapshot>();
 
     public BotDbContext(DbContextOptions<BotDbContext> options) : base(options)
     {

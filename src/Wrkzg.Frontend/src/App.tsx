@@ -18,6 +18,7 @@ import { OverlaysPage } from "./pages/OverlaysPage";
 import { ChannelPointsPage } from "./pages/ChannelPointsPage";
 import { RolesPage } from "./pages/RolesPage";
 import { ChatGamesPage } from "./pages/ChatGamesPage";
+import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { AlertOverlay } from "./components/overlay/AlertOverlay";
 import { ChatOverlay } from "./components/overlay/ChatOverlay";
 import { PollOverlay } from "./components/overlay/PollOverlay";
@@ -83,6 +84,7 @@ function AppShell() {
           <Route path="channel-points" element={<ChannelPointsPage />} />
           <Route path="roles" element={<RolesPage />} />
           <Route path="games" element={<ChatGamesPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="quotes" element={<QuotesPage />} />
           <Route path="spam-filter" element={<SpamFilterPage />} />
           <Route path="notifications" element={<NotificationsPage />} />

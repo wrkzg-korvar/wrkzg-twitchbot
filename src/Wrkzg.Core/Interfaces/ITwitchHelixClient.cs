@@ -74,6 +74,7 @@ public sealed class StreamInfo
     public string UserLogin { get; init; } = string.Empty;
     public string Title { get; init; } = string.Empty;
     public string GameName { get; init; } = string.Empty;
+    public string GameId { get; init; } = string.Empty;
     public int ViewerCount { get; init; }
     public string StartedAt { get; init; } = string.Empty;
 }

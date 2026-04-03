@@ -25,15 +25,16 @@
    - [5.2 Event Notifications](#52-event-notifications)
 6. [Moderation](#6-moderation)
    - [6.1 Spam Filter](#61-spam-filter)
-7. [OBS Overlays](#7-obs-overlays)
-   - [7.1 Alert Box](#71-alert-box)
-   - [7.2 Chat Box](#72-chat-box)
-   - [7.3 Poll Overlay](#73-poll-overlay)
-   - [7.4 Raffle Overlay](#74-raffle-overlay)
-   - [7.5 Counter Overlay](#75-counter-overlay)
-   - [7.6 Event List](#76-event-list)
-8. [Settings & Configuration](#8-settings--configuration)
-9. [Troubleshooting & FAQ](#9-troubleshooting--faq)
+7. [Stream Analytics](#7-stream-analytics)
+8. [OBS Overlays](#8-obs-overlays)
+   - [8.1 Alert Box](#81-alert-box)
+   - [8.2 Chat Box](#82-chat-box)
+   - [8.3 Poll Overlay](#83-poll-overlay)
+   - [8.4 Raffle Overlay](#84-raffle-overlay)
+   - [8.5 Counter Overlay](#85-counter-overlay)
+   - [8.6 Event List](#86-event-list)
+9. [Settings & Configuration](#9-settings--configuration)
+10. [Troubleshooting & FAQ](#10-troubleshooting--faq)
 
 ---
 
@@ -370,7 +371,37 @@ Each filter can be configured independently:
 
 ---
 
-## 7. OBS Overlays
+## 7. Stream Analytics
+
+Automatic stream tracking with viewer counts, category changes, and session history. Data is collected every 60 seconds while you're live — no setup required.
+
+### How It Works
+
+The bot automatically polls the Twitch API every 60 seconds while your stream is live:
+- **Viewer count** is recorded as a snapshot (for minute-by-minute charts)
+- **Category changes** are detected and tracked as segments with exact durations
+- **Stream sessions** are opened when you go live and closed when you go offline
+
+### Dashboard Tabs
+
+**Overview** — KPI cards (total streams, hours streamed, avg/peak viewers), viewer trend line chart, stream hours bar chart for the last 30 days.
+
+**Categories** — Pie chart showing time distribution across games/categories, breakdown table with hours, avg viewers, and peak viewers per category.
+
+**Stream History** — Browse individual stream sessions. Select a session to see:
+- Minute-by-minute viewer count chart (area chart)
+- Category timeline showing which games you played and when
+- Session KPIs (duration, peak, average, categories played)
+
+### Tips
+
+- **Data builds up over time** — the more you stream, the more useful the analytics become
+- **Category tracking is automatic** — just switch games in your Twitch dashboard and the bot detects the change
+- **No manual setup needed** — the StreamAnalyticsService starts automatically with the bot
+
+---
+
+## 8. OBS Overlays
 
 Six overlay types available as OBS Browser Sources. No authentication needed — overlays connect via localhost.
 
@@ -383,37 +414,37 @@ Six overlay types available as OBS Browser Sources. No authentication needed —
 
 All overlays auto-reconnect if the bot restarts. They poll for connectivity every 10 seconds and reload automatically when the connection is restored.
 
-### 7.1 Alert Box
+### 8.1 Alert Box
 
 Displays animated alerts for follows, subscriptions, raids, gift subs, resubs, and channel point redemptions. Alerts queue up and display one at a time.
 
 **Recommended size:** 800 x 200
 
-### 7.2 Chat Box
+### 8.2 Chat Box
 
 Shows live chat messages with emote rendering and role badges.
 
 **Recommended size:** 400 x 600
 
-### 7.3 Poll Overlay
+### 8.3 Poll Overlay
 
 Displays the active poll with animated vote bars, percentages, and a countdown timer. Shows results for 10 seconds after the poll ends.
 
 **Recommended size:** 500 x 400
 
-### 7.4 Raffle Overlay
+### 8.4 Raffle Overlay
 
 Shows the active raffle with entry instructions, animated winner reveal, and confetti animation.
 
 **Recommended size:** 600 x 300
 
-### 7.5 Counter Overlay
+### 8.5 Counter Overlay
 
 Displays a single counter value. Updates in real-time via SignalR.
 
 **Recommended size:** 300 x 100
 
-### 7.6 Event List
+### 8.6 Event List
 
 Scrolling feed of recent events (follows, subs, raids, etc.) with icons for each event type.
 
@@ -421,7 +452,7 @@ Scrolling feed of recent events (follows, subs, raids, etc.) with icons for each
 
 ---
 
-## 8. Settings & Configuration
+## 9. Settings & Configuration
 
 ### Twitch Account Connections
 
@@ -442,7 +473,7 @@ Toggle between Light and Dark mode using the theme toggle at the bottom of the s
 
 ---
 
-## 9. Troubleshooting & FAQ
+## 10. Troubleshooting & FAQ
 
 ### Bot Won't Connect
 

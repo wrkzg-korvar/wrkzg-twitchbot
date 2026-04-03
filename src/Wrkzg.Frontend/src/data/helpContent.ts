@@ -259,6 +259,21 @@ export const helpContent: Record<string, HelpEntry> = {
     handbookSection: "#chat-games",
   },
 
+  // --- Analytics ---
+  "analytics": {
+    title: "Stream Analytics",
+    description: "Automatic stream tracking with viewer counts, category changes, and session history. Data is collected every 60 seconds while you're live — no setup required.",
+    howToUse: [
+      "Data collection starts automatically when you go live",
+      "The Overview tab shows KPIs, viewer trends, and stream hours",
+      "The Categories tab shows time distribution across games/categories",
+      "The Stream History tab lets you explore individual sessions",
+      "Select a session to see minute-by-minute viewer charts",
+      "Data builds up over time — the more you stream, the more useful it gets",
+    ],
+    handbookSection: "#stream-analytics",
+  },
+
   // --- Overlays ---
   "overlays": {
     title: "OBS Overlays",
