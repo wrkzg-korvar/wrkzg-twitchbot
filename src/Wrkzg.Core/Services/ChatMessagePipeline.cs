@@ -223,6 +223,8 @@ public class ChatMessagePipeline
             using IServiceScope scope = _scopeFactory.CreateScope();
             IUserRepository users = scope.ServiceProvider.GetRequiredService<IUserRepository>();
 
+            // GetOrCreateAsync automatically resolves imported user placeholder IDs
+            // (imported users have TwitchId "imported_{username}" until they chat)
             User user = await users.GetOrCreateAsync(message.UserId, message.Username, ct);
 
             user.MessageCount++;

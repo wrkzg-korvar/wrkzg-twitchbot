@@ -39,7 +39,9 @@
    - [8.6 Event List](#86-event-list)
    - [8.7 Song Player](#87-song-player)
 9. [Settings & Configuration](#9-settings--configuration)
-10. [Troubleshooting & FAQ](#10-troubleshooting--faq)
+10. [Data Management](#10-data-management)
+    - [10.1 Import Data from Another Bot](#101-import-data-from-another-bot)
+11. [Troubleshooting & FAQ](#11-troubleshooting--faq)
 
 ---
 
@@ -708,7 +710,63 @@ Toggle between Light and Dark mode using the theme toggle at the bottom of the s
 
 ---
 
-## 10. Troubleshooting & FAQ
+## 10. Data Management
+
+### 10.1 Import Data from Another Bot
+
+Wrkzg can import your community data from other Twitch bots so your viewers keep their points, watch time, and status when you switch.
+
+#### Supported Formats
+
+| Source | Format | What's imported |
+|---|---|---|
+| **Deepbot (CSV)** | .csv, 3 columns, no header | Username, Points, Watch Time |
+| **Deepbot (JSON)** | .json from API export | All above + VIP level, Mod status, Join Date, Last Seen |
+| **Streamlabs Chatbot** | .csv export | Username, Points, Watch Hours |
+| **Generic CSV** | Any .csv | Customizable column mapping |
+
+#### How to Export from Deepbot
+
+**CSV Export (simple):**
+1. Open Deepbot
+2. Go to the "User Database" tab
+3. Right-click anywhere in the list
+4. Select "Export" and save as .csv
+5. The file contains: Username, Points, Minutes Watched
+
+**JSON Export (full data):**
+1. Connect to Deepbot's WebSocket API (port 3337)
+2. Authenticate with your API secret
+3. Use `get_users` with pagination to export all users
+4. Save the response as a .json file
+
+#### Import Steps
+
+1. Go to **Import Data** in the sidebar
+2. Select your previous bot format
+3. Upload your export file
+4. Preview the data to verify it looks correct
+5. Choose a conflict strategy for existing users
+6. Click **Import** to start the migration
+
+#### Conflict Strategies
+
+When importing, some users may already exist in Wrkzg. Choose how to handle them:
+
+| Strategy | Points | Watch Time | Best for |
+|---|---|---|---|
+| **Skip** | Keep Wrkzg value | Keep Wrkzg value | Keeping current data untouched |
+| **Overwrite** | Use imported value | Use imported value | Starting fresh with old data |
+| **Keep Higher** | Use the bigger value | Use the bigger value | Merging data from two sources |
+| **Add** | Sum both values | Sum both values | Combining multiple bot exports |
+
+#### Imported User ID Resolution
+
+Imported users don't have a Twitch ID yet (Deepbot only stores usernames). Wrkzg creates them with a temporary placeholder ID. The first time an imported user types in your chat, Wrkzg automatically links their Twitch account to the imported data. This happens silently — no action needed from you or the viewer.
+
+---
+
+## 11. Troubleshooting & FAQ
 
 ### Bot Won't Connect
 

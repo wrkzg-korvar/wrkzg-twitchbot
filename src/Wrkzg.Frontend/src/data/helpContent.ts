@@ -346,6 +346,21 @@ export const helpContent: Record<string, HelpEntry> = {
     handbookSection: "#7-obs-overlays",
   },
 
+  // --- Import ---
+  "import": {
+    title: "Import Data",
+    description: "Migrate your community data from another bot. Import points, watch time, and user data from Deepbot, Streamlabs Chatbot, or any CSV file. Your viewers keep their progress when you switch to Wrkzg.",
+    howToUse: [
+      "Select which bot you're importing from",
+      "Upload your export file (CSV or JSON)",
+      "Preview the data to make sure it looks correct",
+      "Choose how to handle users that already exist in Wrkzg",
+      "Optionally map VIP levels to Wrkzg Roles (Deepbot JSON only)",
+      "Click Import to start the migration",
+    ],
+    handbookSection: "#import-data",
+  },
+
   // --- Integrations ---
   "integrations": {
     title: "Integrations",

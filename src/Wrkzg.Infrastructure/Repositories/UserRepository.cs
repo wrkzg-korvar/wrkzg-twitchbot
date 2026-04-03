@@ -37,6 +37,18 @@ public class UserRepository : IUserRepository
             return user;
         }
 
+        // Check if this user was imported (has placeholder TwitchId "imported_{username}").
+        // If found, adopt the imported user and update their TwitchId to the real one.
+        User? imported = await _db.Users.FirstOrDefaultAsync(
+            u => u.Username == username && u.TwitchId.StartsWith("imported_"), ct);
+
+        if (imported is not null)
+        {
+            imported.TwitchId = twitchId;
+            await _db.SaveChangesAsync(ct);
+            return imported;
+        }
+
         user = new User
         {
             TwitchId = twitchId,
@@ -75,5 +87,18 @@ public class UserRepository : IUserRepository
     public async Task<IReadOnlyList<User>> GetAllAsync(CancellationToken ct = default)
     {
         return await _db.Users.OrderBy(u => u.DisplayName).ToListAsync(ct);
+    }
+
+    public async Task<User?> GetByUsernameAsync(string username, CancellationToken ct = default)
+    {
+        return await _db.Users.FirstOrDefaultAsync(
+            u => u.Username == username, ct);
+    }
+
+    public async Task<User> CreateAsync(User user, CancellationToken ct = default)
+    {
+        _db.Users.Add(user);
+        await _db.SaveChangesAsync(ct);
+        return user;
     }
 }

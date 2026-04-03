@@ -23,6 +23,7 @@ import { SongRequestsPage } from "./pages/SongRequestsPage";
 import { HotkeysPage } from "./pages/HotkeysPage";
 import { EffectsPage } from "./pages/EffectsPage";
 import { IntegrationsPage } from "./pages/IntegrationsPage";
+import { ImportPage } from "./pages/ImportPage";
 import { AlertOverlay } from "./components/overlay/AlertOverlay";
 import { ChatOverlay } from "./components/overlay/ChatOverlay";
 import { PollOverlay } from "./components/overlay/PollOverlay";
@@ -95,6 +96,7 @@ function AppShell() {
           <Route path="hotkeys" element={<HotkeysPage />} />
           <Route path="effects" element={<EffectsPage />} />
           <Route path="integrations" element={<IntegrationsPage />} />
+          <Route path="import" element={<ImportPage />} />
           <Route path="quotes" element={<QuotesPage />} />
           <Route path="spam-filter" element={<SpamFilterPage />} />
           <Route path="notifications" element={<NotificationsPage />} />

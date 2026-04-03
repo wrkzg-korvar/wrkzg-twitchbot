@@ -6,6 +6,7 @@ using Microsoft.Extensions.Http.Resilience;
 using TwitchLib.EventSub.Websockets.Extensions;
 using Wrkzg.Core.Interfaces;
 using Wrkzg.Infrastructure.Data;
+using Wrkzg.Infrastructure.Import;
 using Wrkzg.Infrastructure.Repositories;
 using Wrkzg.Infrastructure.Security;
 using Wrkzg.Infrastructure.Twitch;
@@ -40,6 +41,7 @@ public static class DependencyInjection
         services.AddScoped<ISongRequestRepository, SongRequestRepository>();
         services.AddScoped<IHotkeyBindingRepository, HotkeyBindingRepository>();
         services.AddScoped<IEffectListRepository, EffectListRepository>();
+        services.AddScoped<IDataImportService, DataImportService>();
 
         // Secure Storage + Hotkey Listener (platform-specific)
         if (OperatingSystem.IsWindows())

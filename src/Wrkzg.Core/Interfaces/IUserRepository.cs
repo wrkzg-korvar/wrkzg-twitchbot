@@ -17,4 +17,6 @@ public interface IUserRepository
     Task<IReadOnlyList<User>> GetTopByWatchTimeAsync(int count, CancellationToken ct = default);
     Task UpdateAsync(User user, CancellationToken ct = default);
     Task<IReadOnlyList<User>> GetAllAsync(CancellationToken ct = default);
+    Task<User?> GetByUsernameAsync(string username, CancellationToken ct = default);
+    Task<User> CreateAsync(User user, CancellationToken ct = default);
 }

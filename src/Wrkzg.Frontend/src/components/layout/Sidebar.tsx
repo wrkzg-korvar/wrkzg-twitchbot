@@ -19,6 +19,7 @@ import {
   Keyboard,
   Workflow,
   Plug,
+  Upload,
 } from "lucide-react";
 import { SidebarGroup } from "./SidebarGroup";
 import { ThemeToggle } from "./ThemeToggle";
@@ -82,6 +83,12 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
     items: [
       { to: "/spam-filter", label: "Spam Filter", icon: Shield },
       { to: "/users", label: "Users", icon: Users },
+    ],
+  },
+  {
+    label: "Data",
+    items: [
+      { to: "/import", label: "Import Data", icon: Upload },
     ],
   },
 ];
