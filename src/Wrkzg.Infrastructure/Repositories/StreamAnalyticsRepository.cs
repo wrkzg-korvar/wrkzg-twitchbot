@@ -68,11 +68,14 @@ public class StreamAnalyticsRepository : IStreamAnalyticsRepository
 
     public async Task<IReadOnlyList<StreamSession>> GetSessionsSinceAsync(DateTimeOffset since, CancellationToken ct = default)
     {
-        return await _db.StreamSessions
+        // SQLite cannot translate DateTimeOffset comparisons in WHERE clauses.
+        // Load all sessions and filter in memory, ordered by Id (creation order).
+        List<StreamSession> all = await _db.StreamSessions
             .Include(s => s.CategorySegments)
-            .Where(s => s.StartedAt >= since)
             .OrderByDescending(s => s.Id)
             .ToListAsync(ct);
+
+        return all.Where(s => s.StartedAt >= since).ToList();
     }
 
     public async Task<CategorySegment> CreateSegmentAsync(CategorySegment segment, CancellationToken ct = default)
