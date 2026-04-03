@@ -67,6 +67,10 @@ Wrkzg is different:
 | **Automation system** | ✅ Visual | ❌ | ✅ | ❌ | ❌ |
 | **Discord integration** | ✅ Webhooks | ❌ | ❌ | ✅ | ❌ |
 | **Stream analytics** | ✅ | ❌ | ✅ | ✅ | ❌ |
+| **Overlay editor** | ✅ Visual | ❌ | ✅ | ❌ | ✅ |
+| **Custom overlays (HTML/CSS/JS)** | ✅ Local | ✅ Cloud | ❌ | ❌ | ❌ |
+| **Custom sounds/images** | ✅ Local | ✅ Cloud | ✅ | ❌ | ✅ Cloud |
+| **Data import** | ✅ Deepbot/CSV | ❌ | ✅ | ✅ | ❌ |
 | **Open source** | ✅ MIT | ❌ | ✅ GPL-3 | ✅ GPL-3 | ❌ |
 | **No account required** | ✅ | ❌ | ✅ | ✅ | ❌ |
 | **Price** | **Free** | Free (limited) | **Free** | **Free** | Freemium |
@@ -98,10 +102,12 @@ Wrkzg is different:
 - **Uptime Command** — `!uptime` / `!live` with smart time formatting
 
 **OBS Overlays**
-- **7 Browser Source Overlays** — Alert Box, Chat Box, Poll, Raffle, Counter, Event List, Song Player — all real-time via SignalR
-- **Auto-Reconnect** — Overlays detect when the bot restarts and reload automatically within 10 seconds
-- **Customizable** — Font size, colors, animations, duration — configurable per overlay type from the dashboard
-- **Copy URL** — One-click copy of the OBS Browser Source URL for each overlay
+- **7 Built-in Overlays** — Alert Box, Chat Box, Poll, Raffle, Counter, Event List, Song Player — all real-time via SignalR
+- **Full Overlay Editor** — Visual editor with live preview, per-event customization, 14 animations, 30+ Google Fonts, Custom CSS
+- **Custom Sounds & Images** — Upload your own alert sounds (.mp3/.wav/.ogg) and images (.png/.gif/.webp) — stored locally, no cloud
+- **Per-Event Alerts** — Individual image, sound, message, and animation for each event type (follow, sub, raid, etc.)
+- **Custom Overlays (Developer Mode)** — Create fully custom overlays with HTML, CSS, and JavaScript with full SignalR access
+- **5 Templates** — Follow Goal Bar, Follower Ticker, Stream Clock, Sub Counter, Raid Banner — ready to use and customize
 
 **Automation & Integrations**
 - **Effect System** — Trigger → Conditions → Effects automation chains. Combine any trigger (commands, events, hotkeys, keywords, channel points) with any effect (chat messages, counter updates, alerts, variables, Discord messages)
@@ -121,8 +127,6 @@ Wrkzg is different:
 
 | Version | Features |
 |---|---|
-| **v2.2.0** | Bot Import (migrate settings and data from other bots) |
-| **v2.3.0** | Overlay Editor (visual editor for each overlay type) |
 | **v2.4.0** | Linux support |
 | **v2.5.0** | Automatic updater |
 
@@ -442,12 +446,35 @@ For questions or ideas, open a **[GitHub Discussion](https://github.com/wrkzg-ko
 
 </details>
 
+<details>
+<summary><strong>v2.2.0 — Bot Data Import ✅</strong></summary>
+
+- Data import from Deepbot (CSV + JSON), Streamlabs Chatbot, and generic CSV files
+- 4-step import wizard with preview, column mapping, and conflict strategies
+- Imported user ID auto-resolution when users first chat
+- VIP-to-Role mapping for Deepbot JSON imports
+
+</details>
+
+<details>
+<summary><strong>v2.3.0 — Overlay Editor ✅</strong></summary>
+
+- Full visual overlay editor with live preview replacing the config modal
+- Per-event alert customization (custom image, sound, message, animation per event type)
+- Asset management system — upload sounds (.mp3/.wav/.ogg) and images (.png/.gif/.webp) locally
+- 30+ Google Fonts with live font picker
+- 14 animations (slideDown, slideUp, bounceIn, flipIn, jackInTheBox, heartBeat, tada, and more)
+- Custom CSS per overlay type — no !important needed
+- Custom Overlays (Developer Mode) — HTML/CSS/JS editor with full SignalR access
+- 5 ready-to-use templates (Follow Goal Bar, Follower Ticker, Stream Clock, Sub Counter, Raid Banner)
+- JSON Field Definitions for configurable overlay settings
+
+</details>
+
 ### Future
 
 | Version | Features |
 |---|---|
-| **v2.2.0** | Bot Import — migrate settings and data from other bots |
-| **v2.3.0** | Overlay Editor — visual editor for each overlay type |
 | **v2.4.0** | Linux Support |
 | **v2.5.0** | Automatic Updater — GitHub Releases download + install |
 

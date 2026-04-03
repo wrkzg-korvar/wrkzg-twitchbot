@@ -34,6 +34,9 @@ public class TimedMessage
     /// <summary>Whether this timer fires when the stream is offline.</summary>
     public bool RunWhenOffline { get; set; }
 
+    /// <summary>Whether messages are sent as Twitch announcements (highlighted in chat). Requires the bot to be a moderator.</summary>
+    public bool IsAnnouncement { get; set; }
+
     /// <summary>When this timer last fired.</summary>
     public DateTimeOffset? LastFiredAt { get; set; }
 

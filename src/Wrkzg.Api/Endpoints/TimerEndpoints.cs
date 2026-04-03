@@ -53,7 +53,8 @@ public static class TimerEndpoints
                 MinChatLines = request.MinChatLines ?? 5,
                 IsEnabled = request.IsEnabled ?? true,
                 RunWhenOnline = request.RunWhenOnline ?? true,
-                RunWhenOffline = request.RunWhenOffline ?? false
+                RunWhenOffline = request.RunWhenOffline ?? false,
+                IsAnnouncement = request.IsAnnouncement ?? false
             };
 
             timer = await repo.CreateAsync(timer, ct);
@@ -101,6 +102,10 @@ public static class TimerEndpoints
             {
                 timer.RunWhenOffline = request.RunWhenOffline.Value;
             }
+            if (request.IsAnnouncement.HasValue)
+            {
+                timer.IsAnnouncement = request.IsAnnouncement.Value;
+            }
 
             await repo.UpdateAsync(timer, ct);
             return Results.Ok(timer);
@@ -121,7 +126,8 @@ public record CreateTimerRequest(
     int? MinChatLines,
     bool? IsEnabled,
     bool? RunWhenOnline,
-    bool? RunWhenOffline);
+    bool? RunWhenOffline,
+    bool? IsAnnouncement);
 
 public record UpdateTimerRequest(
     string? Name,
@@ -130,4 +136,5 @@ public record UpdateTimerRequest(
     int? MinChatLines,
     bool? IsEnabled,
     bool? RunWhenOnline,
-    bool? RunWhenOffline);
+    bool? RunWhenOffline,
+    bool? IsAnnouncement);

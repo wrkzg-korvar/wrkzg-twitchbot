@@ -24,6 +24,8 @@ import { HotkeysPage } from "./pages/HotkeysPage";
 import { EffectsPage } from "./pages/EffectsPage";
 import { IntegrationsPage } from "./pages/IntegrationsPage";
 import { ImportPage } from "./pages/ImportPage";
+import { OverlayEditorPage } from "./pages/OverlayEditorPage";
+import { CustomOverlayEditorPage } from "./pages/CustomOverlayEditorPage";
 import { AlertOverlay } from "./components/overlay/AlertOverlay";
 import { ChatOverlay } from "./components/overlay/ChatOverlay";
 import { PollOverlay } from "./components/overlay/PollOverlay";
@@ -101,6 +103,8 @@ function AppShell() {
           <Route path="spam-filter" element={<SpamFilterPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="overlays" element={<OverlaysPage />} />
+          <Route path="overlays/:type/edit" element={<OverlayEditorPage />} />
+          <Route path="overlays/custom/:id/edit" element={<CustomOverlayEditorPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

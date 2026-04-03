@@ -123,6 +123,20 @@ body {
   background: transparent !important;
 }
 
+/* Checkerboard pattern to indicate transparency — used for overlay preview containers */
+.checkerboard-bg {
+  background: repeating-conic-gradient(
+      var(--checker-a, #222) 0% 25%,
+      var(--checker-b, #2a2a2a) 0% 50%
+    )
+    50% / 20px 20px;
+}
+
+:root[data-theme="light"] .checkerboard-bg {
+  --checker-a: #e0e0e0;
+  --checker-b: #f0f0f0;
+}
+
 .overlay-text {
   text-shadow:
     0 1px 3px rgba(0, 0, 0, 0.9),
@@ -207,4 +221,62 @@ body {
   100% {
     transform: scale(1);
   }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(80px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideLeft {
+  from { transform: translateX(100px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideRight {
+  from { transform: translateX(-100px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes flipIn {
+  from { transform: perspective(400px) rotateY(90deg); opacity: 0; }
+  to { transform: perspective(400px) rotateY(0); opacity: 1; }
+}
+
+@keyframes rotateIn {
+  from { transform: rotate(-200deg) scale(0); opacity: 0; }
+  to { transform: rotate(0) scale(1); opacity: 1; }
+}
+
+@keyframes jackInTheBox {
+  0% { transform: scale(0.1) rotate(30deg); transform-origin: center bottom; opacity: 0; }
+  50% { transform: rotate(-10deg); }
+  70% { transform: rotate(3deg); }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+@keyframes rubberBand {
+  0% { transform: scale(1); }
+  30% { transform: scaleX(1.25) scaleY(0.75); }
+  40% { transform: scaleX(0.75) scaleY(1.25); }
+  50% { transform: scaleX(1.15) scaleY(0.85); }
+  65% { transform: scaleX(0.95) scaleY(1.05); }
+  75% { transform: scaleX(1.05) scaleY(0.95); }
+  100% { transform: scale(1); }
+}
+
+@keyframes heartBeat {
+  0% { transform: scale(1); }
+  14% { transform: scale(1.3); }
+  28% { transform: scale(1); }
+  42% { transform: scale(1.3); }
+  70% { transform: scale(1); }
+}
+
+@keyframes tada {
+  0% { transform: scale(1) rotate(0); }
+  10%, 20% { transform: scale(0.9) rotate(-3deg); }
+  30%, 50%, 70%, 90% { transform: scale(1.1) rotate(3deg); }
+  40%, 60%, 80% { transform: scale(1.1) rotate(-3deg); }
+  100% { transform: scale(1) rotate(0); }
 }

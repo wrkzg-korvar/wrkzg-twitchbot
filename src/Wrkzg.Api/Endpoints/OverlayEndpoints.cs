@@ -37,6 +37,51 @@ public static class OverlayEndpoints
             ["subMessage"] = "{user} subscribed (Tier {tier})!",
             ["giftMessage"] = "{user} gifted {count} subs!",
             ["raidMessage"] = "{user} is raiding with {viewers} viewers!",
+            // Per-event overrides (empty = use global value)
+            ["follow.enabled"] = "true",
+            ["follow.image"] = "",
+            ["follow.sound"] = "",
+            ["follow.soundVolume"] = "80",
+            ["follow.message"] = "{user} just followed!",
+            ["follow.animation"] = "",
+            ["follow.duration"] = "",
+            ["subscribe.enabled"] = "true",
+            ["subscribe.image"] = "",
+            ["subscribe.sound"] = "",
+            ["subscribe.soundVolume"] = "80",
+            ["subscribe.message"] = "{user} subscribed (Tier {tier})!",
+            ["subscribe.animation"] = "",
+            ["subscribe.duration"] = "",
+            ["giftsub.enabled"] = "true",
+            ["giftsub.image"] = "",
+            ["giftsub.sound"] = "",
+            ["giftsub.soundVolume"] = "80",
+            ["giftsub.message"] = "{user} gifted {count} subs!",
+            ["giftsub.animation"] = "",
+            ["giftsub.duration"] = "",
+            ["resub.enabled"] = "true",
+            ["resub.image"] = "",
+            ["resub.sound"] = "",
+            ["resub.soundVolume"] = "80",
+            ["resub.message"] = "{user} resubscribed for {months} months!",
+            ["resub.animation"] = "",
+            ["resub.duration"] = "",
+            ["raid.enabled"] = "true",
+            ["raid.image"] = "",
+            ["raid.sound"] = "",
+            ["raid.soundVolume"] = "80",
+            ["raid.message"] = "{user} is raiding with {viewers} viewers!",
+            ["raid.animation"] = "",
+            ["raid.duration"] = "",
+            ["channelpoint.enabled"] = "true",
+            ["channelpoint.image"] = "",
+            ["channelpoint.sound"] = "",
+            ["channelpoint.soundVolume"] = "80",
+            ["channelpoint.message"] = "{user} redeemed {rewardTitle}!",
+            ["channelpoint.animation"] = "",
+            ["channelpoint.duration"] = "",
+            // Custom CSS
+            ["customCSS"] = "",
         },
         ["chat"] = new()
         {
@@ -48,6 +93,7 @@ public static class OverlayEndpoints
             ["showBadges"] = "true",
             ["fadeAfter"] = "30",
             ["direction"] = "bottomUp",
+            ["customCSS"] = "",
         },
         ["poll"] = new()
         {
@@ -56,6 +102,7 @@ public static class OverlayEndpoints
             ["barColor"] = "#8BBF4C",
             ["showPercentage"] = "true",
             ["animation"] = "growBar",
+            ["customCSS"] = "",
         },
         ["raffle"] = new()
         {
@@ -63,6 +110,7 @@ public static class OverlayEndpoints
             ["fontSize"] = "20",
             ["drawAnimation"] = "spin",
             ["confetti"] = "true",
+            ["customCSS"] = "",
         },
         ["counter"] = new()
         {
@@ -73,6 +121,7 @@ public static class OverlayEndpoints
             ["label"] = "{name}: {value}",
             ["animateChange"] = "true",
             ["counterId"] = "",
+            ["customCSS"] = "",
         },
         ["events"] = new()
         {
@@ -83,6 +132,7 @@ public static class OverlayEndpoints
             ["showFollows"] = "true",
             ["showSubs"] = "true",
             ["showRaids"] = "true",
+            ["customCSS"] = "",
         },
     };
 
@@ -156,6 +206,18 @@ public static class OverlayEndpoints
             return Results.Ok(result);
         });
 
+        // GET /api/overlays/defaults/{type} — get built-in defaults (for editor reset)
+        group.MapGet("/defaults/{type}", (string type) =>
+        {
+            string normalizedType = type.ToLowerInvariant();
+            if (!Defaults.ContainsKey(normalizedType))
+            {
+                return Results.BadRequest(new { error = $"Unknown overlay type: '{type}'." });
+            }
+
+            return Results.Ok(Defaults[normalizedType]);
+        });
+
         // PUT /api/overlays/settings/{type} — update settings for one overlay type
         group.MapPut("/settings/{type}", async (
             string type,
@@ -174,9 +236,10 @@ public static class OverlayEndpoints
 
             foreach (KeyValuePair<string, string> kvp in settings)
             {
-                if (kvp.Value.Length > 500)
+                int maxLen = kvp.Key == "customCSS" ? 10000 : 500;
+                if (kvp.Value.Length > maxLen)
                 {
-                    return Results.BadRequest(new { error = $"Value for '{kvp.Key}' exceeds 500 characters." });
+                    return Results.BadRequest(new { error = $"Value for '{kvp.Key}' exceeds {maxLen} characters." });
                 }
 
                 toSave[prefix + kvp.Key] = kvp.Value;

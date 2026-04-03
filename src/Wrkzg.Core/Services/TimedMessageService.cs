@@ -116,7 +116,14 @@ public class TimedMessageService : BackgroundService
             }
 
             string message = timer.Messages[timer.NextMessageIndex % timer.Messages.Length];
-            await _chat.SendMessageAsync(message, ct);
+            if (timer.IsAnnouncement)
+            {
+                await _chat.SendMessageAsync($"/announce {message}", ct);
+            }
+            else
+            {
+                await _chat.SendMessageAsync(message, ct);
+            }
 
             timer.NextMessageIndex = (timer.NextMessageIndex + 1) % timer.Messages.Length;
             timer.LastFiredAt = now;

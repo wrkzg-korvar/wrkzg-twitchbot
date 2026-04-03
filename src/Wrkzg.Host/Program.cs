@@ -53,6 +53,18 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 }
 
+// ─── Asset Serving (before auth — overlays need access without token) ──
+WrkzgPaths.EnsureDirectories();
+string assetsPath = WrkzgPaths.AssetsDirectory;
+if (Directory.Exists(assetsPath))
+{
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(assetsPath),
+        RequestPath = "/assets"
+    });
+}
+
 // ─── Security ────────────────────────────────────────────────────────
 // Security headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy)
 app.UseMiddleware<SecurityHeadersMiddleware>();
@@ -106,6 +118,8 @@ if (wwwrootPath is not null && Directory.Exists(wwwrootPath))
     app.MapEffectEndpoints();
     app.MapIntegrationEndpoints();
     app.MapImportEndpoints();
+    app.MapAssetEndpoints();
+    app.MapCustomOverlayEndpoints();
 
     // SPA fallback: unmatched routes serve index.html for React Router
     app.MapFallbackToFile("index.html", new StaticFileOptions

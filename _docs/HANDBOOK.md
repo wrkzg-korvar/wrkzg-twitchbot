@@ -31,13 +31,19 @@
    - [6.1 Spam Filter](#61-spam-filter)
 7. [Stream Analytics](#7-stream-analytics)
 8. [OBS Overlays](#8-obs-overlays)
-   - [8.1 Alert Box](#81-alert-box)
-   - [8.2 Chat Box](#82-chat-box)
-   - [8.3 Poll Overlay](#83-poll-overlay)
-   - [8.4 Raffle Overlay](#84-raffle-overlay)
-   - [8.5 Counter Overlay](#85-counter-overlay)
-   - [8.6 Event List](#86-event-list)
-   - [8.7 Song Player](#87-song-player)
+   - [8.1 Setup](#81-setup-same-for-all-overlays)
+   - [8.2 Overlay Editor](#82-overlay-editor)
+   - [8.3 Alert Box](#83-alert-box)
+   - [8.4 Chat Box](#84-chat-box)
+   - [8.5 Poll Overlay](#85-poll-overlay)
+   - [8.6 Raffle Overlay](#86-raffle-overlay)
+   - [8.7 Counter Overlay](#87-counter-overlay)
+   - [8.8 Event List](#88-event-list)
+   - [8.9 Song Player](#89-song-player)
+   - [8.10 Asset Management](#810-asset-management)
+   - [8.11 Google Fonts](#811-google-fonts)
+   - [8.12 Custom CSS](#812-custom-css)
+   - [8.13 Custom Overlays (Developer Mode)](#813-custom-overlays-developer-mode)
 9. [Settings & Configuration](#9-settings--configuration)
 10. [Data Management](#10-data-management)
     - [10.1 Import Data from Another Bot](#101-import-data-from-another-bot)
@@ -630,9 +636,9 @@ The bot automatically polls the Twitch API every 60 seconds while your stream is
 
 ## 8. OBS Overlays
 
-Six overlay types available as OBS Browser Sources. No authentication needed — overlays connect via localhost.
+Seven built-in overlay types plus a Developer Mode for fully custom HTML/CSS/JS overlays. No authentication needed — overlays connect via localhost.
 
-### Setup (same for all overlays)
+### 8.1 Setup (same for all overlays)
 
 1. In the Wrkzg dashboard, go to **Overlays**
 2. Click **Copy URL** next to the overlay you want
@@ -641,51 +647,292 @@ Six overlay types available as OBS Browser Sources. No authentication needed —
 
 All overlays auto-reconnect if the bot restarts. They poll for connectivity every 10 seconds and reload automatically when the connection is restored.
 
-### 8.1 Alert Box
+### 8.2 Overlay Editor
+
+Every built-in overlay has a full visual editor. Click **Edit** on any overlay card to open it.
+
+**Layout:**
+- **Left side** — Live preview that updates in real-time as you change settings
+- **Right side** — Tabbed settings panel
+
+**Tabs:**
+- **General** — Font size, font family (30+ Google Fonts), text color, animation, duration
+- **Events** (Alert Box only) — Per-event customization with image, sound, message, and animation overrides
+- **Style** — Colors, accents, additional visual settings
+- **Custom CSS** — Write your own CSS to override any style (no `!important` needed)
+
+**Saving:** Click **Save** to persist your changes. Click **Reset to Defaults** to restore all settings to the built-in defaults.
+
+**Test Buttons:** The Alert Box editor has test buttons for each event type (Follow, Subscribe, Gift Sub, Resub, Raid). Click to fire a test event and see/hear it in the live preview.
+
+### 8.3 Alert Box
 
 Displays animated alerts for follows, subscriptions, raids, gift subs, resubs, and channel point redemptions. Alerts queue up and display one at a time.
 
 **Recommended size:** 800 x 200
 
-### 8.2 Chat Box
+#### Per-Event Customization
+
+Each event type (Follow, Subscribe, Gift Sub, Resub, Raid, Channel Point) can be individually customized:
+
+| Setting | Description |
+|---|---|
+| **Image** | Upload a custom image or GIF that displays with the alert |
+| **Sound** | Upload a custom sound (.mp3, .wav, .ogg) that plays when the alert shows |
+| **Volume** | Sound volume (0-100%) |
+| **Message** | Custom message template with variables like `{user}`, `{tier}`, `{viewers}` |
+| **Animation** | Override the global animation for this specific event type |
+| **Enabled** | Toggle individual event types on/off |
+
+If a per-event setting is left empty, the global default is used (e.g. if Follow has no animation override, it uses the global animation setting).
+
+#### Animations
+
+14 animations are available:
+
+| Animation | Description |
+|---|---|
+| Slide Down | Slides in from the top |
+| Slide Up | Slides in from the bottom |
+| Slide Left | Slides in from the right |
+| Slide Right | Slides in from the left |
+| Fade In | Fades in smoothly |
+| Bounce In | Bounces in with elastic effect |
+| Zoom In | Zooms in from small to full size |
+| Flip In | 3D flip rotation |
+| Rotate In | Rotates in from off-screen |
+| Jack in the Box | Springs up with a wobble |
+| Rubber Band | Stretchy elastic effect |
+| Heart Beat | Pulsing heartbeat effect |
+| Tada | Attention-grabbing shake |
+| No Animation | Appears instantly |
+
+### 8.4 Chat Box
 
 Shows live chat messages with emote rendering and role badges.
 
 **Recommended size:** 400 x 600
 
-### 8.3 Poll Overlay
+**Settings:** Max messages, font size, font family, fade after (seconds), direction, show badges.
+
+### 8.5 Poll Overlay
 
 Displays the active poll with animated vote bars, percentages, and a countdown timer. Shows results for 10 seconds after the poll ends.
 
 **Recommended size:** 500 x 400
 
-### 8.4 Raffle Overlay
+### 8.6 Raffle Overlay
 
 Shows the active raffle with entry instructions, animated winner reveal, and confetti animation.
 
 **Recommended size:** 600 x 300
 
-### 8.5 Counter Overlay
+### 8.7 Counter Overlay
 
 Displays a single counter value. Updates in real-time via SignalR.
 
 **Recommended size:** 300 x 100
 
-### 8.6 Event List
+### 8.8 Event List
 
 Scrolling feed of recent events (follows, subs, raids, etc.) with icons for each event type.
 
 **Recommended size:** 400 x 500
 
-### 8.7 Song Player
+### 8.9 Song Player
 
-Displays the currently playing or next queued song with thumbnail, title, and requester name. Apple Music inspired design with animated music bars.
+Displays the currently playing or next queued song with thumbnail, title, and requester name.
 
 **Two modes:**
 - **Full** (default) — Thumbnail, title, requester, queue count. 440 x 100.
 - **Slim** — Compact bar. Add `?mode=slim` to the overlay URL. 380 x 48.
 
 **Recommended size:** 440 x 100 (full) or 380 x 48 (slim)
+
+### 8.10 Asset Management
+
+Upload your own sounds and images for use in overlays.
+
+**Supported formats:**
+- **Sounds:** .mp3, .wav, .ogg (max 10 MB per file)
+- **Images:** .png, .jpg, .jpeg, .gif, .webp, .webm, .svg (max 10 MB per file)
+
+Assets are stored locally in your app data directory (`%APPDATA%/Wrkzg/assets/` on Windows, `~/Library/Application Support/Wrkzg/assets/` on macOS). No cloud upload — files are served directly from your machine via localhost.
+
+Upload assets through the **Asset Picker** in the Overlay Editor's Events tab. Each asset shows a preview (image thumbnail or sound play button) and can be selected or deleted.
+
+### 8.11 Google Fonts
+
+The Overlay Editor includes a font picker with 30+ popular Google Fonts. Select a font in the General tab to use it in your overlay.
+
+Google Fonts require an active internet connection on the streaming PC. The font CSS is loaded dynamically from Google's CDN when the overlay renders in OBS.
+
+Fonts available include: Roboto, Open Sans, Lato, Montserrat, Poppins, Nunito, Bangers, Permanent Marker, Press Start 2P, VT323, Orbitron, JetBrains Mono, and many more.
+
+### 8.12 Custom CSS
+
+Every overlay type supports custom CSS. Open the Overlay Editor, go to the **Custom CSS** tab, and write your styles.
+
+**Key advantage:** Custom CSS is loaded AFTER the default styles, so your rules naturally override the defaults. No `!important` needed — this is a deliberate design choice that makes custom CSS much cleaner than competing overlay systems.
+
+**Available CSS classes per overlay:**
+
+| Overlay | CSS Classes |
+|---|---|
+| Alert Box | `.overlay-text`, `.alert-image` |
+| Chat Box | `.chat-message`, `.chat-username` |
+| Poll | `.poll-bar` |
+| Counter | `.counter-value` |
+| All | `.overlay-root` (root container) |
+
+**Example — Add text shadow to alerts:**
+```css
+.overlay-text {
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+```
+
+### 8.13 Custom Overlays (Developer Mode)
+
+Create fully custom overlays with HTML, CSS, and JavaScript. Your overlays have full access to Wrkzg's real-time SignalR events and run as standalone Browser Sources in OBS.
+
+#### Creating a Custom Overlay
+
+1. Go to **Overlays** in the sidebar
+2. Scroll to the **Custom Overlays** section
+3. Click **Blank Overlay** or choose a template (Follow Goal Bar, Ticker, Clock, Sub Counter, Raid Banner)
+4. The code editor opens with HTML, CSS, JS, and Fields tabs
+5. Write your overlay code
+6. Click **Save** and copy the OBS URL
+
+#### Code Editor
+
+The editor has a split-view layout:
+- **Left** — Live preview with checkerboard background (indicates transparency). Click **Refresh** to reload after saving.
+- **Right** — Code tabs and settings
+
+**Code Tabs:**
+- **HTML** — Your overlay's markup
+- **CSS** — Your styles (applied after the base reset styles)
+- **JS** — Your JavaScript (runs after SignalR connects)
+- **Fields (JSON)** — Define configurable fields (see below)
+
+**Settings Tab:**
+- Description, recommended width/height for OBS
+
+#### Wrkzg JavaScript API
+
+Every custom overlay has access to the `Wrkzg` object:
+
+```javascript
+// Listen for stream events
+Wrkzg.on('FollowEvent', function(data) {
+  console.log(data.username + ' followed!');
+});
+
+// Read a configured field value
+const title = Wrkzg.getField('title');
+```
+
+**`Wrkzg.on(eventName, callback)`** — Register a listener for a SignalR event. The callback receives the event data as its first argument.
+
+**`Wrkzg.getField(key)`** — Read a field value from the Fields JSON definition. Returns the configured value, or the default from the field definition, or `null`.
+
+#### Available Events
+
+| Event Name | Data Fields | When it fires |
+|---|---|---|
+| `FollowEvent` | `username` | Someone follows |
+| `SubscribeEvent` | `username`, `tier` | Someone subscribes |
+| `GiftSubEvent` | `username`, `count`, `tier` | Someone gifts subs |
+| `ResubEvent` | `username`, `months`, `tier`, `message` | Someone resubscribes |
+| `RaidEvent` | `username`, `viewers` | Someone raids |
+| `ChannelPointRedemption` | `username`, `rewardTitle`, `cost`, `userInput` | Channel point redeemed |
+| `ChatMessage` | `username`, `displayName`, `content`, `isMod`, `isSubscriber` | Chat message received |
+| `CounterUpdated` | `counterId`, `name`, `value` | Counter value changes |
+| `StreamOnline` | `broadcaster` | Stream goes live |
+
+#### Field Definitions (JSON)
+
+Define configurable fields that appear as a visual form in the Settings tab. This lets other users customize your overlay without editing code.
+
+```json
+{
+  "title": {
+    "type": "text",
+    "label": "Widget Title",
+    "value": "My Widget"
+  },
+  "fontSize": {
+    "type": "number",
+    "label": "Font Size (px)",
+    "value": 24,
+    "min": 8,
+    "max": 128
+  },
+  "backgroundColor": {
+    "type": "color",
+    "label": "Background Color",
+    "value": "#000000"
+  },
+  "showIcon": {
+    "type": "toggle",
+    "label": "Show Icon",
+    "value": true
+  }
+}
+```
+
+**Supported field types:** `text`, `number`, `color`, `toggle`, `select`, `sound` (asset picker), `image` (asset picker), `font` (font picker).
+
+Access field values in JavaScript with `Wrkzg.getField('title')`.
+
+#### Example: Follow Goal Bar
+
+This overlay shows a progress bar that fills up as followers come in:
+
+**HTML:**
+```html
+<div id="goal">
+  <div id="label">Follower Goal</div>
+  <div id="bar"><div id="fill"></div></div>
+  <div id="count">0 / 100</div>
+</div>
+```
+
+**CSS:**
+```css
+#goal { font-family: system-ui; color: white; padding: 16px; }
+#bar { background: rgba(255,255,255,0.15); border-radius: 8px; height: 24px; overflow: hidden; }
+#fill { background: linear-gradient(90deg, #8BBF4C, #6da832); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; }
+#count { font-size: 12px; margin-top: 4px; text-align: right; opacity: 0.7; }
+```
+
+**JavaScript:**
+```javascript
+let count = 0;
+const goal = 100;
+
+function update() {
+  document.getElementById("fill").style.width = (count / goal * 100) + "%";
+  document.getElementById("count").textContent = count + " / " + goal;
+}
+
+Wrkzg.on("FollowEvent", function() {
+  count++;
+  update();
+});
+
+update();
+```
+
+#### Tips
+
+- **Transparency:** In OBS, Browser Sources render transparent backgrounds correctly. The checkerboard pattern in the editor preview indicates transparency.
+- **No framework needed:** Write vanilla HTML/CSS/JS. No build step, no bundler.
+- **Everything is local:** No upload limits, no CDN, no cloud dependency. Your overlays load instantly from localhost.
+- **Test with events:** Use the Test buttons on the Alert Box overlay card (or the Automations test feature) to fire test events while developing.
+- **Templates:** Start from one of the 5 built-in templates to see working examples of event handling, animations, and styling
 
 ---
 

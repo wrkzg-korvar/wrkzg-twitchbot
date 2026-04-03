@@ -335,15 +335,18 @@ export const helpContent: Record<string, HelpEntry> = {
   // --- Overlays ---
   "overlays": {
     title: "OBS Overlays",
-    description: "Browser Sources for OBS Studio. Each overlay type has its own URL that you add as a Browser Source in OBS. No authentication needed — overlays connect via localhost.",
+    description: "Browser Sources for OBS Studio. Customize every detail — upload your own images and sounds, choose from 30+ Google Fonts, pick from 14 animations, and add Custom CSS. For advanced users: create fully custom overlays with HTML, CSS, and JavaScript.",
     howToUse: [
-      "Click 'Copy URL' next to an overlay to copy its Browser Source URL",
-      "In OBS: Sources -> + -> Browser -> paste the URL",
-      "Set the width/height as recommended for each overlay type",
-      "Overlays update in real-time — no refresh needed in OBS",
-      "Customize overlay appearance in the settings for each type",
+      "Click 'Edit' on any overlay to open the full editor",
+      "Upload custom images and sounds in the Events tab (Alert Box)",
+      "Choose from 30+ Google Fonts for your overlay text",
+      "Pick from 14 animations or set 'No Animation' for clean alerts",
+      "Add Custom CSS for advanced styling — no !important needed",
+      "Use 'Test' buttons to preview changes before going live",
+      "Copy the OBS URL and add as Browser Source in OBS",
+      "Create custom overlays with HTML/CSS/JS for unlimited possibilities",
     ],
-    handbookSection: "#7-obs-overlays",
+    handbookSection: "#8-obs-overlays",
   },
 
   // --- Import ---

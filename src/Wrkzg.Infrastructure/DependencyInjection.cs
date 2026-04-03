@@ -42,6 +42,7 @@ public static class DependencyInjection
         services.AddScoped<IHotkeyBindingRepository, HotkeyBindingRepository>();
         services.AddScoped<IEffectListRepository, EffectListRepository>();
         services.AddScoped<IDataImportService, DataImportService>();
+        services.AddScoped<ICustomOverlayRepository, CustomOverlayRepository>();
 
         // Secure Storage + Hotkey Listener (platform-specific)
         if (OperatingSystem.IsWindows())

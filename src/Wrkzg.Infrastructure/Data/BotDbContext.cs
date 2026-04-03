@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Logging;
 using Wrkzg.Core.Models;
 
 namespace Wrkzg.Infrastructure.Data;
@@ -33,9 +35,19 @@ public class BotDbContext : DbContext
     public DbSet<SongRequest> SongRequests => Set<SongRequest>();
     public DbSet<HotkeyBinding> HotkeyBindings => Set<HotkeyBinding>();
     public DbSet<EffectList> EffectLists => Set<EffectList>();
+    public DbSet<CustomOverlay> CustomOverlays => Set<CustomOverlay>();
 
     public BotDbContext(DbContextOptions<BotDbContext> options) : base(options)
     {
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder options)
+    {
+        // Suppress warning for RoleAutoAssignCriteria owned type with all-nullable columns.
+        // This is by design — AutoAssign is optional and null when no criteria are set.
+        options.ConfigureWarnings(w => w
+            .Ignore(RelationalEventId.OptionalDependentWithAllNullPropertiesWarning)
+            .Ignore(new EventId(20606, "OptionalDependentWithAllNullProperties")));
     }
 
     protected override void OnModelCreating(ModelBuilder model)

@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] — 2026-04-03
+
+### Added
+
+- **Overlay Editor** — full visual editor with split-view live preview, replacing the previous config modal
+- **Per-Event Alert Customization** — each event type (follow, subscribe, gift sub, resub, raid, channel point) has individual image, sound, volume, message, and animation settings
+- **Asset Management** — upload custom sounds (.mp3, .wav, .ogg) and images (.png, .jpg, .gif, .webp, .svg) locally; max 10 MB per file; served via localhost
+- **Google Fonts** — 30+ popular fonts available in a picker with live preview; loaded dynamically from Google CDN
+- **14 Animations** — slideDown, slideUp, slideLeft, slideRight, fadeIn, bounceIn, zoomIn, flipIn, rotateIn, jackInTheBox, rubberBand, heartBeat, tada, none
+- **Custom CSS** — per-overlay CSS textarea; loaded after default styles so no !important needed
+- **Custom Overlays (Developer Mode)** — create fully custom overlays with HTML, CSS, and JavaScript; full SignalR event access via `Wrkzg.on()` API
+- **5 Custom Overlay Templates** — Follow Goal Bar, Recent Follower Ticker, Stream Clock, Sub Counter with Effects, Raid Alert Banner
+- **JSON Field Definitions** — define configurable fields for custom overlays; supported types: text, number, color, toggle, select, sound, image, font
+- **Overlay Defaults API** — `GET /api/overlays/defaults/{type}` for editor reset-to-defaults
+- **Asset API** — `POST /api/assets/upload/{category}`, `GET /api/assets/{category}`, `DELETE /api/assets/{category}/{fileName}`
+- **Custom Overlay API** — full CRUD at `/api/custom-overlays`, render at `/overlay/custom/{id}`
+- **Custom Overlay Render** — renders as full HTML page with embedded SignalR; checkerboard preview background indicates transparency
+- **Test Buttons in Editor** — fire test events directly from the Alert Box editor
+- **Live Preview via postMessage** — overlay settings update in the preview iframe without page reload
+
+### Changed
+
+- **Overlay Cards** — "Configure" button replaced with "Edit" that opens the full editor page
+- **Preview Backgrounds** — checkerboard pattern (adapts to light/dark theme) replaces solid backgrounds
+
+## [2.2.0] — 2026-04-03
+
+### Added
+
+- **Bot Data Import** — import community data from Deepbot (CSV + JSON), Streamlabs Chatbot, and generic CSV files
+- **4-Step Import Wizard** — select source, upload file, configure conflict strategy, view results
+- **Deepbot CSV Parser** — 3-column format (Username, Points, MinutesWatched) with float support
+- **Deepbot JSON Parser** — full data including VIP levels, mod status, join dates; VIP 10 correctly mapped as Regular
+- **Generic CSV Parser** — user-defined column mapping, header detection, configurable delimiter
+- **Conflict Strategies** — Skip, Overwrite, Keep Higher, Add — choose how to handle existing users
+- **Auto Column Detection** — headers matching common names (Username, Points, Watchtime) are mapped automatically
+- **Imported User ID Resolution** — placeholder IDs (`imported_{username}`) are automatically resolved when users first chat
+- **VIP-to-Role Mapping** — Deepbot JSON VIP levels can be mapped to Wrkzg Roles during import
+- **Import Preview** — dry-run analysis showing counts before committing
+- **Import API** — `POST /api/import/preview`, `POST /api/import/execute`, `POST /api/import/preview-columns`, `GET /api/import/templates`
+- **FormData Upload** — `api.upload()` method added to frontend API client
+
 ## [2.1.0] — 2026-04-03
 
 ### Added

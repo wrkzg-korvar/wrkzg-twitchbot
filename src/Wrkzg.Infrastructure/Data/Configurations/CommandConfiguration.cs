@@ -1,5 +1,8 @@
+using System;
+using System.Linq;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Wrkzg.Core.Models;
 
@@ -20,10 +23,16 @@ public class CommandConfiguration : IEntityTypeConfiguration<Command>
             .HasConversion(
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
                 v => JsonSerializer.Deserialize<string[]>(v, (JsonSerializerOptions?)null)
-                     ?? System.Array.Empty<string>())
-            .HasColumnType("TEXT");
+                     ?? Array.Empty<string>())
+            .HasColumnType("TEXT")
+            .Metadata.SetValueComparer(StringArrayComparer());
 
         builder.Property(c => c.PermissionLevel)
             .HasConversion<int>();
     }
+
+    internal static ValueComparer<string[]> StringArrayComparer() => new(
+        (a, b) => (a == null && b == null) || (a != null && b != null && a.SequenceEqual(b)),
+        v => v.Aggregate(0, (hash, item) => HashCode.Combine(hash, item.GetHashCode())),
+        v => v.ToArray());
 }
