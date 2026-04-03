@@ -79,22 +79,31 @@ function OverviewTab() {
     );
   }
 
-  const viewerTrend = (sessions ?? [])
-    .filter((s) => s.averageViewers != null)
-    .map((s) => ({
-      date: new Date(s.startedAt).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }),
-      avg: Math.round(s.averageViewers ?? 0),
-      peak: s.peakViewers,
-    }))
-    .reverse();
+  // Aggregate per day — multiple sessions on the same day get merged
+  const sessionsByDate = new Map<string, { avg: number[]; peak: number; hours: number }>();
+  for (const s of (sessions ?? []).slice().reverse()) {
+    const date = new Date(s.startedAt).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
+    const entry = sessionsByDate.get(date) ?? { avg: [], peak: 0, hours: 0 };
+    if (s.averageViewers != null) { entry.avg.push(s.averageViewers); }
+    entry.peak = Math.max(entry.peak, s.peakViewers);
+    entry.hours += (s.durationMinutes ?? 0) / 60;
+    sessionsByDate.set(date, entry);
+  }
 
-  const streamHours = (sessions ?? [])
-    .filter((s) => s.durationMinutes != null)
-    .map((s) => ({
-      date: new Date(s.startedAt).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }),
-      hours: Math.round(((s.durationMinutes ?? 0) / 60) * 10) / 10,
-    }))
-    .reverse();
+  const viewerTrend = [...sessionsByDate.entries()]
+    .filter(([, v]) => v.avg.length > 0)
+    .map(([date, v]) => ({
+      date,
+      avg: Math.round(v.avg.reduce((a, b) => a + b, 0) / v.avg.length),
+      peak: v.peak,
+    }));
+
+  const streamHours = [...sessionsByDate.entries()]
+    .filter(([, v]) => v.hours > 0)
+    .map(([date, v]) => ({
+      date,
+      hours: Math.round(v.hours * 10) / 10,
+    }));
 
   return (
     <div className="space-y-6">
@@ -230,9 +239,11 @@ function StreamHistoryTab({
   selectedSessionId: number | null;
   onSelectSession: (id: number) => void;
 }) {
+  const [days, setDays] = useState(30);
+
   const { data: sessions } = useQuery<AnalyticsSession[]>({
-    queryKey: ["analytics-sessions"],
-    queryFn: () => analyticsApi.getSessions(50),
+    queryKey: ["analytics-sessions", days],
+    queryFn: () => analyticsApi.getSessions(days),
   });
 
   const { data: selectedSession } = useQuery<AnalyticsSession>({
@@ -252,43 +263,64 @@ function StreamHistoryTab({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-      {/* Session List */}
-      <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-[var(--color-text)]">Sessions</h3>
-        {sessions.map((session) => (
-          <button
-            key={session.id}
-            onClick={() => onSelectSession(session.id)}
-            className={`w-full text-left rounded-lg border p-3 transition-colors ${
-              selectedSessionId === session.id
-                ? "border-[var(--color-brand)] bg-[var(--color-brand-subtle)]"
-                : "border-[var(--color-border)] hover:bg-[var(--color-elevated)]"
-            }`}
-          >
-            <div className="text-sm font-medium text-[var(--color-text)]">
-              {new Date(session.startedAt).toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" })}
-            </div>
-            <div className="text-xs text-[var(--color-text-muted)] mt-1">
-              {session.durationMinutes ? `${Math.floor(session.durationMinutes / 60)}h ${session.durationMinutes % 60}m` : "Live"}
-              {" · "}Peak: {session.peakViewers}
-              {session.averageViewers != null && ` · Avg: ${Math.round(session.averageViewers)}`}
-            </div>
-            {session.title && (
-              <div className="text-xs text-[var(--color-text-muted)] truncate mt-1">{session.title}</div>
-            )}
-          </button>
-        ))}
+    <div className="flex gap-4" style={{ height: "calc(100vh - 250px)" }}>
+      {/* Session List — scrollable container */}
+      <div className="w-72 shrink-0 flex flex-col rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
+        <div className="flex items-center justify-between border-b border-[var(--color-border)] px-3 py-2">
+          <span className="text-xs font-semibold text-[var(--color-text)]">Sessions</span>
+          <select value={days} onChange={(e) => setDays(Number(e.target.value))}
+            className="rounded border border-[var(--color-border)] bg-[var(--color-elevated)] px-2 py-0.5 text-xs text-[var(--color-text)]">
+            <option value={7}>Last 7 days</option>
+            <option value={14}>Last 14 days</option>
+            <option value={30}>Last 30 days</option>
+            <option value={90}>Last 90 days</option>
+            <option value={365}>Last year</option>
+            <option value={9999}>All time</option>
+          </select>
+        </div>
+        <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
+          {sessions.map((session) => (
+            <button
+              key={session.id}
+              onClick={() => onSelectSession(session.id)}
+              className={`w-full text-left rounded-lg border p-2.5 transition-colors ${
+                selectedSessionId === session.id
+                  ? "border-[var(--color-brand)] bg-[var(--color-brand-subtle)]"
+                  : "border-transparent hover:bg-[var(--color-elevated)]"
+              }`}
+            >
+              <div className="text-sm font-medium text-[var(--color-text)]">
+                {new Date(session.startedAt).toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" })}
+              </div>
+              <div className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                {session.durationMinutes ? `${Math.floor(session.durationMinutes / 60)}h ${session.durationMinutes % 60}m` : "Live"}
+                {" · "}Peak: {session.peakViewers}
+                {session.averageViewers != null && ` · Avg: ${Math.round(session.averageViewers)}`}
+              </div>
+              {session.title && (
+                <div className="text-[11px] text-[var(--color-text-muted)] truncate mt-0.5">{session.title}</div>
+              )}
+            </button>
+          ))}
+        </div>
+        <div className="border-t border-[var(--color-border)] px-3 py-1.5 text-[10px] text-[var(--color-text-muted)]">
+          {sessions.length} session{sessions.length !== 1 ? "s" : ""}
+        </div>
       </div>
 
       {/* Session Detail */}
-      <div className="lg:col-span-2">
+      <div className="flex-1 overflow-y-auto">
         {!selectedSession ? (
-          <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-8 text-center text-sm text-[var(--color-text-muted)]">
+          <div className="flex h-full items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-sm text-[var(--color-text-muted)]">
             Select a session to view details
           </div>
         ) : (
           <div className="space-y-4">
+            {/* Title */}
+            {selectedSession.title && (
+              <div className="text-sm font-medium text-[var(--color-text)]">{selectedSession.title}</div>
+            )}
+
             {/* KPIs */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <KpiCard icon={Clock} label="Duration" value={selectedSession.durationMinutes ? `${Math.floor(selectedSession.durationMinutes / 60)}h ${selectedSession.durationMinutes % 60}m` : "Live"} />
@@ -297,10 +329,10 @@ function StreamHistoryTab({
               <KpiCard icon={BarChart3} label="Categories" value={selectedSession.categories.length.toString()} />
             </div>
 
-            {/* Viewer Chart */}
-            {selectedSession.snapshots && selectedSession.snapshots.length > 1 && (
-              <Card title="Viewer Count">
-                <div className="h-56">
+            {/* Viewer Chart — always show, with fallback for no snapshots */}
+            <Card title="Viewer Count">
+              <div className="h-56">
+                {selectedSession.snapshots && selectedSession.snapshots.length > 1 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={selectedSession.snapshots.map((s) => ({
                       time: new Date(s.timestamp).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }),
@@ -313,9 +345,15 @@ function StreamHistoryTab({
                       <Area type="monotone" dataKey="viewers" stroke="#8b5cf6" fill="#8b5cf620" strokeWidth={2} name="Viewers" />
                     </AreaChart>
                   </ResponsiveContainer>
-                </div>
-              </Card>
-            )}
+                ) : (
+                  <div className="flex h-full flex-col items-center justify-center text-[var(--color-text-muted)]">
+                    <BarChart3 className="h-8 w-8 mb-2 opacity-30" />
+                    <p className="text-sm">No viewer snapshots for this session</p>
+                    <p className="text-xs mt-1">Snapshots are recorded every 60 seconds while live</p>
+                  </div>
+                )}
+              </div>
+            </Card>
 
             {/* Category Timeline */}
             {selectedSession.categories.length > 0 && (
