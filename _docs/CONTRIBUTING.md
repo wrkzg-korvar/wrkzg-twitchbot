@@ -157,7 +157,7 @@ Host → Api → Core ← Infrastructure
 
 | Layer | Belongs here | Does NOT belong here |
 |---|---|---|
-| `Core` | Interfaces, domain models, business logic, chat games | EF Core, HttpClient, Twitch SDK, ASP.NET types |
+| `Core` | Interfaces, domain models, business logic, chat games, effect types | EF Core, HttpClient, Twitch SDK, ASP.NET types |
 | `Infrastructure` | DbContext, repositories, Twitch clients, secure storage | Business logic, API endpoints |
 | `Api` | Endpoints, SignalR hubs, DTOs, validators | Database queries, Twitch API calls |
 | `Host` | DI bootstrap, Photino window, app startup | Business logic, database access |
@@ -300,3 +300,48 @@ app.MapMyFeatureEndpoints();
 ```
 
 **Step 3:** Add integration tests in `Wrkzg.Api.Tests/`.
+
+---
+
+## How to Add an Effect Type
+
+Effect types are the building blocks of the Effect System (Automations). They live in `Wrkzg.Core/Effects/EffectTypes/` and are auto-registered in DI.
+
+**Step 1:** Create a new class implementing `IEffectType`:
+
+```csharp
+namespace Wrkzg.Core.Effects.EffectTypes;
+
+public class MyCustomEffect : IEffectType
+{
+    public string Id => "my_custom_effect";
+    public string DisplayName => "My Custom Effect";
+    public string[] ParameterKeys => new[] { "message" };
+
+    public async Task ExecuteAsync(
+        EffectExecutionContext context,
+        CancellationToken ct = default)
+    {
+        string message = context.ResolveVariables(
+            context.GetParameter("message"));
+
+        // Your effect logic here
+    }
+}
+```
+
+**Step 2:** Register it in `Wrkzg.Core/DependencyInjection.cs`:
+
+```csharp
+services.AddSingleton<IEffectType, MyCustomEffect>();
+```
+
+**Step 3:** The effect is now available in the Automations editor under its `DisplayName`. Users configure it using the `ParameterKeys` you defined.
+
+**Available context methods:**
+- `context.GetParameter("key")` — get a parameter from the effect's JSON config
+- `context.ResolveVariables("Hello {user}")` — replace `{user}`, trigger data, and custom variables
+- `context.Trigger.Username` — the user who triggered the automation
+- `context.Trigger.GetData("key")` — get event-specific data
+
+Similarly, you can add new **Trigger Types** (`ITriggerType` in `Effects/Triggers/`) and **Condition Types** (`IConditionType` in `Effects/Conditions/`).

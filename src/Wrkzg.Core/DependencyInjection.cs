@@ -1,4 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
+using Wrkzg.Core.ChatGames;
+using Wrkzg.Core.Effects;
 using Wrkzg.Core.Interfaces;
 using Wrkzg.Core.Services;
 using Wrkzg.Core.SystemCommands;
@@ -30,6 +32,10 @@ public static class DependencyInjection
         services.AddSingleton<ISystemCommand, UptimeCommand>();
         services.AddSingleton<ISystemCommand, ShoutoutCommand>();
         services.AddSingleton<ISystemCommand, QuoteCommand>();
+        services.AddSingleton<ISystemCommand, SongRequestCommand>();
+        services.AddSingleton<ISystemCommand, SkipSongCommand>();
+        services.AddSingleton<ISystemCommand, QueueCommand>();
+        services.AddSingleton<ISystemCommand, CurrentSongCommand>();
 
         // Poll System
         services.AddScoped<PollService>();
@@ -46,8 +52,51 @@ public static class DependencyInjection
         // Spam Filter
         services.AddScoped<SpamFilterService>();
 
+        // Role Evaluation (Singleton — uses IServiceScopeFactory internally)
+        services.AddSingleton<RoleEvaluationService>();
+
         // Command Processor (Singleton — maintains cooldown state in-memory)
         services.AddSingleton<ICommandProcessor, CommandProcessor>();
+
+        // Chat Games (Singleton — each game manages its own state)
+        services.AddSingleton<IChatGame, HeistGame>();
+        services.AddSingleton<IChatGame, DuelGame>();
+        services.AddSingleton<IChatGame, SlotsGame>();
+        services.AddSingleton<IChatGame, RouletteGame>();
+        services.AddSingleton<IChatGame, TriviaGame>();
+
+        // Effect System — Built-in Trigger Types
+        services.AddSingleton<ITriggerType, Effects.Triggers.CommandTrigger>();
+        services.AddSingleton<ITriggerType, Effects.Triggers.EventTrigger>();
+        services.AddSingleton<ITriggerType, Effects.Triggers.KeywordTrigger>();
+        services.AddSingleton<ITriggerType, Effects.Triggers.HotkeyTrigger>();
+        services.AddSingleton<ITriggerType, Effects.Triggers.ChannelPointTrigger>();
+
+        // Effect System — Built-in Condition Types
+        services.AddSingleton<IConditionType, Effects.Conditions.RoleCheckCondition>();
+        services.AddSingleton<IConditionType, Effects.Conditions.PointsCheckCondition>();
+        services.AddSingleton<IConditionType, Effects.Conditions.RandomChanceCondition>();
+        services.AddSingleton<IConditionType, Effects.Conditions.StreamStatusCondition>();
+
+        // Effect System — Built-in Effect Types
+        services.AddSingleton<IEffectType, Effects.EffectTypes.ChatMessageEffect>();
+        services.AddSingleton<IEffectType, Effects.EffectTypes.WaitEffect>();
+        services.AddSingleton<IEffectType, Effects.EffectTypes.CounterEffect>();
+        services.AddSingleton<IEffectType, Effects.EffectTypes.AlertEffect>();
+        services.AddSingleton<IEffectType, Effects.EffectTypes.VariableEffect>();
+
+        // Effect System — Integration Effect Types (v2.1.0)
+        services.AddSingleton<IEffectType, Effects.EffectTypes.DiscordSendMessageEffect>();
+        services.AddSingleton<IEffectType, Effects.EffectTypes.DiscordSendEmbedEffect>();
+
+        // Effect Engine (Singleton — evaluates Trigger → Condition → Effect chains)
+        services.AddSingleton<EffectEngine>();
+
+        // Song Request Service (Singleton — manages song queue)
+        services.AddSingleton<SongRequestService>();
+
+        // Chat Game Manager (Singleton — manages all chat games)
+        services.AddSingleton<ChatGameManager>();
 
         // Chat Message Pipeline (Singleton — orchestrates message processing)
         services.AddSingleton<ChatMessagePipeline>();

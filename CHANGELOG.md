@@ -5,6 +5,132 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] — 2026-04-03
+
+### Added
+
+- **Overlay Editor** — full visual editor with split-view live preview, replacing the previous config modal
+- **Per-Event Alert Customization** — each event type (follow, subscribe, gift sub, resub, raid, channel point) has individual image, sound, volume, message, and animation settings
+- **Asset Management** — upload custom sounds (.mp3, .wav, .ogg) and images (.png, .jpg, .gif, .webp, .svg) locally; max 10 MB per file; served via localhost
+- **Google Fonts** — 30+ popular fonts available in a picker with live preview; loaded dynamically from Google CDN
+- **14 Animations** — slideDown, slideUp, slideLeft, slideRight, fadeIn, bounceIn, zoomIn, flipIn, rotateIn, jackInTheBox, rubberBand, heartBeat, tada, none
+- **Custom CSS** — per-overlay CSS textarea; loaded after default styles so no !important needed
+- **Custom Overlays (Developer Mode)** — create fully custom overlays with HTML, CSS, and JavaScript; full SignalR event access via `Wrkzg.on()` API
+- **5 Custom Overlay Templates** — Follow Goal Bar, Recent Follower Ticker, Stream Clock, Sub Counter with Effects, Raid Alert Banner
+- **JSON Field Definitions** — define configurable fields for custom overlays; supported types: text, number, color, toggle, select, sound, image, font
+- **Overlay Defaults API** — `GET /api/overlays/defaults/{type}` for editor reset-to-defaults
+- **Asset API** — `POST /api/assets/upload/{category}`, `GET /api/assets/{category}`, `DELETE /api/assets/{category}/{fileName}`
+- **Custom Overlay API** — full CRUD at `/api/custom-overlays`, render at `/overlay/custom/{id}`
+- **Custom Overlay Render** — renders as full HTML page with embedded SignalR; checkerboard preview background indicates transparency
+- **Test Buttons in Editor** — fire test events directly from the Alert Box editor
+- **Live Preview via postMessage** — overlay settings update in the preview iframe without page reload
+
+### Changed
+
+- **Overlay Cards** — "Configure" button replaced with "Edit" that opens the full editor page
+- **Preview Backgrounds** — checkerboard pattern (adapts to light/dark theme) replaces solid backgrounds
+
+## [2.2.0] — 2026-04-03
+
+### Added
+
+- **Bot Data Import** — import community data from Deepbot (CSV + JSON), Streamlabs Chatbot, and generic CSV files
+- **4-Step Import Wizard** — select source, upload file, configure conflict strategy, view results
+- **Deepbot CSV Parser** — 3-column format (Username, Points, MinutesWatched) with float support
+- **Deepbot JSON Parser** — full data including VIP levels, mod status, join dates; VIP 10 correctly mapped as Regular
+- **Generic CSV Parser** — user-defined column mapping, header detection, configurable delimiter
+- **Conflict Strategies** — Skip, Overwrite, Keep Higher, Add — choose how to handle existing users
+- **Auto Column Detection** — headers matching common names (Username, Points, Watchtime) are mapped automatically
+- **Imported User ID Resolution** — placeholder IDs (`imported_{username}`) are automatically resolved when users first chat
+- **VIP-to-Role Mapping** — Deepbot JSON VIP levels can be mapped to Wrkzg Roles during import
+- **Import Preview** — dry-run analysis showing counts before committing
+- **Import API** — `POST /api/import/preview`, `POST /api/import/execute`, `POST /api/import/preview-columns`, `GET /api/import/templates`
+- **FormData Upload** — `api.upload()` method added to frontend API client
+
+## [2.1.0] — 2026-04-03
+
+### Added
+
+- **Discord Integration** — send messages and rich embeds to Discord channels via webhooks; no Discord bot token needed
+- **Discord Effect Types** — `discord.send_message` and `discord.send_embed` available in the Effect System automations
+- **Stream Online Event** — `stream.online` EventSub subscription; triggers automations when the stream goes live
+- **EventSub → Effect Engine** — all EventSub events (follow, subscribe, gift, resub, raid, stream online) are now dispatched to the Effect Engine for custom automations
+- **Integrations Page** — dashboard page with Discord webhook setup, step-by-step instructions, test button, and webhook management
+- **Discord Live Notification Example** — quick-start automation template that sends a Discord message when the stream goes live
+- **Help entry** for Integrations page
+
+## [2.0.0] — 2026-04-02
+
+### Added
+
+- **Effect System** — visual automation editor with Trigger → Conditions → Effects chains
+- **5 Trigger Types** — Chat Command, Twitch Event, Chat Keyword, Hotkey Press, Channel Point Redemption
+- **4 Condition Types** — Role Check, Points Check, Random Chance, Stream Status
+- **5 Effect Types** — Send Chat Message, Wait (delay), Update Counter, Show Alert, Set Variable
+- **Quick-Start Examples** — one-click creation of common automations (Welcome Followers, Lucky Viewer, Raid Alert)
+- **Test Button** — simulate any automation trigger without waiting for the real event
+- **Effect List API** — full CRUD endpoints at `/api/effects` with types discovery at `/api/effects/types`
+- **Cooldown Management** — per-automation cooldowns to prevent spam
+- **Variable System** — effects can set variables (`{variable_name}`) used by later effects in the same chain
+
+## [1.9.0] — 2026-04-01
+
+### Added
+
+- **Hotkey Triggers** — map global keyboard shortcuts to bot actions (chat message, counter update)
+- **Key Recorder** — visual key combination recorder in the dashboard (no freetext input)
+- **Counter Dropdown** — select counters from a dropdown instead of entering IDs manually
+- **Auth-Free API Trigger** — `POST /api/hotkeys/{id}/trigger` works without authentication for Stream Deck integration
+- **macOS Accessibility Permission** — automatic detection with "Open System Settings" button and permission check
+- **Hotkey Bindings API** — full CRUD at `/api/hotkeys` with trigger endpoint
+
+## [1.8.0] — 2026-03-31
+
+### Added
+
+- **Song Requests** — viewers request YouTube songs via `!sr <URL>`; queue management with open/close, skip, clear
+- **Song Player Overlay** — OBS Browser Source with Apple Music inspired design; full mode (440x100) and slim mode (380x48, `?mode=slim`)
+- **Song Request Commands** — `!sr`, `!skip`, `!queue`, `!currentsong` with aliases
+- **Queue Settings** — max duration, max per user, points cost; queue closed by default
+- **Customizable Messages** — all bot responses configurable via Messages modal
+- **Auth-Free Overlay Data** — `/api/overlays/data/song-queue` for overlay access without token
+
+### Fixed
+
+- **YouTube thumbnails blocked by CSP** — added `img.youtube.com` and `i.ytimg.com` to `img-src`
+- **SQLite ORDER BY DateTimeOffset** — replaced with `ORDER BY Id` to avoid `NotSupportedException`
+
+## [1.7.0] — 2026-03-30
+
+### Added
+
+- **Stream Analytics** — automatic stream session tracking with minute-by-minute viewer snapshots
+- **Category Tracking** — automatic detection of game/category changes with time segments
+- **Analytics Dashboard** — three tabs: Overview (KPIs, viewer trends, stream hours), Categories (pie chart, breakdown table), Stream History (session explorer with viewer chart and category timeline)
+- **StreamAnalyticsService** — IHostedService polling Twitch API every 60 seconds while live
+
+## [1.6.0] — 2026-03-30
+
+### Added
+
+- **Chat Games** — 5 points-based games: Heist (group), Duel (1v1), Slots (solo), Roulette (group), Trivia (group)
+- **Game Configuration** — per-game settings (cooldown, bet limits, multipliers, join duration, success rate)
+- **Customizable Game Messages** — every bot response is configurable via Messages modal with variable reference
+- **Custom Trivia Questions** — add your own questions alongside built-in ones
+- **Role-Based Access** — optionally restrict games to minimum community role
+- **Chat Games Dashboard** — enable/disable toggle, settings, messages, trivia question management per game
+
+## [1.5.0] — 2026-03-29
+
+### Added
+
+- **Channel Point Rewards** — sync Twitch channel point rewards, configure bot actions per reward (chat message, counter update, overlay alert)
+- **Roles & Ranks** — community role system with auto-assign criteria (watch time, points, messages, subscriber status)
+- **Role Priority** — higher priority roles grant more privileges; color-coded display
+- **Re-evaluate All** — bulk check all users against auto-assign criteria
+- **Channel Points Dashboard** — sync, add handler, toggle handlers
+- **Roles Dashboard** — create/edit/delete roles with auto-assign configuration
+
 ## [1.4.1] — 2026-03-28
 
 ### Added

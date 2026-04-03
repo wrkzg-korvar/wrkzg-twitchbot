@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -42,6 +43,9 @@ public interface ITwitchHelixClient
         int durationSeconds,
         CancellationToken ct = default);
 
+    /// <summary>Gets custom channel point rewards for the broadcaster.</summary>
+    Task<IReadOnlyList<TwitchCustomReward>> GetCustomRewardsAsync(CancellationToken ct = default);
+
     /// <summary>Ends a Twitch-native poll.</summary>
     Task<bool> EndTwitchPollAsync(
         string broadcasterId,
@@ -70,6 +74,7 @@ public sealed class StreamInfo
     public string UserLogin { get; init; } = string.Empty;
     public string Title { get; init; } = string.Empty;
     public string GameName { get; init; } = string.Empty;
+    public string GameId { get; init; } = string.Empty;
     public int ViewerCount { get; init; }
     public string StartedAt { get; init; } = string.Empty;
 }
@@ -93,4 +98,17 @@ public sealed class ChannelInfo
     public string BroadcasterName { get; init; } = string.Empty;
     public string GameName { get; init; } = string.Empty;
     public string Title { get; init; } = string.Empty;
+}
+
+/// <summary>
+/// Custom Channel Point Reward from the Helix API.
+/// </summary>
+public sealed class TwitchCustomReward
+{
+    public string Id { get; init; } = string.Empty;
+    public string Title { get; init; } = string.Empty;
+    public int Cost { get; init; }
+    public bool IsEnabled { get; init; }
+    public string? Prompt { get; init; }
+    public bool IsUserInputRequired { get; init; }
 }

@@ -50,7 +50,22 @@ public class ChatMessagePipelineTests
 
         TimedMessageService timedService = new(scopeFactory, chatClient, Substitute.For<ILogger<TimedMessageService>>());
 
-        _sut = new ChatMessagePipeline(_commandProcessor, _trackingService, timedService, broadcaster, scopeFactory, _logger);
+        // ChatGameManager with no games registered (empty list)
+        ChatGameManager gameManager = new(
+            System.Array.Empty<IChatGame>(),
+            scopeFactory,
+            chatClient,
+            Substitute.For<ILogger<ChatGameManager>>());
+
+        // EffectEngine with no types registered (empty lists)
+        Wrkzg.Core.Effects.EffectEngine effectEngine = new(
+            System.Array.Empty<Wrkzg.Core.Effects.ITriggerType>(),
+            System.Array.Empty<Wrkzg.Core.Effects.IConditionType>(),
+            System.Array.Empty<Wrkzg.Core.Effects.IEffectType>(),
+            scopeFactory,
+            Substitute.For<ILogger<Wrkzg.Core.Effects.EffectEngine>>());
+
+        _sut = new ChatMessagePipeline(_commandProcessor, _trackingService, timedService, gameManager, effectEngine, broadcaster, scopeFactory, _logger);
     }
 
     private static ChatMessage CreateMessage(

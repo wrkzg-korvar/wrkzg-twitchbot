@@ -6,6 +6,7 @@ using Microsoft.Extensions.Http.Resilience;
 using TwitchLib.EventSub.Websockets.Extensions;
 using Wrkzg.Core.Interfaces;
 using Wrkzg.Infrastructure.Data;
+using Wrkzg.Infrastructure.Import;
 using Wrkzg.Infrastructure.Repositories;
 using Wrkzg.Infrastructure.Security;
 using Wrkzg.Infrastructure.Twitch;
@@ -33,15 +34,26 @@ public static class DependencyInjection
         services.AddScoped<ITimedMessageRepository, TimedMessageRepository>();
         services.AddScoped<ICounterRepository, CounterRepository>();
         services.AddScoped<IQuoteRepository, QuoteRepository>();
+        services.AddScoped<IChannelPointRewardRepository, ChannelPointRewardRepository>();
+        services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddScoped<ITriviaQuestionRepository, TriviaQuestionRepository>();
+        services.AddScoped<IStreamAnalyticsRepository, StreamAnalyticsRepository>();
+        services.AddScoped<ISongRequestRepository, SongRequestRepository>();
+        services.AddScoped<IHotkeyBindingRepository, HotkeyBindingRepository>();
+        services.AddScoped<IEffectListRepository, EffectListRepository>();
+        services.AddScoped<IDataImportService, DataImportService>();
+        services.AddScoped<ICustomOverlayRepository, CustomOverlayRepository>();
 
-        // Secure Storage (platform-specific)
+        // Secure Storage + Hotkey Listener (platform-specific)
         if (OperatingSystem.IsWindows())
         {
             services.AddSingleton<ISecureStorage, WindowsSecureStorage>();
+            services.AddSingleton<IHotkeyListener, Wrkzg.Infrastructure.Hotkeys.WindowsHotkeyListener>();
         }
         else if (OperatingSystem.IsMacOS())
         {
             services.AddSingleton<ISecureStorage, MacOsSecureStorage>();
+            services.AddSingleton<IHotkeyListener, Wrkzg.Infrastructure.Hotkeys.MacOsHotkeyListener>();
         }
         else
         {
@@ -49,7 +61,13 @@ public static class DependencyInjection
             // instead of silently failing with a DI resolution crash.
             // Tests provide their own fake via DI override.
             services.AddSingleton<ISecureStorage, UnsupportedPlatformSecureStorage>();
+            services.AddSingleton<IHotkeyListener, Wrkzg.Infrastructure.Hotkeys.NoOpHotkeyListener>();
         }
+
+        // Hotkey Services
+        services.AddSingleton<Wrkzg.Core.Services.HotkeyActionExecutor>();
+        services.AddSingleton<Wrkzg.Infrastructure.Hotkeys.HotkeyListenerService>();
+        services.AddHostedService(sp => sp.GetRequiredService<Wrkzg.Infrastructure.Hotkeys.HotkeyListenerService>());
 
         // Twitch OAuth Service (own HttpClient with resilience pipeline)
         services.AddHttpClient<ITwitchOAuthService, TwitchOAuthService>(client =>
@@ -81,6 +99,9 @@ public static class DependencyInjection
         // EventSub WebSocket (TwitchLib — manages WebSocket, keepalive, reconnect)
         services.AddTwitchLibEventSubWebsockets();
         services.AddHostedService<EventSubConnectionService>();
+
+        // Stream Analytics (IHostedService — polls viewer count + category every 60s)
+        services.AddHostedService<Wrkzg.Infrastructure.Services.StreamAnalyticsService>();
 
         return services;
     }

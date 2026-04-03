@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Wrkzg.Core.Effects;
 using Wrkzg.Core.Interfaces;
 using Wrkzg.Core.Models;
 
@@ -32,6 +33,8 @@ public class ChatMessagePipeline
     private readonly ICommandProcessor _commandProcessor;
     private readonly IUserTrackingService _tracking;
     private readonly TimedMessageService _timedMessageService;
+    private readonly ChatGameManager _chatGameManager;
+    private readonly EffectEngine _effectEngine;
     private readonly IChatEventBroadcaster _broadcaster;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ChatMessagePipeline> _logger;
@@ -40,6 +43,8 @@ public class ChatMessagePipeline
         ICommandProcessor commandProcessor,
         IUserTrackingService tracking,
         TimedMessageService timedMessageService,
+        ChatGameManager chatGameManager,
+        EffectEngine effectEngine,
         IChatEventBroadcaster broadcaster,
         IServiceScopeFactory scopeFactory,
         ILogger<ChatMessagePipeline> logger)
@@ -47,6 +52,8 @@ public class ChatMessagePipeline
         _commandProcessor = commandProcessor;
         _tracking = tracking;
         _timedMessageService = timedMessageService;
+        _chatGameManager = chatGameManager;
+        _effectEngine = effectEngine;
         _broadcaster = broadcaster;
         _scopeFactory = scopeFactory;
         _logger = logger;
@@ -159,8 +166,43 @@ public class ChatMessagePipeline
                 return;
             }
 
-            // 3. Future: try chat games
-            // bool gameHandled = await _chatGameManager.HandleMessageAsync(message, ct);
+            // 8. Check active game rounds (e.g. trivia answers, duel !accept)
+            bool gameRoundHandled = await _chatGameManager.HandleActiveRoundMessageAsync(message, ct);
+            if (gameRoundHandled)
+            {
+                return;
+            }
+
+            // 9. Check game triggers (e.g. !heist 100, !slots 50)
+            bool gameHandled = await _chatGameManager.HandleMessageAsync(message, ct);
+            if (gameHandled)
+            {
+                return;
+            }
+
+            // 10. Effect Engine — evaluate all EffectLists against this chat message
+            try
+            {
+                EffectTriggerContext effectContext = new()
+                {
+                    EventType = "chat_message",
+                    UserId = message.UserId,
+                    Username = message.DisplayName,
+                    MessageContent = message.Content,
+                    Data = new System.Collections.Generic.Dictionary<string, string>
+                    {
+                        ["channel"] = message.Channel ?? "",
+                        ["isMod"] = message.IsModerator.ToString(),
+                        ["isSub"] = message.IsSubscriber.ToString(),
+                        ["isBroadcaster"] = message.IsBroadcaster.ToString(),
+                    }
+                };
+                await _effectEngine.ProcessAsync(effectContext, ct);
+            }
+            catch (Exception effectEx)
+            {
+                _logger.LogWarning(effectEx, "Effect engine error for message from {User}", message.Username);
+            }
         }
         catch (Exception ex)
         {
@@ -181,6 +223,8 @@ public class ChatMessagePipeline
             using IServiceScope scope = _scopeFactory.CreateScope();
             IUserRepository users = scope.ServiceProvider.GetRequiredService<IUserRepository>();
 
+            // GetOrCreateAsync automatically resolves imported user placeholder IDs
+            // (imported users have TwitchId "imported_{username}" until they chat)
             User user = await users.GetOrCreateAsync(message.UserId, message.Username, ct);
 
             user.MessageCount++;

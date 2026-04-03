@@ -15,6 +15,7 @@ export function UsersPage() {
       <PageHeader
         title="Users"
         description="Tracked viewers, their points, watch time, and activity."
+        helpKey="users"
       />
 
       {isLoading ? (

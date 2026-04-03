@@ -23,6 +23,7 @@ export function QuotesPage() {
       <PageHeader
         title="Quotes"
         description="Save memorable chat moments."
+        helpKey="quotes"
         badge={
           quotes && quotes.length > 0 ? (
             <span className="rounded-full bg-[var(--color-elevated)] px-2.5 py-0.5 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)]">

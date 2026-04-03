@@ -23,6 +23,7 @@ export function NotificationsPage() {
       <PageHeader
         title="Event Notifications"
         description="Configure chat messages for follows, subs, raids, and more."
+        helpKey="notifications"
       />
 
       <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-4 text-sm text-blue-300">

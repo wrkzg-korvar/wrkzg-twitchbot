@@ -213,4 +213,33 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
             timestamp = DateTimeOffset.UtcNow
         }, ct);
     }
+
+    public Task BroadcastChannelPointRedemptionAsync(string username, string rewardTitle, int cost, string? userInput, CancellationToken ct = default)
+    {
+        return BroadcastToAllAsync("ChannelPointRedemption", new
+        {
+            username,
+            rewardTitle,
+            cost,
+            userInput,
+            timestamp = DateTimeOffset.UtcNow
+        }, ct);
+    }
+
+    public Task BroadcastSongQueueUpdatedAsync(CancellationToken ct = default)
+    {
+        return BroadcastToAllAsync("SongQueueUpdated", new
+        {
+            timestamp = DateTimeOffset.UtcNow
+        }, ct);
+    }
+
+    public Task BroadcastStreamOnlineAsync(string broadcasterName, CancellationToken ct = default)
+    {
+        return BroadcastToAllAsync("StreamOnline", new
+        {
+            broadcaster = broadcasterName,
+            timestamp = DateTimeOffset.UtcNow
+        }, ct);
+    }
 }

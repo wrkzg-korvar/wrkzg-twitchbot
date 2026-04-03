@@ -35,4 +35,5 @@ public class User
     // Navigation properties
     public List<RaffleEntry> RaffleEntries { get; set; } = new();
     public List<PollVote> PollVotes { get; set; } = new();
+    public List<UserRole> UserRoles { get; set; } = new();
 }

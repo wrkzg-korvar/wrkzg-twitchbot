@@ -77,6 +77,7 @@ export function PollsPage() {
       <PageHeader
         title="Polls"
         description="Create polls, view live results, and browse history."
+        helpKey="polls"
       />
 
       <PollForm />

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- .NET Runtime: JIT compilation requires executable memory -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+
+    <!-- .NET Runtime: RWX memory pages for RyuJIT -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+
+    <!-- .NET Runtime: Load unsigned native libraries (Photino, SQLite) -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+
+    <!-- .NET Runtime: DYLD_LIBRARY_PATH for self-contained deployment -->
+    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+    <true/>
+</dict>
+</plist>

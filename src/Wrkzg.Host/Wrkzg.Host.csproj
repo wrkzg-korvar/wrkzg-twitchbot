@@ -72,6 +72,9 @@
              kopiert die Datei aber nicht in den Output für SetWindowIcon zur Laufzeit -->
         <Content Include="Assets\icon.ico" CopyToOutputDirectory="PreserveNewest" />
         <None Update="version.json" CopyToOutputDirectory="PreserveNewest" />
+        <!-- macOS App Bundle metadata -->
+        <None Update="macOS\Info.plist" CopyToOutputDirectory="PreserveNewest" />
+        <None Update="macOS\Wrkzg.entitlements" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
     <!--

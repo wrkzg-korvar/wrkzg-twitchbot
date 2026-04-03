@@ -17,6 +17,90 @@ namespace Wrkzg.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
 
+            modelBuilder.Entity("Wrkzg.Core.Models.CategorySegment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double?>("AverageViewers")
+                        .HasColumnType("REAL");
+
+                    b.Property<string>("CategoryName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("DurationMinutes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset?>("EndedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("PeakViewers")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("StreamSessionId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("TwitchCategoryId")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StreamSessionId");
+
+                    b.ToTable("CategorySegments");
+                });
+
+            modelBuilder.Entity("Wrkzg.Core.Models.ChannelPointReward", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ActionPayload")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ActionType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("AutoFulfill")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Cost")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TwitchRewardId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TwitchRewardId")
+                        .IsUnique();
+
+                    b.ToTable("ChannelPointRewards");
+                });
+
             modelBuilder.Entity("Wrkzg.Core.Models.Command", b =>
                 {
                     b.Property<int>("Id")
@@ -98,6 +182,144 @@ namespace Wrkzg.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Counters");
+                });
+
+            modelBuilder.Entity("Wrkzg.Core.Models.CustomOverlay", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Css")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FieldDefinitions")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FieldValues")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Height")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Html")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("JavaScript")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Width")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CustomOverlays");
+                });
+
+            modelBuilder.Entity("Wrkzg.Core.Models.EffectList", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ConditionsConfig")
+                        .IsRequired()
+                        .HasMaxLength(5000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Cooldown")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EffectsConfig")
+                        .IsRequired()
+                        .HasMaxLength(5000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TriggerConfig")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TriggerTypeId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EffectLists");
+                });
+
+            modelBuilder.Entity("Wrkzg.Core.Models.HotkeyBinding", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ActionPayload")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ActionType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("KeyCombination")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("HotkeyBindings");
                 });
 
             modelBuilder.Entity("Wrkzg.Core.Models.Poll", b =>
@@ -336,6 +558,39 @@ namespace Wrkzg.Infrastructure.Migrations
                     b.ToTable("RaffleEntries");
                 });
 
+            modelBuilder.Entity("Wrkzg.Core.Models.Role", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Color")
+                        .HasMaxLength(7)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Icon")
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Roles");
+                });
+
             modelBuilder.Entity("Wrkzg.Core.Models.Setting", b =>
                 {
                     b.Property<string>("Key")
@@ -394,6 +649,99 @@ namespace Wrkzg.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Wrkzg.Core.Models.SongRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("DurationSeconds")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset?>("PlayedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("PointsCost")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ThumbnailUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("VideoId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("SongRequests");
+                });
+
+            modelBuilder.Entity("Wrkzg.Core.Models.StreamSession", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double?>("AverageViewers")
+                        .HasColumnType("REAL");
+
+                    b.Property<int?>("DurationMinutes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset?>("EndedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("NewFollowers")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("NewSubscribers")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PeakViewers")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("TotalMessages")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("TwitchStreamId")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("UniqueChatters")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("StreamSessions");
+                });
+
             modelBuilder.Entity("Wrkzg.Core.Models.SystemCommandOverride", b =>
                 {
                     b.Property<string>("Trigger")
@@ -425,6 +773,11 @@ namespace Wrkzg.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER")
                         .HasDefaultValue(10);
+
+                    b.Property<bool>("IsAnnouncement")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
 
                     b.Property<bool>("IsEnabled")
                         .ValueGeneratedOnAdd()
@@ -464,6 +817,42 @@ namespace Wrkzg.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("TimedMessages");
+                });
+
+            modelBuilder.Entity("Wrkzg.Core.Models.TriviaQuestion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("AcceptedAnswers")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Answer")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsCustom")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Question")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TriviaQuestions");
                 });
 
             modelBuilder.Entity("Wrkzg.Core.Models.User", b =>
@@ -528,6 +917,60 @@ namespace Wrkzg.Infrastructure.Migrations
                     b.HasIndex("Username");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Wrkzg.Core.Models.UserRole", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset>("AssignedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsAutoAssigned")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("UserRoles");
+                });
+
+            modelBuilder.Entity("Wrkzg.Core.Models.ViewerSnapshot", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("StreamSessionId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset>("Timestamp")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ViewerCount")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StreamSessionId");
+
+                    b.ToTable("ViewerSnapshots");
+                });
+
+            modelBuilder.Entity("Wrkzg.Core.Models.CategorySegment", b =>
+                {
+                    b.HasOne("Wrkzg.Core.Models.StreamSession", "StreamSession")
+                        .WithMany("CategorySegments")
+                        .HasForeignKey("StreamSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("StreamSession");
                 });
 
             modelBuilder.Entity("Wrkzg.Core.Models.PollVote", b =>
@@ -604,6 +1047,72 @@ namespace Wrkzg.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Wrkzg.Core.Models.Role", b =>
+                {
+                    b.OwnsOne("Wrkzg.Core.Models.RoleAutoAssignCriteria", "AutoAssign", b1 =>
+                        {
+                            b1.Property<int>("RoleId")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<int?>("MinMessages")
+                                .HasColumnType("INTEGER")
+                                .HasColumnName("AutoAssign_MinMessages");
+
+                            b1.Property<long?>("MinPoints")
+                                .HasColumnType("INTEGER")
+                                .HasColumnName("AutoAssign_MinPoints");
+
+                            b1.Property<int?>("MinWatchedMinutes")
+                                .HasColumnType("INTEGER")
+                                .HasColumnName("AutoAssign_MinWatchedMinutes");
+
+                            b1.Property<bool?>("MustBeFollower")
+                                .HasColumnType("INTEGER")
+                                .HasColumnName("AutoAssign_MustBeFollower");
+
+                            b1.Property<bool?>("MustBeSubscriber")
+                                .HasColumnType("INTEGER")
+                                .HasColumnName("AutoAssign_MustBeSubscriber");
+
+                            b1.HasKey("RoleId");
+
+                            b1.ToTable("Roles");
+
+                            b1.WithOwner()
+                                .HasForeignKey("RoleId");
+                        });
+
+                    b.Navigation("AutoAssign");
+                });
+
+            modelBuilder.Entity("Wrkzg.Core.Models.UserRole", b =>
+                {
+                    b.HasOne("Wrkzg.Core.Models.Role", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Wrkzg.Core.Models.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Wrkzg.Core.Models.ViewerSnapshot", b =>
+                {
+                    b.HasOne("Wrkzg.Core.Models.StreamSession", null)
+                        .WithMany("ViewerSnapshots")
+                        .HasForeignKey("StreamSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Wrkzg.Core.Models.Poll", b =>
                 {
                     b.Navigation("Votes");
@@ -616,11 +1125,20 @@ namespace Wrkzg.Infrastructure.Migrations
                     b.Navigation("Entries");
                 });
 
+            modelBuilder.Entity("Wrkzg.Core.Models.StreamSession", b =>
+                {
+                    b.Navigation("CategorySegments");
+
+                    b.Navigation("ViewerSnapshots");
+                });
+
             modelBuilder.Entity("Wrkzg.Core.Models.User", b =>
                 {
                     b.Navigation("PollVotes");
 
                     b.Navigation("RaffleEntries");
+
+                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }

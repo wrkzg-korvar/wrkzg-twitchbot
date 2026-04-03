@@ -1,9 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Copy, Settings, Play } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Card } from "../../ui/Card";
 import { Button } from "../../ui/Button";
-import { OverlayConfigModal } from "./OverlayConfigModal";
 import { showToast } from "../../../hooks/useToast";
 
 export interface OverlayDefinition {
@@ -35,7 +35,7 @@ function getOverlayUrl(type: string): string {
 }
 
 export function OverlayCard({ overlay }: OverlayCardProps) {
-  const [configOpen, setConfigOpen] = useState(false);
+  const navigate = useNavigate();
   const [testing, setTesting] = useState(false);
   const url = getOverlayUrl(overlay.type);
   const Icon = overlay.icon;
@@ -78,15 +78,15 @@ export function OverlayCard({ overlay }: OverlayCardProps) {
             </div>
           </div>
 
-          {/* Live preview */}
-          <div className="overflow-hidden rounded-lg border border-[var(--color-border)] bg-gray-950">
+          {/* Live preview — checkerboard signals transparency */}
+          <div className="overflow-hidden rounded-lg border border-[var(--color-border)] checkerboard-bg">
             <iframe
               src={url}
               title={`${overlay.title} preview`}
-              className="pointer-events-none block h-32 w-full origin-top-left"
+              className="pointer-events-none block w-full origin-top-left"
               style={{
                 transform: `scale(${Math.min(1, 320 / overlay.width)})`,
-                height: `${Math.min(128, (overlay.height / overlay.width) * 320)}px`,
+                height: "180px",
               }}
             />
           </div>
@@ -124,19 +124,13 @@ export function OverlayCard({ overlay }: OverlayCardProps) {
             <span className="text-xs text-[var(--color-text-muted)]">
               Recommended: {overlay.width} x {overlay.height}
             </span>
-            <Button variant="secondary" size="sm" onClick={() => setConfigOpen(true)}>
+            <Button variant="secondary" size="sm" onClick={() => navigate(`/overlays/${overlay.type}/edit`)}>
               <Settings className="h-3.5 w-3.5" />
-              Configure
+              Edit
             </Button>
           </div>
         </div>
       </Card>
-
-      <OverlayConfigModal
-        open={configOpen}
-        onClose={() => setConfigOpen(false)}
-        overlay={overlay}
-      />
     </>
   );
 }

@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Logging;
 using Wrkzg.Core.Models;
 
 namespace Wrkzg.Infrastructure.Data;
@@ -23,9 +25,29 @@ public class BotDbContext : DbContext
     public DbSet<TimedMessage> TimedMessages => Set<TimedMessage>();
     public DbSet<Counter> Counters => Set<Counter>();
     public DbSet<Quote> Quotes => Set<Quote>();
+    public DbSet<ChannelPointReward> ChannelPointRewards => Set<ChannelPointReward>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<TriviaQuestion> TriviaQuestions => Set<TriviaQuestion>();
+    public DbSet<StreamSession> StreamSessions => Set<StreamSession>();
+    public DbSet<CategorySegment> CategorySegments => Set<CategorySegment>();
+    public DbSet<ViewerSnapshot> ViewerSnapshots => Set<ViewerSnapshot>();
+    public DbSet<SongRequest> SongRequests => Set<SongRequest>();
+    public DbSet<HotkeyBinding> HotkeyBindings => Set<HotkeyBinding>();
+    public DbSet<EffectList> EffectLists => Set<EffectList>();
+    public DbSet<CustomOverlay> CustomOverlays => Set<CustomOverlay>();
 
     public BotDbContext(DbContextOptions<BotDbContext> options) : base(options)
     {
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder options)
+    {
+        // Suppress warning for RoleAutoAssignCriteria owned type with all-nullable columns.
+        // This is by design — AutoAssign is optional and null when no criteria are set.
+        options.ConfigureWarnings(w => w
+            .Ignore(RelationalEventId.OptionalDependentWithAllNullPropertiesWarning)
+            .Ignore(new EventId(20606, "OptionalDependentWithAllNullProperties")));
     }
 
     protected override void OnModelCreating(ModelBuilder model)

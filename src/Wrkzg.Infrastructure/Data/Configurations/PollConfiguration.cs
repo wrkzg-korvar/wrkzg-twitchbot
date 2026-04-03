@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -17,8 +19,9 @@ public class PollConfiguration : IEntityTypeConfiguration<Poll>
             .HasConversion(
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
                 v => JsonSerializer.Deserialize<string[]>(v, (JsonSerializerOptions?)null)
-                     ?? System.Array.Empty<string>())
-            .HasColumnType("TEXT");
+                     ?? Array.Empty<string>())
+            .HasColumnType("TEXT")
+            .Metadata.SetValueComparer(CommandConfiguration.StringArrayComparer());
 
         builder.Property(p => p.Source)
             .HasConversion<int>();

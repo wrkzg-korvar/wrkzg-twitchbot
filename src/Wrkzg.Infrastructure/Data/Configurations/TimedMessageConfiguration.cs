@@ -18,12 +18,14 @@ public class TimedMessageConfiguration : IEntityTypeConfiguration<TimedMessage>
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
                 v => JsonSerializer.Deserialize<string[]>(v, (JsonSerializerOptions?)null)
                      ?? Array.Empty<string>())
-            .HasColumnType("TEXT");
+            .HasColumnType("TEXT")
+            .Metadata.SetValueComparer(CommandConfiguration.StringArrayComparer());
 
         builder.Property(t => t.IntervalMinutes).HasDefaultValue(10);
         builder.Property(t => t.MinChatLines).HasDefaultValue(5);
         builder.Property(t => t.IsEnabled).HasDefaultValue(true);
         builder.Property(t => t.RunWhenOnline).HasDefaultValue(true);
         builder.Property(t => t.RunWhenOffline).HasDefaultValue(false);
+        builder.Property(t => t.IsAnnouncement).HasDefaultValue(false);
     }
 }

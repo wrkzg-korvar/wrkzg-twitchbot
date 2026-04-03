@@ -21,6 +21,7 @@ export function TimerForm({ initial, onClose }: TimerFormProps) {
   const [isEnabled, setIsEnabled] = useState(initial?.isEnabled ?? true);
   const [runWhenOnline, setRunWhenOnline] = useState(initial?.runWhenOnline ?? true);
   const [runWhenOffline, setRunWhenOffline] = useState(initial?.runWhenOffline ?? false);
+  const [isAnnouncement, setIsAnnouncement] = useState(initial?.isAnnouncement ?? false);
 
   const isEditing = !!initial;
 
@@ -32,6 +33,7 @@ export function TimerForm({ initial, onClose }: TimerFormProps) {
     isEnabled,
     runWhenOnline,
     runWhenOffline,
+    isAnnouncement,
   });
 
   const createMutation = useMutation({
@@ -143,11 +145,17 @@ export function TimerForm({ initial, onClose }: TimerFormProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-6 flex-wrap">
           <Toggle label="Enabled" checked={isEnabled} onChange={setIsEnabled} />
           <Toggle label="Run When Online" checked={runWhenOnline} onChange={setRunWhenOnline} />
           <Toggle label="Run When Offline" checked={runWhenOffline} onChange={setRunWhenOffline} />
+          <Toggle label="Announcement" checked={isAnnouncement} onChange={setIsAnnouncement} />
         </div>
+        {isAnnouncement && (
+          <p className="text-xs text-[var(--color-text-muted)]">
+            Messages will appear highlighted in chat. Requires the bot account to be a moderator in your channel.
+          </p>
+        )}
 
         <div className="flex gap-2">
           <button

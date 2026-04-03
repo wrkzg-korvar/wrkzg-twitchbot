@@ -12,6 +12,14 @@ import {
   Shield,
   Users,
   Settings,
+  Gem,
+  Crown,
+  Gamepad2,
+  Music,
+  Keyboard,
+  Workflow,
+  Plug,
+  Upload,
 } from "lucide-react";
 import { SidebarGroup } from "./SidebarGroup";
 import { ThemeToggle } from "./ThemeToggle";
@@ -42,6 +50,9 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
       { to: "/polls", label: "Polls", icon: BarChart3 },
       { to: "/raffles", label: "Raffles", icon: Gift },
       { to: "/counters", label: "Counters", icon: Hash },
+      { to: "/channel-points", label: "Channel Points", icon: Gem },
+      { to: "/games", label: "Chat Games", icon: Gamepad2 },
+      { to: "/song-requests", label: "Song Requests", icon: Music },
     ],
   },
   {
@@ -49,12 +60,22 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
     items: [
       { to: "/timers", label: "Timers", icon: Clock },
       { to: "/notifications", label: "Notifications", icon: Bell },
+      { to: "/hotkeys", label: "Hotkeys", icon: Keyboard },
+      { to: "/effects", label: "Automations", icon: Workflow },
+      { to: "/integrations", label: "Integrations", icon: Plug },
     ],
   },
   {
     label: "Stream",
     items: [
       { to: "/overlays", label: "Overlays", icon: Monitor },
+      { to: "/analytics", label: "Analytics", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Community",
+    items: [
+      { to: "/roles", label: "Roles & Ranks", icon: Crown },
     ],
   },
   {
@@ -62,6 +83,12 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
     items: [
       { to: "/spam-filter", label: "Spam Filter", icon: Shield },
       { to: "/users", label: "Users", icon: Users },
+    ],
+  },
+  {
+    label: "Data",
+    items: [
+      { to: "/import", label: "Import Data", icon: Upload },
     ],
   },
 ];

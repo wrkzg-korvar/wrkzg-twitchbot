@@ -16,6 +16,7 @@ export function CountersPage() {
   const { data: counters } = useQuery<Counter[]>({
     queryKey: ["counters"],
     queryFn: countersApi.getAll,
+    refetchOnMount: "always",
   });
 
   // Live counter updates via SignalR
@@ -38,6 +39,7 @@ export function CountersPage() {
       <PageHeader
         title="Counters"
         description="Track deaths, wins, and more with chat commands."
+        helpKey="counters"
         actions={
           !showCreate ? (
             <button

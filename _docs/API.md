@@ -24,6 +24,11 @@ This document describes all REST endpoints and SignalR events exposed by the Wrk
 - [Notifications](#notifications)
 - [Overlays](#overlays)
 - [Spam Filter](#spam-filter)
+- [Effects (Automations)](#effects-automations)
+- [Integrations](#integrations)
+- [Import](#import)
+- [Assets](#assets)
+- [Custom Overlays](#custom-overlays)
 - [SignalR — Real-Time Events](#signalr--real-time-events)
 
 ---
@@ -755,6 +760,170 @@ Updates the spam filter configuration.
 
 ---
 
+## Effects (Automations)
+
+### `GET /api/effects`
+
+Returns all effect lists (automations).
+
+### `GET /api/effects/{id}`
+
+Returns a single effect list by ID.
+
+### `POST /api/effects`
+
+Creates a new effect list.
+
+**Request Body:**
+```json
+{
+  "name": "Welcome Followers",
+  "description": "Send welcome message on follow",
+  "triggerTypeId": "event",
+  "triggerConfig": "{\"event_type\": \"event.follow\"}",
+  "conditionsConfig": "[]",
+  "effectsConfig": "[{\"type\":\"chat_message\",\"params\":{\"message\":\"Welcome {user}!\"}}]",
+  "cooldown": 0
+}
+```
+
+### `PUT /api/effects/{id}`
+
+Updates an existing effect list. All fields are optional — only provided fields are updated.
+
+### `DELETE /api/effects/{id}`
+
+Deletes an effect list.
+
+### `GET /api/effects/types`
+
+Returns all available trigger types, condition types, and effect types with their parameter keys.
+
+### `POST /api/effects/{id}/test`
+
+Test-triggers an effect list. Builds an intelligent test context from the trigger configuration and runs the full chain.
+
+---
+
+## Integrations
+
+### `GET /api/integrations/discord`
+
+Returns the Discord integration status.
+
+**Response:**
+```json
+{
+  "configured": true,
+  "webhookUrlSet": true
+}
+```
+
+### `PUT /api/integrations/discord`
+
+Configures the Discord webhook URL.
+
+**Request Body:**
+```json
+{
+  "webhookUrl": "https://discord.com/api/webhooks/..."
+}
+```
+
+### `DELETE /api/integrations/discord`
+
+Removes the Discord webhook URL.
+
+### `POST /api/integrations/discord/test`
+
+Sends a test message to the configured Discord webhook.
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Test message sent successfully!"
+}
+```
+
+---
+
+## Import
+
+### `POST /api/import/preview`
+
+Preview an import file without writing to the database. Accepts `multipart/form-data` with `file` and `config` (JSON string).
+
+### `POST /api/import/execute`
+
+Execute the import. Same format as preview. Returns `ImportResult` with counts and errors.
+
+### `POST /api/import/preview-columns`
+
+Detect CSV column structure. Accepts `file`, `hasHeader` (bool), `delimiter` (char). Returns headers and sample rows.
+
+### `GET /api/import/templates`
+
+Returns available import source templates (Deepbot CSV, Deepbot JSON, Streamlabs, Generic CSV).
+
+---
+
+## Assets
+
+### `POST /api/assets/upload/{category}`
+
+Upload a file. Category: `sounds` or `images`. Accepts `multipart/form-data` with `file`. Max 10 MB. Returns `{ fileName, url, category, size }`.
+
+### `GET /api/assets/{category}`
+
+List all uploaded assets in a category. Returns array of `{ fileName, url, size, lastModified }`.
+
+### `DELETE /api/assets/{category}/{fileName}`
+
+Delete an uploaded asset.
+
+---
+
+## Custom Overlays
+
+### `GET /api/custom-overlays`
+
+Returns all custom overlays.
+
+### `GET /api/custom-overlays/{id}`
+
+Returns a single custom overlay including code (HTML, CSS, JS, field definitions).
+
+### `POST /api/custom-overlays`
+
+Creates a new custom overlay.
+
+### `PUT /api/custom-overlays/{id}`
+
+Updates a custom overlay. All fields optional.
+
+### `PUT /api/custom-overlays/{id}/fields`
+
+Updates only the field values (not code).
+
+### `DELETE /api/custom-overlays/{id}`
+
+Deletes a custom overlay.
+
+### `GET /overlay/custom/{id}`
+
+Renders the custom overlay as a full HTML page (for OBS Browser Source). Add `?preview=true` for checkerboard background in the editor.
+
+---
+
+## Overlay Defaults
+
+### `GET /api/overlays/defaults/{type}`
+
+Returns the built-in default settings for an overlay type. Used by the editor's "Reset to Defaults" button.
+
+---
+
 ## SignalR — Real-Time Events
 
 Connect to the SignalR hub at `/hubs/chat` for live updates. The hub supports two client groups:
@@ -876,3 +1045,9 @@ connection.on("SubscribeEvent", (event: { username: string; tier: number }) => {
 | Event | Payload | Description |
 |---|---|---|
 | `CounterUpdated` | `{ counterId, name, value }` | Counter value changed |
+
+#### Stream Events
+
+| Event | Payload | Description |
+|---|---|---|
+| `StreamOnline` | `{ broadcaster, timestamp }` | Stream went live |
