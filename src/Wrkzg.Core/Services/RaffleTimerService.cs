@@ -17,12 +17,18 @@ public class RaffleTimerService : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<RaffleTimerService> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="RaffleTimerService"/>.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating DI scopes to resolve the scoped <see cref="RaffleService"/>.</param>
+    /// <param name="logger">Logger instance for diagnostics.</param>
     public RaffleTimerService(IServiceScopeFactory scopeFactory, ILogger<RaffleTimerService> logger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
     }
 
+    /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("RaffleTimerService starting");

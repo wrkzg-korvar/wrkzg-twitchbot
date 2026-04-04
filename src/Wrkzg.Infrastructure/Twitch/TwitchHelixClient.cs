@@ -28,14 +28,25 @@ public class TwitchHelixClient : ITwitchHelixClient
         PropertyNameCaseInsensitive = true
     };
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TwitchHelixClient"/> class.
+    /// </summary>
+    /// <param name="http">The typed HTTP client with TwitchAuthHandler configured.</param>
+    /// <param name="logger">The logger for Helix API diagnostics.</param>
     public TwitchHelixClient(HttpClient http, ILogger<TwitchHelixClient> logger)
     {
         _http = http;
         _logger = logger;
     }
 
+    /// <summary>Gets the current stream information for a channel, or null if the channel is offline.</summary>
     public async Task<StreamInfo?> GetStreamAsync(string channelLogin, CancellationToken ct = default)
     {
+        if (string.IsNullOrWhiteSpace(channelLogin))
+        {
+            return null;
+        }
+
         try
         {
             HelixResponse<StreamInfo>? response = await _http.GetFromJsonAsync<HelixResponse<StreamInfo>>(
@@ -50,8 +61,14 @@ public class TwitchHelixClient : ITwitchHelixClient
         }
     }
 
+    /// <summary>Gets Twitch user information by login name.</summary>
     public async Task<HelixUserInfo?> GetUserAsync(string login, CancellationToken ct = default)
     {
+        if (string.IsNullOrWhiteSpace(login))
+        {
+            return null;
+        }
+
         try
         {
             HelixResponse<HelixUserInfo>? response = await _http.GetFromJsonAsync<HelixResponse<HelixUserInfo>>(
@@ -66,6 +83,7 @@ public class TwitchHelixClient : ITwitchHelixClient
         }
     }
 
+    /// <summary>Sends a chat message via the Helix API on behalf of a sender.</summary>
     public async Task<bool> SendChatMessageAsync(string broadcasterId, string senderId, string message, CancellationToken ct = default)
     {
         try
@@ -92,6 +110,7 @@ public class TwitchHelixClient : ITwitchHelixClient
         }
     }
 
+    /// <summary>Gets channel information (title, game, etc.) by broadcaster identifier.</summary>
     public async Task<ChannelInfo?> GetChannelInfoAsync(string broadcasterId, CancellationToken ct = default)
     {
         try
@@ -108,6 +127,7 @@ public class TwitchHelixClient : ITwitchHelixClient
         }
     }
 
+    /// <summary>Times out a user in chat for the specified duration. Not yet fully implemented.</summary>
     public async Task<bool> TimeoutUserAsync(string userId, int durationSeconds, string reason, CancellationToken ct = default)
     {
         try
@@ -125,6 +145,7 @@ public class TwitchHelixClient : ITwitchHelixClient
         }
     }
 
+    /// <summary>Creates a native Twitch poll via the Helix API.</summary>
     public async Task<TwitchPollResponse?> CreateTwitchPollAsync(
         string broadcasterId,
         string question,
@@ -161,6 +182,7 @@ public class TwitchHelixClient : ITwitchHelixClient
         }
     }
 
+    /// <summary>Ends a native Twitch poll by setting its status (e.g., "TERMINATED" or "ARCHIVED").</summary>
     public async Task<bool> EndTwitchPollAsync(
         string broadcasterId,
         string pollId,
@@ -194,6 +216,7 @@ public class TwitchHelixClient : ITwitchHelixClient
         }
     }
 
+    /// <summary>Gets all custom channel point rewards configured for the broadcaster's channel.</summary>
     public async Task<IReadOnlyList<TwitchCustomReward>> GetCustomRewardsAsync(CancellationToken ct = default)
     {
         try

@@ -7,6 +7,7 @@ namespace Wrkzg.Core.Services;
 /// </summary>
 public static class RaffleTemplates
 {
+    /// <summary>Default template values keyed by settings key. Used as fallbacks when no custom template is configured.</summary>
     public static readonly Dictionary<string, string> Defaults = new()
     {
         ["raffle.announce.start"] = "\ud83c\udf89 RAFFLE: {title} \u2014 {join_method} to enter! ({duration})",
@@ -19,6 +20,7 @@ public static class RaffleTemplates
         ["raffle.entry.success"] = "",
     };
 
+    /// <summary>Human-readable descriptions of each template, for display in the dashboard settings UI.</summary>
     public static readonly Dictionary<string, string> Descriptions = new()
     {
         ["raffle.announce.start"] = "Sent in chat when a raffle starts",
@@ -31,6 +33,7 @@ public static class RaffleTemplates
         ["raffle.entry.success"] = "Sent on successful entry (empty = silent)",
     };
 
+    /// <summary>Available placeholder variables for each template, for documentation and validation.</summary>
     public static readonly Dictionary<string, string[]> Variables = new()
     {
         ["raffle.announce.start"] = new[] { "title", "keyword", "join_method", "max_entries", "duration" },

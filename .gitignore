@@ -70,4 +70,5 @@ CLAUDE.md
 .claude
 .claude-flow
 .mcp.json
+.swarm
 schema.sql

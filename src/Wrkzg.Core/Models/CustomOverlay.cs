@@ -7,6 +7,7 @@ namespace Wrkzg.Core.Models;
 /// </summary>
 public class CustomOverlay
 {
+    /// <summary>Primary key.</summary>
     public int Id { get; set; }
 
     /// <summary>Display name.</summary>
@@ -39,6 +40,9 @@ public class CustomOverlay
     /// <summary>Whether this overlay is active.</summary>
     public bool IsEnabled { get; set; } = true;
 
+    /// <summary>When this overlay was created.</summary>
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    /// <summary>When this overlay was last modified.</summary>
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

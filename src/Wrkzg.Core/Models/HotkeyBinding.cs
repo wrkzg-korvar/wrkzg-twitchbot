@@ -9,6 +9,7 @@ namespace Wrkzg.Core.Models;
 /// </summary>
 public class HotkeyBinding
 {
+    /// <summary>Primary key.</summary>
     public int Id { get; set; }
 
     /// <summary>Key combination string (e.g. "Ctrl+Shift+F1").</summary>
@@ -32,5 +33,6 @@ public class HotkeyBinding
     /// <summary>Whether this hotkey binding is active.</summary>
     public bool IsEnabled { get; set; } = true;
 
+    /// <summary>When this hotkey binding was created.</summary>
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

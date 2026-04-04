@@ -8,6 +8,7 @@ namespace Wrkzg.Core.Models;
 /// </summary>
 public class Counter
 {
+    /// <summary>Primary key.</summary>
     public int Id { get; set; }
 
     /// <summary>Display name (e.g. "Deaths", "Wins").</summary>
@@ -22,5 +23,6 @@ public class Counter
     /// <summary>Response template when a viewer checks the counter.</summary>
     public string ResponseTemplate { get; set; } = "{name}: {value}";
 
+    /// <summary>When this counter was created.</summary>
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

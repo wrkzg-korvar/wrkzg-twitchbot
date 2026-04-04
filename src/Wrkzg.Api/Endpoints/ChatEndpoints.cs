@@ -16,6 +16,7 @@ namespace Wrkzg.Api.Endpoints;
 /// </summary>
 public static class ChatEndpoints
 {
+    /// <summary>Registers chat message retrieval and sending API endpoints.</summary>
     public static void MapChatEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/chat").WithTags("Chat");

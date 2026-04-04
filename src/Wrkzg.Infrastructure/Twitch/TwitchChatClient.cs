@@ -29,14 +29,30 @@ public class TwitchChatClient : ITwitchChatClient
     private string? _joinedChannel;
     private string? _botUsername;
 
+    /// <summary>Raised when a chat message is received from a user (excludes bot's own messages).</summary>
     public event Func<ChatMessage, Task>? OnMessageReceived;
+
+    /// <summary>Raised when a user joins the chat channel.</summary>
     public event Func<string, Task>? OnUserJoined;
+
+    /// <summary>Raised when the bot successfully connects to IRC.</summary>
     public event Func<Task>? OnConnected;
+
+    /// <summary>Raised when the bot disconnects from IRC.</summary>
     public event Func<Task>? OnDisconnected;
 
+    /// <summary>Gets whether the bot is currently connected to Twitch IRC.</summary>
     public bool IsConnected => _client?.IsConnected ?? false;
+
+    /// <summary>Gets the channel the bot is currently joined to, or null if not connected.</summary>
     public string? JoinedChannel => _joinedChannel;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TwitchChatClient"/> class.
+    /// </summary>
+    /// <param name="storage">Secure storage for loading OAuth tokens.</param>
+    /// <param name="oauth">OAuth service for token validation and refresh.</param>
+    /// <param name="logger">The logger for IRC diagnostics.</param>
     public TwitchChatClient(
         ISecureStorage storage,
         ITwitchOAuthService oauth,
@@ -47,6 +63,7 @@ public class TwitchChatClient : ITwitchChatClient
         _logger = logger;
     }
 
+    /// <summary>Connects the bot to the specified Twitch chat channel via IRC.</summary>
     public async Task ConnectAsync(string channel, CancellationToken ct = default)
     {
         if (_client?.IsConnected == true)
@@ -100,6 +117,7 @@ public class TwitchChatClient : ITwitchChatClient
         _logger.LogInformation("IRC connection initiated for channel #{Channel}", channel);
     }
 
+    /// <summary>Disconnects the bot from Twitch IRC.</summary>
     public Task DisconnectAsync(CancellationToken ct = default)
     {
         if (_client is null)
@@ -125,6 +143,7 @@ public class TwitchChatClient : ITwitchChatClient
         return Task.CompletedTask;
     }
 
+    /// <summary>Sends a chat message to the currently joined channel.</summary>
     public Task SendMessageAsync(string message, CancellationToken ct = default)
     {
         if (_client is null || !_client.IsConnected || _joinedChannel is null)
@@ -137,6 +156,7 @@ public class TwitchChatClient : ITwitchChatClient
         return Task.CompletedTask;
     }
 
+    /// <summary>Sends a reply to a specific chat message in the currently joined channel.</summary>
     public Task SendReplyAsync(string replyToMessageId, string message, CancellationToken ct = default)
     {
         if (_client is null || !_client.IsConnected || _joinedChannel is null)
@@ -149,6 +169,7 @@ public class TwitchChatClient : ITwitchChatClient
         return Task.CompletedTask;
     }
 
+    /// <summary>Disconnects from IRC and releases all event handler subscriptions.</summary>
     public async ValueTask DisposeAsync()
     {
         await DisconnectAsync();

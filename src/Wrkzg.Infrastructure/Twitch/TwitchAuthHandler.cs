@@ -24,6 +24,9 @@ public class TwitchAuthHandler : DelegatingHandler
 
     private static readonly SemaphoreSlim _refreshLock = new(1, 1);
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TwitchAuthHandler"/> class.
+    /// </summary>
     public TwitchAuthHandler(
         ISecureStorage storage,
         ITwitchOAuthService oauth,
@@ -36,6 +39,10 @@ public class TwitchAuthHandler : DelegatingHandler
         _logger = logger;
     }
 
+    /// <summary>
+    /// Intercepts outgoing HTTP requests to inject the Bearer token and Client-Id header,
+    /// and automatically refreshes the token on 401 Unauthorized responses.
+    /// </summary>
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request, CancellationToken ct)
     {

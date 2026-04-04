@@ -13,18 +13,30 @@ namespace Wrkzg.Core.SystemCommands;
 /// </summary>
 public class CancelRaffleCommand : ISystemCommand
 {
+    /// <inheritdoc />
     public string Trigger => "!cancelraffle";
+
+    /// <inheritdoc />
     public string[] Aliases => new[] { "!rafflecancel" };
+
+    /// <inheritdoc />
     public string Description => "Cancel the active raffle. Mod only.";
+
+    /// <inheritdoc />
     public string? DefaultResponseTemplate => null;
 
     private readonly IServiceScopeFactory _scopeFactory;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CancelRaffleCommand"/> class.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating scoped service providers.</param>
     public CancelRaffleCommand(IServiceScopeFactory scopeFactory)
     {
         _scopeFactory = scopeFactory;
     }
 
+    /// <inheritdoc />
     public async Task<string?> ExecuteAsync(ChatMessage message, CancellationToken ct = default)
     {
         if (!message.IsModerator && !message.IsBroadcaster)

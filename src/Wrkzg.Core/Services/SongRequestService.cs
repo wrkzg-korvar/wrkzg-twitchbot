@@ -52,6 +52,12 @@ public class SongRequestService : IDisposable
         ["Usage"] = "Usage: !sr <YouTube URL>",
     };
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="SongRequestService"/>.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating DI scopes to resolve scoped repositories.</param>
+    /// <param name="broadcaster">Broadcasts real-time song queue events to the dashboard.</param>
+    /// <param name="logger">Logger instance for diagnostics.</param>
     public SongRequestService(
         IServiceScopeFactory scopeFactory,
         IChatEventBroadcaster broadcaster,
@@ -64,6 +70,10 @@ public class SongRequestService : IDisposable
         _msg = new GameMessageTemplates("SongRequest", DefaultMessages);
     }
 
+    /// <summary>
+    /// Loads song request settings (max duration, max per user, points cost, queue open state) from the database.
+    /// </summary>
+    /// <param name="ct">Cancellation token.</param>
     public async Task LoadSettingsAsync(CancellationToken ct = default)
     {
         try
@@ -91,6 +101,13 @@ public class SongRequestService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Adds a song request to the queue after validating the URL, user limits, and point balance.
+    /// </summary>
+    /// <param name="input">The YouTube URL or video ID provided by the user.</param>
+    /// <param name="requestedBy">The Twitch user ID of the requester.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A chat response message indicating success or the reason for failure.</returns>
     public async Task<string> RequestSongAsync(string input, string requestedBy, CancellationToken ct = default)
     {
         await LoadSettingsAsync(ct);
@@ -155,6 +172,11 @@ public class SongRequestService : IDisposable
         return _msg.Get("Added", ("title", title), ("position", position.ToString()));
     }
 
+    /// <summary>
+    /// Skips the currently playing song and marks it as skipped.
+    /// </summary>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A chat response message confirming the skip or indicating nothing is playing.</returns>
     public async Task<string> SkipCurrentAsync(CancellationToken ct = default)
     {
         using IServiceScope scope = _scopeFactory.CreateScope();
@@ -174,6 +196,11 @@ public class SongRequestService : IDisposable
         return _msg.Get("Skipped", ("title", current.Title));
     }
 
+    /// <summary>
+    /// Marks the current song as played and advances to the next song in the queue.
+    /// </summary>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The next song request to play, or null if the queue is empty.</returns>
     public async Task<SongRequest?> PlayNextAsync(CancellationToken ct = default)
     {
         using IServiceScope scope = _scopeFactory.CreateScope();
@@ -199,11 +226,23 @@ public class SongRequestService : IDisposable
         return next;
     }
 
+    /// <summary>Gets whether the song request queue is currently open for new requests.</summary>
     public bool IsQueueOpen => _queueOpen;
+
+    /// <summary>Gets the maximum number of songs a single user can have in the queue.</summary>
     public int MaxPerUser => _maxPerUser;
+
+    /// <summary>Gets the maximum allowed song duration in seconds.</summary>
     public int MaxDuration => _maxDuration;
+
+    /// <summary>Gets the point cost per song request (0 means free).</summary>
     public int PointsCost => _pointsCost;
 
+    /// <summary>
+    /// Opens or closes the song request queue and persists the setting.
+    /// </summary>
+    /// <param name="open">True to open the queue, false to close it.</param>
+    /// <param name="ct">Cancellation token.</param>
     public async Task SetQueueOpenAsync(bool open, CancellationToken ct = default)
     {
         _queueOpen = open;
@@ -212,7 +251,12 @@ public class SongRequestService : IDisposable
         await settings.SetAsync("SongRequest.QueueOpen", open.ToString().ToLowerInvariant(), ct);
     }
 
+    /// <summary>Returns all current message templates with their active values.</summary>
+    /// <returns>A dictionary of template key to template text.</returns>
     public Dictionary<string, string> GetMessageTemplates() => _msg.GetAll();
+
+    /// <summary>Returns all message templates with their built-in default values.</summary>
+    /// <returns>A dictionary of template key to default template text.</returns>
     public Dictionary<string, string> GetDefaultMessageTemplates() => _msg.GetDefaults();
 
     internal static string? ExtractVideoId(string input)
@@ -264,6 +308,7 @@ public class SongRequestService : IDisposable
         }
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         _http.Dispose();

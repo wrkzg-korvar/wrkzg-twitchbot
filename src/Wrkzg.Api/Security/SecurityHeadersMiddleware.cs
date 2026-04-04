@@ -12,11 +12,13 @@ public sealed class SecurityHeadersMiddleware
 {
     private readonly RequestDelegate _next;
 
+    /// <summary>Initializes the middleware with the next request delegate.</summary>
     public SecurityHeadersMiddleware(RequestDelegate next)
     {
         _next = next;
     }
 
+    /// <summary>Adds security headers to the response, applying relaxed rules for overlay routes.</summary>
     public async Task InvokeAsync(HttpContext context)
     {
         IHeaderDictionary headers = context.Response.Headers;
@@ -57,7 +59,7 @@ public sealed class SecurityHeadersMiddleware
                 "default-src 'self'; " +
                 "script-src 'self'; " +
                 "style-src 'self' 'unsafe-inline'; " +
-                "connect-src 'self' ws://localhost:5050 ws://localhost:5173; " +
+                "connect-src 'self' ws://localhost:5050 ws://localhost:5173 https://api.github.com; " +
                 "img-src 'self' data: https://static-cdn.jtvnw.net https://img.youtube.com https://i.ytimg.com; " +
                 "font-src 'self'; " +
                 "object-src 'none'; " +

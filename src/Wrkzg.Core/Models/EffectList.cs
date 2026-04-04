@@ -8,6 +8,7 @@ namespace Wrkzg.Core.Models;
 /// </summary>
 public class EffectList
 {
+    /// <summary>Primary key.</summary>
     public int Id { get; set; }
 
     /// <summary>User-defined name (e.g. "Welcome VIPs", "Death Counter Combo").</summary>
@@ -34,5 +35,6 @@ public class EffectList
     /// <summary>Cooldown in seconds between activations. 0 = no cooldown.</summary>
     public int Cooldown { get; set; }
 
+    /// <summary>When this automation was created.</summary>
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Routing;
 using Wrkzg.Core.Interfaces;
 using Wrkzg.Core.Models;
 using Wrkzg.Core.Services;
+using Wrkzg.Infrastructure.Hotkeys;
 
 namespace Wrkzg.Api.Endpoints;
 
@@ -16,6 +17,7 @@ namespace Wrkzg.Api.Endpoints;
 /// </summary>
 public static class HotkeyEndpoints
 {
+    /// <summary>Registers hotkey binding CRUD and trigger API endpoints.</summary>
     public static void MapHotkeyEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/hotkeys").WithTags("Hotkeys");
@@ -45,7 +47,8 @@ public static class HotkeyEndpoints
             });
         });
 
-        group.MapPost("/", async (CreateHotkeyRequest request, IHotkeyBindingRepository repo, CancellationToken ct) =>
+        group.MapPost("/", async (CreateHotkeyRequest request, IHotkeyBindingRepository repo,
+            HotkeyListenerService listenerService, CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(request.KeyCombination) || string.IsNullOrWhiteSpace(request.ActionType))
             {
@@ -62,11 +65,12 @@ public static class HotkeyEndpoints
             };
 
             binding = await repo.CreateAsync(binding, ct);
+            await listenerService.RefreshBindingsAsync(ct);
             return Results.Created($"/api/hotkeys/{binding.Id}", binding);
         });
 
         group.MapPut("/{id:int}", async (int id, UpdateHotkeyRequest request,
-            IHotkeyBindingRepository repo, CancellationToken ct) =>
+            IHotkeyBindingRepository repo, HotkeyListenerService listenerService, CancellationToken ct) =>
         {
             HotkeyBinding? binding = await repo.GetByIdAsync(id, ct);
             if (binding is null)
@@ -81,12 +85,15 @@ public static class HotkeyEndpoints
             if (request.IsEnabled.HasValue) { binding.IsEnabled = request.IsEnabled.Value; }
 
             await repo.UpdateAsync(binding, ct);
+            await listenerService.RefreshBindingsAsync(ct);
             return Results.Ok(binding);
         });
 
-        group.MapDelete("/{id:int}", async (int id, IHotkeyBindingRepository repo, CancellationToken ct) =>
+        group.MapDelete("/{id:int}", async (int id, IHotkeyBindingRepository repo,
+            HotkeyListenerService listenerService, CancellationToken ct) =>
         {
             await repo.DeleteAsync(id, ct);
+            await listenerService.RefreshBindingsAsync(ct);
             return Results.NoContent();
         });
 
@@ -106,12 +113,14 @@ public static class HotkeyEndpoints
     }
 }
 
+/// <summary>Request payload for creating a new hotkey binding.</summary>
 public record CreateHotkeyRequest(
     string KeyCombination,
     string ActionType,
     string? ActionPayload,
     string? Description);
 
+/// <summary>Request payload for updating an existing hotkey binding.</summary>
 public record UpdateHotkeyRequest(
     string? KeyCombination,
     string? ActionType,

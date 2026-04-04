@@ -17,6 +17,7 @@ namespace Wrkzg.Api.Endpoints;
 /// </summary>
 public static class RaffleEndpoints
 {
+    /// <summary>Registers raffle creation, drawing, and template management API endpoints.</summary>
     public static void MapRaffleEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/raffles").WithTags("Raffles");
@@ -197,6 +198,7 @@ public static class RaffleEndpoints
     };
 }
 
+/// <summary>Request payload for creating a new raffle.</summary>
 public record CreateRaffleRequest(
     string Title,
     string? Keyword,
@@ -204,4 +206,5 @@ public record CreateRaffleRequest(
     int? MaxEntries,
     string? CreatedBy);
 
+/// <summary>Request payload for redrawing a raffle winner with an optional rejection reason.</summary>
 public record RedrawRequest(string? Reason);

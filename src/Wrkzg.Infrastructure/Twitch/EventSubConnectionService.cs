@@ -40,6 +40,9 @@ public class EventSubConnectionService : IHostedService
     private string? _broadcasterAccessToken;
     private CancellationTokenSource? _cts;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EventSubConnectionService"/> class.
+    /// </summary>
     public EventSubConnectionService(
         EventSubWebsocketClient eventSub,
         ITwitchChatClient chatClient,
@@ -60,6 +63,7 @@ public class EventSubConnectionService : IHostedService
         _logger = logger;
     }
 
+    /// <summary>Wires up EventSub event handlers and attempts WebSocket connection.</summary>
     public async Task StartAsync(CancellationToken ct)
     {
         _logger.LogInformation("EventSubConnectionService starting");
@@ -81,6 +85,7 @@ public class EventSubConnectionService : IHostedService
         await TryConnectAsync(ct);
     }
 
+    /// <summary>Disconnects from EventSub WebSocket and unwires all event handlers.</summary>
     public async Task StopAsync(CancellationToken ct)
     {
         _logger.LogInformation("EventSubConnectionService stopping");
@@ -645,6 +650,7 @@ public class EventSubConnectionService : IHostedService
         }
     }
 
+    /// <summary>Gets the default chat notification template for a given event type.</summary>
     internal static string GetDefaultTemplate(string eventType) => eventType switch
     {
         "follow" => "Welcome {user}! Thanks for the follow!",
@@ -655,6 +661,7 @@ public class EventSubConnectionService : IHostedService
         _ => ""
     };
 
+    /// <summary>Parses the Twitch tier string (e.g., "1000", "2000", "3000") to a tier number (1, 2, 3).</summary>
     internal static int ParseTier(string tier) => tier switch
     {
         "2000" => 2,

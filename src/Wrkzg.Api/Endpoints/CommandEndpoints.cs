@@ -16,6 +16,7 @@ namespace Wrkzg.Api.Endpoints;
 /// </summary>
 public static class CommandEndpoints
 {
+    /// <summary>Registers custom and system chat command API endpoints.</summary>
     public static void MapCommandEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/commands").WithTags("Commands");

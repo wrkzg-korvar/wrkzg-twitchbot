@@ -155,6 +155,11 @@ else
     app.MapAnalyticsEndpoints();
     app.MapSongRequestEndpoints();
     app.MapHotkeyEndpoints();
+    app.MapEffectEndpoints();
+    app.MapIntegrationEndpoints();
+    app.MapImportEndpoints();
+    app.MapAssetEndpoints();
+    app.MapCustomOverlayEndpoints();
 }
 
 // In test environment, WebApplicationFactory manages the server lifecycle.

@@ -8,7 +8,10 @@ namespace Wrkzg.Core.Models;
 /// </summary>
 public class ViewerSnapshot
 {
+    /// <summary>Primary key.</summary>
     public int Id { get; set; }
+
+    /// <summary>Foreign key to the stream session this snapshot belongs to.</summary>
     public int StreamSessionId { get; set; }
 
     /// <summary>Viewer count at this moment.</summary>

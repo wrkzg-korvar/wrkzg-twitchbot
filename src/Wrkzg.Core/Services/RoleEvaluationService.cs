@@ -18,6 +18,11 @@ public class RoleEvaluationService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<RoleEvaluationService> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="RoleEvaluationService"/>.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating DI scopes to resolve scoped repositories.</param>
+    /// <param name="logger">Logger instance for diagnostics.</param>
     public RoleEvaluationService(
         IServiceScopeFactory scopeFactory,
         ILogger<RoleEvaluationService> logger)

@@ -20,10 +20,20 @@ public class DiscordSendMessageEffect : IEffectType, IDisposable
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<DiscordSendMessageEffect> _logger;
 
+    /// <inheritdoc />
     public string Id => "discord.send_message";
+
+    /// <inheritdoc />
     public string DisplayName => "Send Discord Message";
+
+    /// <inheritdoc />
     public string[] ParameterKeys => new[] { "message" };
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DiscordSendMessageEffect"/> class.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating scoped service providers to read settings.</param>
+    /// <param name="logger">Logger instance for diagnostics.</param>
     public DiscordSendMessageEffect(
         IServiceScopeFactory scopeFactory,
         ILogger<DiscordSendMessageEffect> logger)
@@ -33,6 +43,10 @@ public class DiscordSendMessageEffect : IEffectType, IDisposable
         _logger = logger;
     }
 
+    /// <summary>
+    /// Resolves template variables in the message and posts it to the configured Discord webhook.
+    /// Logs a warning and returns early if the webhook URL is not configured.
+    /// </summary>
     public async Task ExecuteAsync(EffectExecutionContext context, CancellationToken ct = default)
     {
         string? webhookUrl = await GetWebhookUrlAsync(ct);
@@ -76,6 +90,7 @@ public class DiscordSendMessageEffect : IEffectType, IDisposable
         return await settings.GetAsync("Integration.Discord.WebhookUrl", ct);
     }
 
+    /// <summary>Disposes the internal <see cref="HttpClient"/>.</summary>
     public void Dispose() { _http.Dispose(); GC.SuppressFinalize(this); }
 }
 
@@ -89,10 +104,20 @@ public class DiscordSendEmbedEffect : IEffectType, IDisposable
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<DiscordSendEmbedEffect> _logger;
 
+    /// <inheritdoc />
     public string Id => "discord.send_embed";
+
+    /// <inheritdoc />
     public string DisplayName => "Send Discord Embed";
+
+    /// <inheritdoc />
     public string[] ParameterKeys => new[] { "title", "description", "color" };
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DiscordSendEmbedEffect"/> class.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating scoped service providers to read settings.</param>
+    /// <param name="logger">Logger instance for diagnostics.</param>
     public DiscordSendEmbedEffect(
         IServiceScopeFactory scopeFactory,
         ILogger<DiscordSendEmbedEffect> logger)
@@ -102,6 +127,10 @@ public class DiscordSendEmbedEffect : IEffectType, IDisposable
         _logger = logger;
     }
 
+    /// <summary>
+    /// Resolves template variables in the title, description, and color parameters
+    /// and posts a rich embed to the configured Discord webhook.
+    /// </summary>
     public async Task ExecuteAsync(EffectExecutionContext context, CancellationToken ct = default)
     {
         string? webhookUrl = await GetWebhookUrlAsync(ct);
@@ -165,5 +194,6 @@ public class DiscordSendEmbedEffect : IEffectType, IDisposable
         return await settings.GetAsync("Integration.Discord.WebhookUrl", ct);
     }
 
+    /// <summary>Disposes the internal <see cref="HttpClient"/>.</summary>
     public void Dispose() { _http.Dispose(); GC.SuppressFinalize(this); }
 }

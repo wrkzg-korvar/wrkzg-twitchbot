@@ -16,16 +16,28 @@ public class SongRequestCommand : ISystemCommand
 {
     private readonly SongRequestService _songService;
 
+    /// <inheritdoc />
     public string Trigger => "!sr";
+
+    /// <inheritdoc />
     public string[] Aliases => new[] { "!songrequest" };
+
+    /// <inheritdoc />
     public string Description => "Request a song by YouTube URL.";
+
+    /// <inheritdoc />
     public string? DefaultResponseTemplate => null;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SongRequestCommand"/> class.
+    /// </summary>
+    /// <param name="songService">The song request service handling queue management.</param>
     public SongRequestCommand(SongRequestService songService)
     {
         _songService = songService;
     }
 
+    /// <inheritdoc />
     public async Task<string?> ExecuteAsync(ChatMessage message, CancellationToken ct = default)
     {
         string[] parts = message.Content.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
@@ -58,16 +70,28 @@ public class SkipSongCommand : ISystemCommand
 {
     private readonly SongRequestService _songService;
 
+    /// <inheritdoc />
     public string Trigger => "!skip";
+
+    /// <inheritdoc />
     public string[] Aliases => Array.Empty<string>();
+
+    /// <inheritdoc />
     public string Description => "Skip the current song.";
+
+    /// <inheritdoc />
     public string? DefaultResponseTemplate => null;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SkipSongCommand"/> class.
+    /// </summary>
+    /// <param name="songService">The song request service handling queue management.</param>
     public SkipSongCommand(SongRequestService songService)
     {
         _songService = songService;
     }
 
+    /// <inheritdoc />
     public async Task<string?> ExecuteAsync(ChatMessage message, CancellationToken ct = default)
     {
         if (!message.IsModerator && !message.IsBroadcaster)
@@ -85,16 +109,28 @@ public class QueueCommand : ISystemCommand
 {
     private readonly IServiceScopeFactory _scopeFactory;
 
+    /// <inheritdoc />
     public string Trigger => "!queue";
+
+    /// <inheritdoc />
     public string[] Aliases => new[] { "!songlist" };
+
+    /// <inheritdoc />
     public string Description => "Show the next songs in the queue.";
+
+    /// <inheritdoc />
     public string? DefaultResponseTemplate => null;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="QueueCommand"/> class.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating scoped service providers.</param>
     public QueueCommand(IServiceScopeFactory scopeFactory)
     {
         _scopeFactory = scopeFactory;
     }
 
+    /// <inheritdoc />
     public async Task<string?> ExecuteAsync(ChatMessage message, CancellationToken ct = default)
     {
         using IServiceScope scope = _scopeFactory.CreateScope();
@@ -137,16 +173,28 @@ public class CurrentSongCommand : ISystemCommand
 {
     private readonly IServiceScopeFactory _scopeFactory;
 
+    /// <inheritdoc />
     public string Trigger => "!currentsong";
+
+    /// <inheritdoc />
     public string[] Aliases => new[] { "!song", "!nowplaying" };
+
+    /// <inheritdoc />
     public string Description => "Show the currently playing song.";
+
+    /// <inheritdoc />
     public string? DefaultResponseTemplate => null;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CurrentSongCommand"/> class.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating scoped service providers.</param>
     public CurrentSongCommand(IServiceScopeFactory scopeFactory)
     {
         _scopeFactory = scopeFactory;
     }
 
+    /// <inheritdoc />
     public async Task<string?> ExecuteAsync(ChatMessage message, CancellationToken ct = default)
     {
         using IServiceScope scope = _scopeFactory.CreateScope();

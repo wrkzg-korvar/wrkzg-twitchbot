@@ -25,11 +25,22 @@ public class RouletteGame : IChatGame
     private RouletteRound? _activeRound;
     private DateTimeOffset _lastRoundEnd = DateTimeOffset.MinValue;
 
+    /// <inheritdoc />
     public string Trigger => "!roulette";
+
+    /// <inheritdoc />
     public string[] Aliases => new[] { "!rl" };
+
+    /// <inheritdoc />
     public string Name => "Roulette";
+
+    /// <inheritdoc />
     public string Description => "Bet on red or black! 2x payout on a match.";
+
+    /// <inheritdoc />
     public bool IsEnabled { get; set; } = true;
+
+    /// <inheritdoc />
     public int MinRolePriority { get; set; }
 
     private int _spinDuration = 30;
@@ -53,6 +64,12 @@ public class RouletteGame : IChatGame
         ["Lose"] = "{user} loses {amount} points.",
     };
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="RouletteGame"/>.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating DI scopes to resolve scoped repositories.</param>
+    /// <param name="chatClient">The Twitch IRC chat client for sending game messages.</param>
+    /// <param name="logger">Logger instance for diagnostics.</param>
     public RouletteGame(
         IServiceScopeFactory scopeFactory,
         ITwitchChatClient chatClient,
@@ -64,6 +81,7 @@ public class RouletteGame : IChatGame
         _msg = new GameMessageTemplates("Roulette", DefaultMessages);
     }
 
+    /// <inheritdoc />
     public async Task<string?> HandleAsync(ChatMessage message, CancellationToken ct = default)
     {
         await LoadSettingsAsync(ct);
@@ -146,12 +164,16 @@ public class RouletteGame : IChatGame
             ("color", color));
     }
 
+    /// <inheritdoc />
     public Task<bool> HandleActiveRoundMessageAsync(ChatMessage message, CancellationToken ct = default)
     {
         return Task.FromResult(false);
     }
 
+    /// <inheritdoc />
     public Dictionary<string, string> GetMessageTemplates() => _msg.GetAll();
+
+    /// <inheritdoc />
     public Dictionary<string, string> GetDefaultMessageTemplates() => _msg.GetDefaults();
 
     private async Task ResolveRouletteAsync()

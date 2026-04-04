@@ -32,6 +32,15 @@ public class EffectEngine
         PropertyNameCaseInsensitive = true
     };
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EffectEngine"/> class with the registered
+    /// trigger, condition, and effect type implementations.
+    /// </summary>
+    /// <param name="triggerTypes">All registered trigger type implementations.</param>
+    /// <param name="conditionTypes">All registered condition type implementations.</param>
+    /// <param name="effectTypes">All registered effect type implementations.</param>
+    /// <param name="scopeFactory">Factory for creating scoped service providers.</param>
+    /// <param name="logger">Logger instance for diagnostics.</param>
     public EffectEngine(
         IEnumerable<ITriggerType> triggerTypes,
         IEnumerable<IConditionType> conditionTypes,
@@ -229,13 +238,19 @@ public class EffectEngine
 /// <summary>JSON structure for a condition in the ConditionsConfig array.</summary>
 public class ConditionConfig
 {
+    /// <summary>Gets or sets the condition type identifier (e.g. "role_check", "points_check").</summary>
     public string Type { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the key-value parameters for this condition.</summary>
     public Dictionary<string, string> Params { get; set; } = new();
 }
 
 /// <summary>JSON structure for an effect in the EffectsConfig array.</summary>
 public class EffectConfig
 {
+    /// <summary>Gets or sets the effect type identifier (e.g. "chat_message", "alert").</summary>
     public string Type { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the key-value parameters for this effect.</summary>
     public Dictionary<string, string> Params { get; set; } = new();
 }

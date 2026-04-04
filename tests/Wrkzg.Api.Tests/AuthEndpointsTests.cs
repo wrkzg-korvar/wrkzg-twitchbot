@@ -6,15 +6,18 @@ using Xunit;
 
 namespace Wrkzg.Api.Tests;
 
+/// <summary>Tests for the authentication API endpoints.</summary>
 public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
+    /// <summary>Initializes the test with an authenticated HTTP client.</summary>
     public AuthEndpointsTests(CustomWebApplicationFactory factory)
     {
         _client = factory.CreateAuthenticatedClient();
     }
 
+    /// <summary>Verifies that setup status returns incomplete when no credentials are stored.</summary>
     [Fact]
     public async Task GetSetupStatus_NoCredentials_ReturnsIncomplete()
     {
@@ -26,6 +29,7 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         body.Should().Contain("\"setupComplete\":false");
     }
 
+    /// <summary>Verifies that the auth status endpoint returns OK.</summary>
     [Fact]
     public async Task GetAuthStatus_ReturnsOk()
     {

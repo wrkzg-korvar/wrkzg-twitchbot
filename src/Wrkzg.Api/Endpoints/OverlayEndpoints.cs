@@ -146,6 +146,7 @@ public static class OverlayEndpoints
         ["events"] = (350, 400),
     };
 
+    /// <summary>Registers OBS overlay settings, URL generation, and test event API endpoints.</summary>
     public static void MapOverlayEndpoints(this IEndpointRouteBuilder app)
     {
         // Health-check endpoint under /overlay/ prefix — exempt from both auth and CORS.
@@ -285,11 +286,11 @@ public static class OverlayEndpoints
 
             return Results.Ok(new
             {
-                poll.Id,
-                poll.Question,
-                poll.Options,
-                poll.EndsAt,
-                poll.IsActive
+                id = poll.Id,
+                question = poll.Question,
+                options = poll.Options,
+                endsAt = poll.EndsAt,
+                isActive = poll.IsActive
             });
         });
 

@@ -12,6 +12,7 @@ namespace Wrkzg.Api.Endpoints;
 /// </summary>
 public static class BotEndpoints
 {
+    /// <summary>Registers bot connection control API endpoints.</summary>
     public static void MapBotEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/bot").WithTags("Bot");

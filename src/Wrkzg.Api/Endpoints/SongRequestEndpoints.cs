@@ -15,6 +15,7 @@ namespace Wrkzg.Api.Endpoints;
 /// </summary>
 public static class SongRequestEndpoints
 {
+    /// <summary>Registers song request queue, playback, and settings API endpoints.</summary>
     public static void MapSongRequestEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/song-requests").WithTags("SongRequests");
@@ -154,6 +155,8 @@ public static class SongRequestEndpoints
     }
 }
 
+/// <summary>Request payload for updating song request chat message templates.</summary>
 public record UpdateSongRequestMessagesRequest(Dictionary<string, string>? Messages);
 
+/// <summary>Request payload for updating song request queue settings.</summary>
 public record UpdateSongRequestSettingsRequest(int? MaxDuration, int? MaxPerUser, int? PointsCost);

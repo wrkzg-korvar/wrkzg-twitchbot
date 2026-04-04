@@ -52,6 +52,13 @@ public class CommandProcessor : ICommandProcessor
         @"\{random:(\d+):(\d+)\}",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="CommandProcessor"/> with the required dependencies.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating DI scopes to resolve scoped repositories.</param>
+    /// <param name="chat">The Twitch IRC chat client for sending command responses.</param>
+    /// <param name="systemCommands">All registered system command implementations.</param>
+    /// <param name="logger">Logger instance for diagnostics.</param>
     public CommandProcessor(
         IServiceScopeFactory scopeFactory,
         ITwitchChatClient chat,
@@ -64,6 +71,7 @@ public class CommandProcessor : ICommandProcessor
         _logger = logger;
     }
 
+    /// <inheritdoc />
     public async Task<bool> HandleMessageAsync(ChatMessage message, CancellationToken ct = default)
     {
         // 1. Must start with command prefix

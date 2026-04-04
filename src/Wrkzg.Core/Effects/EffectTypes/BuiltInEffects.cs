@@ -10,10 +10,16 @@ namespace Wrkzg.Core.Effects.EffectTypes;
 /// <summary>Sends a chat message.</summary>
 public class ChatMessageEffect : IEffectType
 {
+    /// <inheritdoc />
     public string Id => "chat_message";
+
+    /// <inheritdoc />
     public string DisplayName => "Send Chat Message";
+
+    /// <inheritdoc />
     public string[] ParameterKeys => new[] { "message" };
 
+    /// <summary>Resolves template variables in the <c>message</c> parameter and sends it to chat.</summary>
     public async Task ExecuteAsync(EffectExecutionContext context, CancellationToken ct = default)
     {
         string template = context.GetParameter("message");
@@ -33,10 +39,16 @@ public class ChatMessageEffect : IEffectType
 /// <summary>Waits for a specified duration (used between effects in a chain).</summary>
 public class WaitEffect : IEffectType
 {
+    /// <inheritdoc />
     public string Id => "wait";
+
+    /// <inheritdoc />
     public string DisplayName => "Wait";
+
+    /// <inheritdoc />
     public string[] ParameterKeys => new[] { "seconds" };
 
+    /// <summary>Delays execution for the configured number of seconds, clamped to a maximum of 60.</summary>
     public async Task ExecuteAsync(EffectExecutionContext context, CancellationToken ct = default)
     {
         if (int.TryParse(context.GetParameter("seconds"), out int seconds) && seconds > 0)
@@ -50,10 +62,19 @@ public class WaitEffect : IEffectType
 /// <summary>Modifies a counter value.</summary>
 public class CounterEffect : IEffectType
 {
+    /// <inheritdoc />
     public string Id => "counter";
+
+    /// <inheritdoc />
     public string DisplayName => "Update Counter";
+
+    /// <inheritdoc />
     public string[] ParameterKeys => new[] { "counter_id", "action" };
 
+    /// <summary>
+    /// Looks up a counter by ID and applies the configured action (increment, decrement, or reset),
+    /// then broadcasts the update via SignalR.
+    /// </summary>
     public async Task ExecuteAsync(EffectExecutionContext context, CancellationToken ct = default)
     {
         if (context.Scope is null)
@@ -92,10 +113,16 @@ public class CounterEffect : IEffectType
 /// <summary>Sends an alert to the overlay via SignalR.</summary>
 public class AlertEffect : IEffectType
 {
+    /// <inheritdoc />
     public string Id => "alert";
+
+    /// <inheritdoc />
     public string DisplayName => "Show Alert";
+
+    /// <inheritdoc />
     public string[] ParameterKeys => new[] { "message" };
 
+    /// <summary>Resolves the message template and broadcasts an alert event to all connected overlays.</summary>
     public async Task ExecuteAsync(EffectExecutionContext context, CancellationToken ct = default)
     {
         if (context.Scope is null)
@@ -113,10 +140,19 @@ public class AlertEffect : IEffectType
 /// <summary>Sets a shared variable for use in subsequent effects.</summary>
 public class VariableEffect : IEffectType
 {
+    /// <inheritdoc />
     public string Id => "variable";
+
+    /// <inheritdoc />
     public string DisplayName => "Set Variable";
+
+    /// <inheritdoc />
     public string[] ParameterKeys => new[] { "name", "value" };
 
+    /// <summary>
+    /// Stores a named variable in the shared execution context so later effects in the chain
+    /// can reference it via template substitution.
+    /// </summary>
     public Task ExecuteAsync(EffectExecutionContext context, CancellationToken ct = default)
     {
         string name = context.GetParameter("name");

@@ -15,6 +15,7 @@ public class ImportParserTests
 {
     // ─── Deepbot CSV ─────────────────────────────────────────
 
+    /// <summary>Verifies that the Deepbot CSV parser correctly reads username, points, and watched minutes columns.</summary>
     [Fact]
     public async Task DeepbotCsv_ParsesThreeColumns()
     {
@@ -32,6 +33,7 @@ public class ImportParserTests
         records[1].WatchedMinutes.Should().Be(52000);
     }
 
+    /// <summary>Verifies that floating-point point values are rounded to the nearest integer.</summary>
     [Fact]
     public async Task DeepbotCsv_HandlesFloatPoints()
     {
@@ -44,6 +46,7 @@ public class ImportParserTests
         records[0].WatchedMinutes.Should().Be(13125);
     }
 
+    /// <summary>Verifies that empty lines in the CSV input are skipped without errors.</summary>
     [Fact]
     public async Task DeepbotCsv_SkipsEmptyLines()
     {
@@ -55,6 +58,7 @@ public class ImportParserTests
         records.Should().HaveCount(2);
     }
 
+    /// <summary>Verifies that rows with an incorrect number of columns are skipped.</summary>
     [Fact]
     public async Task DeepbotCsv_SkipsInvalidRows()
     {
@@ -68,6 +72,7 @@ public class ImportParserTests
         records[1].Username.Should().Be("user2");
     }
 
+    /// <summary>Verifies that negative point and watch-time values are clamped to zero.</summary>
     [Fact]
     public async Task DeepbotCsv_ClampsNegativeValues()
     {
@@ -82,6 +87,7 @@ public class ImportParserTests
 
     // ─── Deepbot JSON ────────────────────────────────────────
 
+    /// <summary>Verifies that the Deepbot JSON parser extracts user data including VIP, mod, and date fields.</summary>
     [Fact]
     public async Task DeepbotJson_ParsesApiResponse()
     {
@@ -112,6 +118,7 @@ public class ImportParserTests
         records[0].LastSeen.Should().NotBeNull();
     }
 
+    /// <summary>Verifies that Deepbot VIP level 10 is mapped to null (regular user).</summary>
     [Fact]
     public async Task DeepbotJson_MapsVip10AsRegular()
     {
@@ -123,6 +130,7 @@ public class ImportParserTests
         records[0].VipLevel.Should().BeNull();
     }
 
+    /// <summary>Verifies that Deepbot VIP levels 1 through 3 are mapped to their corresponding values.</summary>
     [Fact]
     public async Task DeepbotJson_MapsVipLevelsCorrectly()
     {
@@ -142,6 +150,7 @@ public class ImportParserTests
         records[2].VipLevel.Should().Be(3);
     }
 
+    /// <summary>Verifies that the parser handles the Deepbot JSON envelope with a "msg" wrapper array.</summary>
     [Fact]
     public async Task DeepbotJson_HandlesMsgWrapper()
     {
@@ -156,6 +165,7 @@ public class ImportParserTests
 
     // ─── Generic CSV ─────────────────────────────────────────
 
+    /// <summary>Verifies that the generic CSV parser detects column headers and returns a correct preview.</summary>
     [Fact]
     public async Task GenericCsv_DetectsHeaders()
     {
@@ -170,6 +180,7 @@ public class ImportParserTests
         preview.ColumnCount.Should().Be(3);
     }
 
+    /// <summary>Verifies that named column mappings are applied correctly during generic CSV parsing.</summary>
     [Fact]
     public async Task GenericCsv_AppliesColumnMapping()
     {
@@ -192,6 +203,7 @@ public class ImportParserTests
         records[0].WatchedMinutes.Should().Be(10);
     }
 
+    /// <summary>Verifies that numeric column index mappings work for headerless CSV files.</summary>
     [Fact]
     public async Task GenericCsv_AppliesNumericColumnIndex()
     {

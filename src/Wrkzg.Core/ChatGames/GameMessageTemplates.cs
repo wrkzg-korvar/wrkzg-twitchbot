@@ -18,6 +18,11 @@ public class GameMessageTemplates
     private readonly Dictionary<string, string> _defaults;
     private readonly string _gameName;
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="GameMessageTemplates"/> with the game name and default templates.
+    /// </summary>
+    /// <param name="gameName">The game name used to construct settings keys (e.g., "Heist" becomes "Games.Heist.Msg.{Key}").</param>
+    /// <param name="defaults">Default message templates keyed by message name.</param>
     public GameMessageTemplates(string gameName, Dictionary<string, string> defaults)
     {
         _gameName = gameName;

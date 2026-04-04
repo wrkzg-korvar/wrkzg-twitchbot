@@ -50,6 +50,9 @@ public class TwitchOAuthService : ITwitchOAuthService
         PropertyNameCaseInsensitive = true
     };
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TwitchOAuthService"/> class.
+    /// </summary>
     public TwitchOAuthService(
         HttpClient http,
         ISecureStorage storage,
@@ -62,6 +65,10 @@ public class TwitchOAuthService : ITwitchOAuthService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Builds a Twitch OAuth authorization URL with PKCE state parameter
+    /// for the specified token type (Bot or Broadcaster).
+    /// </summary>
     public (string url, string state) BuildAuthorizationUrl(TokenType tokenType)
     {
         // GetClientIdAsync is async but BuildAuthorizationUrl is sync in the interface.
@@ -92,6 +99,7 @@ public class TwitchOAuthService : ITwitchOAuthService
         return (url, compositeState);
     }
 
+    /// <summary>Exchanges an authorization code for access and refresh tokens.</summary>
     public async Task<TwitchTokens> ExchangeCodeAsync(string code, CancellationToken ct = default)
     {
         string clientId = await GetClientIdAsync(ct);
@@ -135,6 +143,7 @@ public class TwitchOAuthService : ITwitchOAuthService
         return tokens with { ObtainedAt = DateTimeOffset.UtcNow };
     }
 
+    /// <summary>Refreshes an expired access token using a refresh token.</summary>
     public async Task<TwitchTokens> RefreshTokenAsync(string refreshToken, CancellationToken ct = default)
     {
         string clientId = await GetClientIdAsync(ct);
@@ -175,6 +184,7 @@ public class TwitchOAuthService : ITwitchOAuthService
         return tokens with { ObtainedAt = DateTimeOffset.UtcNow };
     }
 
+    /// <summary>Revokes an access token with the Twitch OAuth revocation endpoint.</summary>
     public async Task RevokeTokenAsync(string accessToken, CancellationToken ct = default)
     {
         string clientId = await GetClientIdAsync(ct);
@@ -197,6 +207,7 @@ public class TwitchOAuthService : ITwitchOAuthService
         }
     }
 
+    /// <summary>Validates an access token against the Twitch validation endpoint, returning user info if valid.</summary>
     public async Task<TwitchTokenValidation?> ValidateTokenAsync(
         string accessToken, CancellationToken ct = default)
     {

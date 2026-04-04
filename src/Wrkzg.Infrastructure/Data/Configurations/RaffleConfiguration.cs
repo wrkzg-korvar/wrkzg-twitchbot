@@ -4,8 +4,13 @@ using Wrkzg.Core.Models;
 
 namespace Wrkzg.Infrastructure.Data.Configurations;
 
+/// <summary>
+/// EF Core entity type configuration for the <see cref="Raffle"/> model.
+/// Configures winner, pending winner, and entry relationships with cascade delete.
+/// </summary>
 public class RaffleConfiguration : IEntityTypeConfiguration<Raffle>
 {
+    /// <summary>Configures the schema for the Raffles table.</summary>
     public void Configure(EntityTypeBuilder<Raffle> builder)
     {
         builder.HasKey(r => r.Id);
@@ -32,8 +37,13 @@ public class RaffleConfiguration : IEntityTypeConfiguration<Raffle>
     }
 }
 
+/// <summary>
+/// EF Core entity type configuration for the <see cref="RaffleEntry"/> model.
+/// Enforces one entry per user per raffle via a unique composite index.
+/// </summary>
 public class RaffleEntryConfiguration : IEntityTypeConfiguration<RaffleEntry>
 {
+    /// <summary>Configures the schema for the RaffleEntries table.</summary>
     public void Configure(EntityTypeBuilder<RaffleEntry> builder)
     {
         builder.HasKey(e => e.Id);

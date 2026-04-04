@@ -13,18 +13,30 @@ namespace Wrkzg.Core.SystemCommands;
 /// </summary>
 public class PollEndCommand : ISystemCommand
 {
+    /// <inheritdoc />
     public string Trigger => "!pollend";
+
+    /// <inheritdoc />
     public string[] Aliases => new[] { "!endpoll", "!closepoll" };
+
+    /// <inheritdoc />
     public string Description => "End the active poll. Mod only.";
+
+    /// <inheritdoc />
     public string? DefaultResponseTemplate => null;
 
     private readonly IServiceScopeFactory _scopeFactory;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PollEndCommand"/> class.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating scoped service providers.</param>
     public PollEndCommand(IServiceScopeFactory scopeFactory)
     {
         _scopeFactory = scopeFactory;
     }
 
+    /// <inheritdoc />
     public async Task<string?> ExecuteAsync(ChatMessage message, CancellationToken ct = default)
     {
         if (!message.IsModerator && !message.IsBroadcaster)

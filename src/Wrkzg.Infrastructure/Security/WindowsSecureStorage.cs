@@ -30,6 +30,11 @@ public class WindowsSecureStorage : ISecureStorage
         WriteIndented = false
     };
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="WindowsSecureStorage"/> class
+    /// and ensures the encrypted token storage directory exists.
+    /// </summary>
+    /// <param name="logger">The logger for DPAPI operation diagnostics.</param>
     public WindowsSecureStorage(ILogger<WindowsSecureStorage> logger)
     {
         _logger = logger;
@@ -42,6 +47,7 @@ public class WindowsSecureStorage : ISecureStorage
 
     // ─── OAuth Tokens ─────────────────────────────────────────────────
 
+    /// <summary>Saves OAuth tokens encrypted with DPAPI for the specified token type.</summary>
     public async Task SaveTokensAsync(TokenType type, TwitchTokens tokens, CancellationToken ct = default)
     {
         byte[] json = JsonSerializer.SerializeToUtf8Bytes(tokens, _jsonOptions);
@@ -49,6 +55,7 @@ public class WindowsSecureStorage : ISecureStorage
         _logger.LogDebug("Saved {TokenType} tokens", type);
     }
 
+    /// <summary>Loads and decrypts OAuth tokens for the specified token type.</summary>
     public async Task<TwitchTokens?> LoadTokensAsync(TokenType type, CancellationToken ct = default)
     {
         byte[]? json = await LoadEncryptedAsync(GetTokenFilePath(type), ct);
@@ -60,6 +67,7 @@ public class WindowsSecureStorage : ISecureStorage
         return JsonSerializer.Deserialize<TwitchTokens>(json, _jsonOptions);
     }
 
+    /// <summary>Deletes the encrypted token file for the specified token type.</summary>
     public Task DeleteTokensAsync(TokenType type, CancellationToken ct = default)
     {
         DeleteFile(GetTokenFilePath(type));
@@ -69,6 +77,7 @@ public class WindowsSecureStorage : ISecureStorage
 
     // ─── Twitch App Credentials ───────────────────────────────────────
 
+    /// <summary>Saves the Twitch application Client ID encrypted with DPAPI.</summary>
     public async Task SaveClientIdAsync(string clientId, CancellationToken ct = default)
     {
         byte[] raw = Encoding.UTF8.GetBytes(clientId);
@@ -76,12 +85,14 @@ public class WindowsSecureStorage : ISecureStorage
         _logger.LogDebug("Saved Client ID to secure storage");
     }
 
+    /// <summary>Loads and decrypts the Twitch application Client ID.</summary>
     public async Task<string?> LoadClientIdAsync(CancellationToken ct = default)
     {
         byte[]? raw = await LoadEncryptedAsync(GetCredentialFilePath("client_id"), ct);
         return raw is null ? null : Encoding.UTF8.GetString(raw);
     }
 
+    /// <summary>Saves the Twitch application Client Secret encrypted with DPAPI.</summary>
     public async Task SaveClientSecretAsync(string clientSecret, CancellationToken ct = default)
     {
         byte[] raw = Encoding.UTF8.GetBytes(clientSecret);
@@ -89,12 +100,14 @@ public class WindowsSecureStorage : ISecureStorage
         _logger.LogDebug("Saved Client Secret to secure storage");
     }
 
+    /// <summary>Loads and decrypts the Twitch application Client Secret.</summary>
     public async Task<string?> LoadClientSecretAsync(CancellationToken ct = default)
     {
         byte[]? raw = await LoadEncryptedAsync(GetCredentialFilePath("client_secret"), ct);
         return raw is null ? null : Encoding.UTF8.GetString(raw);
     }
 
+    /// <summary>Deletes both Client ID and Client Secret encrypted files.</summary>
     public Task DeleteCredentialsAsync(CancellationToken ct = default)
     {
         DeleteFile(GetCredentialFilePath("client_id"));
@@ -103,6 +116,7 @@ public class WindowsSecureStorage : ISecureStorage
         return Task.CompletedTask;
     }
 
+    /// <summary>Checks whether both Client ID and Client Secret encrypted files exist and are readable.</summary>
     public async Task<bool> HasCredentialsAsync(CancellationToken ct = default)
     {
         string? clientId = await LoadClientIdAsync(ct);

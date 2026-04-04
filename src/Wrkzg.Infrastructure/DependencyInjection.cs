@@ -13,8 +13,18 @@ using Wrkzg.Infrastructure.Twitch;
 
 namespace Wrkzg.Infrastructure;
 
+/// <summary>
+/// Extension methods for registering Infrastructure layer services in the DI container.
+/// </summary>
 public static class DependencyInjection
 {
+    /// <summary>
+    /// Registers all Infrastructure services including the SQLite database, repositories,
+    /// platform-specific secure storage, Twitch clients, and hosted background services.
+    /// </summary>
+    /// <param name="services">The service collection to register services into.</param>
+    /// <param name="config">The application configuration for reading connection and API settings.</param>
+    /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration config)

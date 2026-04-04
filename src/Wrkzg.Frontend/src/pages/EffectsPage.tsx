@@ -165,26 +165,26 @@ export function EffectsPage() {
             </p>
             <div className="flex items-center gap-3 mb-6">
               <div className="flex items-center gap-2 rounded-lg bg-blue-500/10 border border-blue-500/20 px-4 py-2.5">
-                <Zap className="h-4 w-4 text-blue-400" />
+                <Zap className="h-4 w-4 text-blue-700 dark:text-blue-400" />
                 <div>
-                  <div className="text-sm font-medium text-blue-400">Trigger</div>
-                  <div className="text-[10px] text-blue-400/60">When this happens...</div>
+                  <div className="text-sm font-medium text-blue-700 dark:text-blue-400">Trigger</div>
+                  <div className="text-[10px] text-blue-600/60 dark:text-blue-400/60">When this happens...</div>
                 </div>
               </div>
               <ChevronRight className="h-4 w-4 text-[var(--color-text-muted)]" />
               <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-4 py-2.5">
-                <Shield className="h-4 w-4 text-amber-400" />
+                <Shield className="h-4 w-4 text-amber-700 dark:text-amber-400" />
                 <div>
-                  <div className="text-sm font-medium text-amber-400">Conditions</div>
-                  <div className="text-[10px] text-amber-400/60">If these are true...</div>
+                  <div className="text-sm font-medium text-amber-700 dark:text-amber-400">Conditions</div>
+                  <div className="text-[10px] text-amber-600/60 dark:text-amber-400/60">If these are true...</div>
                 </div>
               </div>
               <ChevronRight className="h-4 w-4 text-[var(--color-text-muted)]" />
               <div className="flex items-center gap-2 rounded-lg bg-green-500/10 border border-green-500/20 px-4 py-2.5">
-                <Sparkles className="h-4 w-4 text-green-400" />
+                <Sparkles className="h-4 w-4 text-green-700 dark:text-green-400" />
                 <div>
-                  <div className="text-sm font-medium text-green-400">Effects</div>
-                  <div className="text-[10px] text-green-400/60">Do these actions</div>
+                  <div className="text-sm font-medium text-green-700 dark:text-green-400">Effects</div>
+                  <div className="text-[10px] text-green-600/60 dark:text-green-400/60">Do these actions</div>
                 </div>
               </div>
             </div>
@@ -249,14 +249,14 @@ export function EffectsPage() {
 
               {/* Flow visualization with labels */}
               <div className="flex flex-wrap items-center gap-2 mt-3 text-xs">
-                <span className="rounded bg-blue-500/15 text-blue-400 px-2 py-0.5 font-medium">
+                <span className="rounded bg-blue-500/15 text-blue-700 dark:text-blue-400 px-2 py-0.5 font-medium">
                   {triggerLabel(el.triggerTypeId)}
                 </span>
                 {conditions.length > 0 && (
                   <>
                     <ChevronRight className="h-3 w-3 text-[var(--color-text-muted)]" />
                     {conditions.map((c, i) => (
-                      <span key={i} className="rounded bg-amber-500/15 text-amber-400 px-2 py-0.5">
+                      <span key={i} className="rounded bg-amber-500/15 text-amber-700 dark:text-amber-400 px-2 py-0.5">
                         {conditionLabel(c.type)}
                       </span>
                     ))}
@@ -264,7 +264,7 @@ export function EffectsPage() {
                 )}
                 <ChevronRight className="h-3 w-3 text-[var(--color-text-muted)]" />
                 {effects.map((e, i) => (
-                  <span key={i} className="rounded bg-green-500/15 text-green-400 px-2 py-0.5">
+                  <span key={i} className="rounded bg-green-500/15 text-green-700 dark:text-green-400 px-2 py-0.5">
                     {effectLabel(e.type)}
                   </span>
                 ))}
@@ -384,7 +384,7 @@ function EffectFormModal({ editingId, types, onClose, onSaved }: {
         <Section color="amber" icon={Shield} title="Conditions" subtitle="Optional: Only run if ALL of these are true">
           {types.conditions.map((c) => (
             <div key={c.id} className="flex items-start gap-2 text-xs text-[var(--color-text-muted)] mb-1">
-              <code className="text-amber-400 font-mono">{c.id}</code>
+              <code className="text-amber-700 dark:text-amber-400 font-mono">{c.id}</code>
               <span>— {CONDITION_DESCRIPTIONS[c.id] ?? c.displayName}</span>
             </div>
           ))}
@@ -398,7 +398,7 @@ function EffectFormModal({ editingId, types, onClose, onSaved }: {
         <Section color="green" icon={Sparkles} title="Effects" subtitle="Actions to run in order when triggered">
           {types.effects.map((e) => (
             <div key={e.id} className="flex items-start gap-2 text-xs text-[var(--color-text-muted)] mb-1">
-              <code className="text-green-400 font-mono">{e.id}</code>
+              <code className="text-green-700 dark:text-green-400 font-mono">{e.id}</code>
               <span>— {EFFECT_DESCRIPTIONS[e.id] ?? e.displayName}</span>
             </div>
           ))}
@@ -431,9 +431,9 @@ function Section({ color, icon: Icon, title, subtitle, children }: {
     green: "border-green-500/20 bg-green-500/5",
   };
   const textColors: Record<string, string> = {
-    blue: "text-blue-400",
-    amber: "text-amber-400",
-    green: "text-green-400",
+    blue: "text-blue-700 dark:text-blue-400",
+    amber: "text-amber-700 dark:text-amber-400",
+    green: "text-green-700 dark:text-green-400",
   };
 
   return (

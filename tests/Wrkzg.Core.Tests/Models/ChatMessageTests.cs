@@ -5,8 +5,10 @@ using Xunit;
 
 namespace Wrkzg.Core.Tests.Models;
 
+/// <summary>Tests for the ChatMessage record type.</summary>
 public class ChatMessageTests
 {
+    /// <summary>Verifies that ChatMessage properties are set correctly and Channel has a default empty value.</summary>
     [Fact]
     public void ChatMessage_IsImmutableRecord()
     {
@@ -25,6 +27,7 @@ public class ChatMessageTests
         msg.Channel.Should().BeEmpty(); // default value
     }
 
+    /// <summary>Verifies that the Channel property can be set via object initializer.</summary>
     [Fact]
     public void ChatMessage_WithChannel_SetsChannel()
     {
@@ -36,6 +39,7 @@ public class ChatMessageTests
         msg.Channel.Should().Be("mychannel");
     }
 
+    /// <summary>Verifies that two ChatMessage records with identical values are structurally equal.</summary>
     [Fact]
     public void ChatMessage_RecordEquality_WorksCorrectly()
     {
@@ -47,6 +51,7 @@ public class ChatMessageTests
         msg1.Should().BeEquivalentTo(msg2);
     }
 
+    /// <summary>Verifies that the with expression creates a new instance without modifying the original.</summary>
     [Fact]
     public void ChatMessage_WithExpression_CreatesNewInstance()
     {

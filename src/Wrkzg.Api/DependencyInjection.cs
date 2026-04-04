@@ -5,8 +5,12 @@ using Wrkzg.Core.Interfaces;
 
 namespace Wrkzg.Api;
 
+/// <summary>
+/// Dependency injection registration for the Wrkzg.Api layer.
+/// </summary>
 public static class DependencyInjection
 {
+    /// <summary>Registers API services including SignalR, authentication, and CORS policies.</summary>
     public static IServiceCollection AddApiServices(this IServiceCollection services)
     {
         services.AddSignalR();

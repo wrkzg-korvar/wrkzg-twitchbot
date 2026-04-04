@@ -16,6 +16,7 @@ namespace Wrkzg.Api.Endpoints;
 /// </summary>
 public static class PollEndpoints
 {
+    /// <summary>Registers poll creation, voting, and template management API endpoints.</summary>
     public static void MapPollEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/polls").WithTags("Polls");
@@ -33,15 +34,15 @@ public static class PollEndpoints
             IReadOnlyList<Poll> polls = await pollService.GetRecentAsync(10, ct);
             return Results.Ok(polls.Select(p => new
             {
-                p.Id,
-                p.Question,
-                p.Options,
-                p.IsActive,
+                id = p.Id,
+                question = p.Question,
+                options = p.Options,
+                isActive = p.IsActive,
                 source = p.Source.ToString(),
-                p.CreatedBy,
-                p.CreatedAt,
-                p.EndsAt,
-                p.DurationSeconds,
+                createdBy = p.CreatedBy,
+                createdAt = p.CreatedAt,
+                endsAt = p.EndsAt,
+                durationSeconds = p.DurationSeconds,
                 endReason = p.EndReason.ToString(),
                 totalVotes = p.Votes.Count,
                 winnerIndex = p.Votes.Count > 0
@@ -131,12 +132,14 @@ public static class PollEndpoints
     }
 }
 
+/// <summary>Request payload for creating a new bot-managed poll.</summary>
 public record CreatePollRequest(
     string Question,
     string[] Options,
     int DurationSeconds,
     string? CreatedBy);
 
+/// <summary>Request payload for creating a Twitch-native poll via the Helix API.</summary>
 public record CreateTwitchPollRequest(
     string Question,
     string[] Options,

@@ -5,8 +5,10 @@ using Xunit;
 
 namespace Wrkzg.Core.Tests.Models;
 
+/// <summary>Tests for the ImportResult model success logic and summary formatting.</summary>
 public class ImportResultTests
 {
+    /// <summary>Verifies that Success is true when there are no errors.</summary>
     [Fact]
     public void Success_NoErrors_ReturnsTrue()
     {
@@ -14,6 +16,7 @@ public class ImportResultTests
         result.Success.Should().BeTrue();
     }
 
+    /// <summary>Verifies that Success is true when errors contain only warnings.</summary>
     [Fact]
     public void Success_OnlyWarnings_ReturnsTrue()
     {
@@ -27,6 +30,7 @@ public class ImportResultTests
         result.Success.Should().BeTrue();
     }
 
+    /// <summary>Verifies that Success is false when errors contain error-severity items.</summary>
     [Fact]
     public void Success_WithErrors_ReturnsFalse()
     {
@@ -40,6 +44,7 @@ public class ImportResultTests
         result.Success.Should().BeFalse();
     }
 
+    /// <summary>Verifies that Summary formats the import statistics into a readable string.</summary>
     [Fact]
     public void Summary_FormatsCorrectly()
     {

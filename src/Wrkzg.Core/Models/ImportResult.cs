@@ -36,16 +36,32 @@ public class ImportResult
     public string Summary => $"Imported {ImportedCount}/{TotalRows} users ({CreatedCount} new, {UpdatedCount} updated, {SkippedCount} skipped)";
 }
 
+/// <summary>
+/// Describes an error or warning that occurred while importing a single row.
+/// </summary>
 public class ImportRowError
 {
+    /// <summary>One-based row number in the source file where the error occurred.</summary>
     public int RowNumber { get; set; }
+
+    /// <summary>Name of the field that caused the error (e.g. "username", "points").</summary>
     public string Field { get; set; } = string.Empty;
+
+    /// <summary>Human-readable description of the error.</summary>
     public string Message { get; set; } = string.Empty;
+
+    /// <summary>Whether this is a recoverable warning or a fatal row error.</summary>
     public ImportErrorSeverity Severity { get; set; }
 }
 
+/// <summary>
+/// Severity level for import row errors.
+/// </summary>
 public enum ImportErrorSeverity
 {
+    /// <summary>Non-fatal issue; the row was still processed.</summary>
     Warning = 0,
+
+    /// <summary>Fatal issue; the row was skipped.</summary>
     Error = 1
 }

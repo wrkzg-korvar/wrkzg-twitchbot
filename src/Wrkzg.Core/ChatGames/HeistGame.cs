@@ -27,11 +27,22 @@ public class HeistGame : IChatGame
     private HeistRound? _activeRound;
     private DateTimeOffset _lastHeistEnd = DateTimeOffset.MinValue;
 
+    /// <inheritdoc />
     public string Trigger => "!heist";
+
+    /// <inheritdoc />
     public string[] Aliases => Array.Empty<string>();
+
+    /// <inheritdoc />
     public string Name => "Heist";
+
+    /// <inheritdoc />
     public string Description => "Join a group heist! Bet points, survive, and earn big.";
+
+    /// <inheritdoc />
     public bool IsEnabled { get; set; } = true;
+
+    /// <inheritdoc />
     public int MinRolePriority { get; set; }
 
     private int _joinDuration = 60;
@@ -58,6 +69,12 @@ public class HeistGame : IChatGame
         ["Result"] = "Result: {survivors}/{total} survived. Total payout: {payout} points.",
     };
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="HeistGame"/>.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating DI scopes to resolve scoped repositories.</param>
+    /// <param name="chatClient">The Twitch IRC chat client for sending game messages.</param>
+    /// <param name="logger">Logger instance for diagnostics.</param>
     public HeistGame(
         IServiceScopeFactory scopeFactory,
         ITwitchChatClient chatClient,
@@ -69,6 +86,7 @@ public class HeistGame : IChatGame
         _msg = new GameMessageTemplates("Heist", DefaultMessages);
     }
 
+    /// <inheritdoc />
     public async Task<string?> HandleAsync(ChatMessage message, CancellationToken ct = default)
     {
         await LoadSettingsAsync(ct);
@@ -142,12 +160,16 @@ public class HeistGame : IChatGame
             ("count", _activeRound.Participants.Count.ToString()));
     }
 
+    /// <inheritdoc />
     public Task<bool> HandleActiveRoundMessageAsync(ChatMessage message, CancellationToken ct = default)
     {
         return Task.FromResult(false);
     }
 
+    /// <inheritdoc />
     public Dictionary<string, string> GetMessageTemplates() => _msg.GetAll();
+
+    /// <inheritdoc />
     public Dictionary<string, string> GetDefaultMessageTemplates() => _msg.GetDefaults();
 
     private async Task ResolveHeistAsync()

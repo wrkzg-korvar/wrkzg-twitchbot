@@ -15,18 +15,30 @@ namespace Wrkzg.Core.SystemCommands;
 /// </summary>
 public class RaffleCommand : ISystemCommand
 {
+    /// <inheritdoc />
     public string Trigger => "!raffle";
+
+    /// <inheritdoc />
     public string[] Aliases => new[] { "!giveaway" };
+
+    /// <inheritdoc />
     public string Description => "Start a raffle. Usage: !raffle <title> [| keyword=<word>] [| duration=<sec>] [| max=<n>]";
+
+    /// <inheritdoc />
     public string? DefaultResponseTemplate => null;
 
     private readonly IServiceScopeFactory _scopeFactory;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RaffleCommand"/> class.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating scoped service providers.</param>
     public RaffleCommand(IServiceScopeFactory scopeFactory)
     {
         _scopeFactory = scopeFactory;
     }
 
+    /// <inheritdoc />
     public async Task<string?> ExecuteAsync(ChatMessage message, CancellationToken ct = default)
     {
         if (!message.IsModerator && !message.IsBroadcaster)

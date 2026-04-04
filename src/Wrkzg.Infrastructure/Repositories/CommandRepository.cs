@@ -9,20 +9,29 @@ using Wrkzg.Infrastructure.Data;
 
 namespace Wrkzg.Infrastructure.Repositories;
 
+/// <summary>
+/// SQLite-backed repository for custom chat command persistence.
+/// </summary>
 public class CommandRepository : ICommandRepository
 {
     private readonly BotDbContext _db;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CommandRepository"/> class.
+    /// </summary>
+    /// <param name="db">The bot database context.</param>
     public CommandRepository(BotDbContext db)
     {
         _db = db;
     }
 
+    /// <summary>Gets a command by its database identifier.</summary>
     public async Task<Command?> GetByIdAsync(int id, CancellationToken ct = default)
     {
         return await _db.Commands.FindAsync(new object[] { id }, ct);
     }
 
+    /// <summary>Gets a command by its trigger word or any of its aliases (case-insensitive).</summary>
     public async Task<Command?> GetByTriggerOrAliasAsync(string trigger, CancellationToken ct = default)
     {
         string lowerTrigger = trigger.ToLowerInvariant();
@@ -47,6 +56,7 @@ public class CommandRepository : ICommandRepository
             c.Aliases.Any(a => a.Equals(lowerTrigger, System.StringComparison.OrdinalIgnoreCase)));
     }
 
+    /// <summary>Gets all commands ordered alphabetically by trigger.</summary>
     public async Task<IReadOnlyList<Command>> GetAllAsync(CancellationToken ct = default)
     {
         return await _db.Commands
@@ -54,6 +64,7 @@ public class CommandRepository : ICommandRepository
             .ToListAsync(ct);
     }
 
+    /// <summary>Creates a new command and persists it to the database.</summary>
     public async Task<Command> CreateAsync(Command command, CancellationToken ct = default)
     {
         _db.Commands.Add(command);
@@ -61,12 +72,14 @@ public class CommandRepository : ICommandRepository
         return command;
     }
 
+    /// <summary>Updates an existing command in the database.</summary>
     public async Task UpdateAsync(Command command, CancellationToken ct = default)
     {
         _db.Commands.Update(command);
         await _db.SaveChangesAsync(ct);
     }
 
+    /// <summary>Deletes a command by its database identifier.</summary>
     public async Task DeleteAsync(int id, CancellationToken ct = default)
     {
         Command? command = await _db.Commands.FindAsync(new object[] { id }, ct);

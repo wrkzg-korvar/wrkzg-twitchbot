@@ -16,6 +16,7 @@ namespace Wrkzg.Api.Endpoints;
 /// </summary>
 public static class RoleEndpoints
 {
+    /// <summary>Registers role CRUD, assignment, and evaluation API endpoints.</summary>
     public static void MapRoleEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/roles").WithTags("Roles");
@@ -145,6 +146,7 @@ public static class RoleEndpoints
     }
 }
 
+/// <summary>Request payload for creating a new role.</summary>
 public record CreateRoleRequest(
     string Name,
     int? Priority,
@@ -152,6 +154,7 @@ public record CreateRoleRequest(
     string? Icon,
     RoleAutoAssignCriteria? AutoAssign);
 
+/// <summary>Request payload for updating an existing role.</summary>
 public record UpdateRoleRequest(
     string? Name,
     int? Priority,
@@ -163,4 +166,5 @@ public record UpdateRoleRequest(
     public bool HasAutoAssign => AutoAssign is not null;
 }
 
+/// <summary>Request payload for assigning a role to a user.</summary>
 public record AssignRoleRequest(int UserId, int RoleId);

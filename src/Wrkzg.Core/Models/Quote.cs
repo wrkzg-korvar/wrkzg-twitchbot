@@ -7,6 +7,7 @@ namespace Wrkzg.Core.Models;
 /// </summary>
 public class Quote
 {
+    /// <summary>Primary key.</summary>
     public int Id { get; set; }
 
     /// <summary>Sequential quote number (1, 2, 3...). Displayed to users.</summary>

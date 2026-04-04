@@ -8,6 +8,7 @@ namespace Wrkzg.Core;
 /// </summary>
 public static class WrkzgPaths
 {
+    /// <summary>Gets the root data directory for Wrkzg under the user's application data folder.</summary>
     public static string DataDirectory
     {
         get
@@ -17,9 +18,16 @@ public static class WrkzgPaths
         }
     }
 
+    /// <summary>Gets the path to the assets directory containing sounds, images, and custom overlays.</summary>
     public static string AssetsDirectory => Path.Combine(DataDirectory, "assets");
+
+    /// <summary>Gets the path to the directory storing alert and notification sound files.</summary>
     public static string SoundsDirectory => Path.Combine(AssetsDirectory, "sounds");
+
+    /// <summary>Gets the path to the directory storing uploaded image assets.</summary>
     public static string ImagesDirectory => Path.Combine(AssetsDirectory, "images");
+
+    /// <summary>Gets the path to the directory storing user-created custom overlay HTML files.</summary>
     public static string CustomOverlaysDirectory => Path.Combine(AssetsDirectory, "custom-overlays");
 
     /// <summary>

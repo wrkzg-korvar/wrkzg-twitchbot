@@ -14,18 +14,30 @@ namespace Wrkzg.Core.SystemCommands;
 /// </summary>
 public class CommandsListCommand : ISystemCommand
 {
+    /// <inheritdoc />
     public string Trigger => "!commands";
+
+    /// <inheritdoc />
     public string[] Aliases => new[] { "!help" };
+
+    /// <inheritdoc />
     public string Description => "Lists all available commands.";
+
+    /// <inheritdoc />
     public string? DefaultResponseTemplate => "Available commands: {commandlist}";
 
     private readonly IServiceScopeFactory _scopeFactory;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CommandsListCommand"/> class.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating scoped service providers.</param>
     public CommandsListCommand(IServiceScopeFactory scopeFactory)
     {
         _scopeFactory = scopeFactory;
     }
 
+    /// <inheritdoc />
     public async Task<string?> ExecuteAsync(ChatMessage message, CancellationToken ct = default)
     {
         using IServiceScope scope = _scopeFactory.CreateScope();

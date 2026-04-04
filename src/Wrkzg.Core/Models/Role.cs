@@ -8,6 +8,7 @@ namespace Wrkzg.Core.Models;
 /// </summary>
 public class Role
 {
+    /// <summary>Primary key.</summary>
     public int Id { get; set; }
 
     /// <summary>Display name (e.g. "Stammzuschauer", "Elite Viewer").</summary>
@@ -30,6 +31,7 @@ public class Role
     /// </summary>
     public RoleAutoAssignCriteria? AutoAssign { get; set; }
 
+    /// <summary>When this role was created.</summary>
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }
 

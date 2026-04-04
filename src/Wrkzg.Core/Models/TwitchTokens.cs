@@ -9,18 +9,23 @@ namespace Wrkzg.Core.Models;
 /// </summary>
 public sealed record TwitchTokens
 {
+    /// <summary>The OAuth access token used to authenticate API requests.</summary>
     [JsonPropertyName("access_token")]
     public string AccessToken { get; init; } = string.Empty;
 
+    /// <summary>The OAuth refresh token used to obtain a new access token when the current one expires.</summary>
     [JsonPropertyName("refresh_token")]
     public string RefreshToken { get; init; } = string.Empty;
 
+    /// <summary>Lifetime of the access token in seconds, as reported by Twitch.</summary>
     [JsonPropertyName("expires_in")]
     public int ExpiresIn { get; init; }
 
+    /// <summary>OAuth scopes granted for this token pair.</summary>
     [JsonPropertyName("scope")]
     public string[] Scope { get; init; } = Array.Empty<string>();
 
+    /// <summary>Token type (always "bearer" for Twitch OAuth).</summary>
     [JsonPropertyName("token_type")]
     public string TokenType { get; init; } = "bearer";
 

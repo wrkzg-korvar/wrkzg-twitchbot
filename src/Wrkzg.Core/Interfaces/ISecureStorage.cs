@@ -17,8 +17,27 @@ public interface ISecureStorage
 {
     // ─── OAuth Tokens ─────────────────────────────────────────────────
 
+    /// <summary>
+    /// Saves an OAuth access/refresh token pair to encrypted storage.
+    /// </summary>
+    /// <param name="type">The token type (Bot or Broadcaster).</param>
+    /// <param name="tokens">The token pair to store.</param>
+    /// <param name="ct">Cancellation token.</param>
     Task SaveTokensAsync(TokenType type, TwitchTokens tokens, CancellationToken ct = default);
+
+    /// <summary>
+    /// Loads an OAuth access/refresh token pair from encrypted storage.
+    /// </summary>
+    /// <param name="type">The token type (Bot or Broadcaster).</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The stored token pair, or null if no tokens exist for the given type.</returns>
     Task<TwitchTokens?> LoadTokensAsync(TokenType type, CancellationToken ct = default);
+
+    /// <summary>
+    /// Deletes an OAuth token pair from encrypted storage.
+    /// </summary>
+    /// <param name="type">The token type (Bot or Broadcaster) to delete.</param>
+    /// <param name="ct">Cancellation token.</param>
     Task DeleteTokensAsync(TokenType type, CancellationToken ct = default);
 
     // ─── Twitch App Credentials ───────────────────────────────────────

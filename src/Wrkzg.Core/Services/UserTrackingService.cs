@@ -43,6 +43,14 @@ public class UserTrackingService : IUserTrackingService, IDisposable
     private readonly Dictionary<string, DateTimeOffset> _recentlyActiveUsers = new();
     private readonly object _activeUsersLock = new();
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="UserTrackingService"/>.
+    /// </summary>
+    /// <param name="helix">The Twitch Helix API client for checking stream live status.</param>
+    /// <param name="chatClient">The Twitch IRC chat client for checking connection state.</param>
+    /// <param name="broadcaster">Broadcasts viewer count updates to the dashboard.</param>
+    /// <param name="scopeFactory">Factory for creating DI scopes to resolve scoped repositories.</param>
+    /// <param name="logger">Logger instance for diagnostics.</param>
     public UserTrackingService(
         ITwitchHelixClient helix,
         ITwitchChatClient chatClient,
@@ -57,6 +65,11 @@ public class UserTrackingService : IUserTrackingService, IDisposable
         _logger = logger;
     }
 
+    /// <summary>
+    /// Starts the 60-second polling timer for user tracking and point awards.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token for startup.</param>
+    /// <returns>A completed task once the timer is started.</returns>
     public Task StartAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("UserTrackingService starting — polling every 60 seconds");
@@ -67,6 +80,11 @@ public class UserTrackingService : IUserTrackingService, IDisposable
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Stops the polling timer and releases resources.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token for shutdown.</param>
+    /// <returns>A completed task once the timer is disposed.</returns>
     public Task StopAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("UserTrackingService stopping");
@@ -74,6 +92,7 @@ public class UserTrackingService : IUserTrackingService, IDisposable
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         _timer?.Dispose();

@@ -15,6 +15,7 @@ namespace Wrkzg.Api.Endpoints;
 /// </summary>
 public static class CustomOverlayEndpoints
 {
+    /// <summary>Registers custom overlay CRUD and rendering API endpoints.</summary>
     public static void MapCustomOverlayEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/custom-overlays").WithTags("Custom Overlays");
@@ -162,6 +163,7 @@ public static class CustomOverlayEndpoints
     }
 }
 
+/// <summary>Request payload for creating a new custom overlay.</summary>
 public record CreateCustomOverlayRequest(
     string Name,
     string? Description,
@@ -173,6 +175,7 @@ public record CreateCustomOverlayRequest(
     int? Width,
     int? Height);
 
+/// <summary>Request payload for updating an existing custom overlay.</summary>
 public record UpdateCustomOverlayRequest(
     string? Name,
     string? Description,
@@ -185,4 +188,5 @@ public record UpdateCustomOverlayRequest(
     int? Height,
     bool? IsEnabled);
 
+/// <summary>Request payload for updating custom overlay field values only.</summary>
 public record FieldValuesRequest(string? FieldValues);

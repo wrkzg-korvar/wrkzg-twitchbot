@@ -14,6 +14,7 @@ namespace Wrkzg.Api.Endpoints;
 /// </summary>
 public static class TimerEndpoints
 {
+    /// <summary>Registers timed message CRUD API endpoints.</summary>
     public static void MapTimerEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/timers").WithTags("Timers");
@@ -119,6 +120,7 @@ public static class TimerEndpoints
     }
 }
 
+/// <summary>Request payload for creating a new timed message.</summary>
 public record CreateTimerRequest(
     string Name,
     string[] Messages,
@@ -129,6 +131,7 @@ public record CreateTimerRequest(
     bool? RunWhenOffline,
     bool? IsAnnouncement);
 
+/// <summary>Request payload for updating an existing timed message.</summary>
 public record UpdateTimerRequest(
     string? Name,
     string[]? Messages,

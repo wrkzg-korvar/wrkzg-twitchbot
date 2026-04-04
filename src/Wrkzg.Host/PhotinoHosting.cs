@@ -26,6 +26,7 @@ public static class PhotinoHosting
 {
     private const string ViteDevUrl = "http://localhost:5173";
 
+    /// <summary>Starts Kestrel, opens the Photino browser window, and blocks until the window is closed.</summary>
     public static void Start(WebApplication app, PhotinoWindowController windowController)
     {
         try

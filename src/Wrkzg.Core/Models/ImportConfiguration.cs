@@ -42,14 +42,25 @@ public class ImportConfiguration
     public char Delimiter { get; set; } = ',';
 }
 
+/// <summary>
+/// Identifies the source bot format for data import.
+/// </summary>
 public enum ImportSourceType
 {
+    /// <summary>Deepbot CSV export file.</summary>
     DeepbotCsv = 0,
+
+    /// <summary>Deepbot JSON export file (includes VIP levels).</summary>
     DeepbotJson = 1,
+
+    /// <summary>Streamlabs Chatbot export file.</summary>
     StreamlabsChatbot = 2,
+
+    /// <summary>Generic CSV with user-defined column mapping.</summary>
     GenericCsv = 3
 }
 
+/// <summary>Strategy for handling conflicts when a user already exists during import.</summary>
 public enum ImportConflictStrategy
 {
     /// <summary>Skip users that already exist.</summary>

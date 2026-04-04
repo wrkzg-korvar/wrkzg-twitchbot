@@ -12,6 +12,7 @@ using Xunit;
 
 namespace Wrkzg.Core.Tests.Services;
 
+/// <summary>Tests for the PollService including poll creation, voting, expiration, and template overrides.</summary>
 public class PollServiceTests
 {
     private readonly IPollRepository _pollRepo;
@@ -21,6 +22,7 @@ public class PollServiceTests
     private readonly ISettingsRepository _settings;
     private readonly PollService _sut;
 
+    /// <summary>Initializes test dependencies with NSubstitute mocks.</summary>
     public PollServiceTests()
     {
         _pollRepo = Substitute.For<IPollRepository>();
@@ -36,6 +38,7 @@ public class PollServiceTests
         _sut = new PollService(_pollRepo, _userRepo, _broadcaster, _chatClient, _settings, logger);
     }
 
+    /// <summary>Verifies that creating a poll with valid parameters succeeds.</summary>
     [Fact]
     public async Task CreateBotPoll_Success()
     {
@@ -59,6 +62,7 @@ public class PollServiceTests
         await _broadcaster.Received(1).BroadcastPollCreatedAsync(Arg.Any<Poll>(), Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that creating a poll fails when one is already active.</summary>
     [Fact]
     public async Task CreateBotPoll_ActivePollExists_Fails()
     {
@@ -71,6 +75,7 @@ public class PollServiceTests
         result.Error.Should().Contain("already active");
     }
 
+    /// <summary>Verifies that creating a poll with fewer than two options fails.</summary>
     [Fact]
     public async Task CreateBotPoll_TooFewOptions_Fails()
     {
@@ -80,6 +85,7 @@ public class PollServiceTests
         result.Error.Should().Contain("2-5 options");
     }
 
+    /// <summary>Verifies that creating a poll with more than five options fails.</summary>
     [Fact]
     public async Task CreateBotPoll_TooManyOptions_Fails()
     {
@@ -89,6 +95,7 @@ public class PollServiceTests
         result.Error.Should().Contain("2-5 options");
     }
 
+    /// <summary>Verifies that a valid vote is recorded and broadcast.</summary>
     [Fact]
     public async Task Vote_Success()
     {
@@ -113,6 +120,7 @@ public class PollServiceTests
         await _broadcaster.Received(1).BroadcastPollVoteAsync(1, 0, Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that a user cannot vote twice in the same poll.</summary>
     [Fact]
     public async Task Vote_AlreadyVoted_Fails()
     {
@@ -135,6 +143,7 @@ public class PollServiceTests
         result.Error.Should().Contain("already voted");
     }
 
+    /// <summary>Verifies that voting fails when no poll is active.</summary>
     [Fact]
     public async Task Vote_NoPoll_Fails()
     {
@@ -146,6 +155,7 @@ public class PollServiceTests
         result.Error.Should().Contain("no active poll");
     }
 
+    /// <summary>Verifies that voting for an invalid option index fails.</summary>
     [Fact]
     public async Task Vote_InvalidOption_Fails()
     {
@@ -165,6 +175,7 @@ public class PollServiceTests
         result.Error.Should().Contain("invalid option");
     }
 
+    /// <summary>Verifies that ending a poll marks it inactive and broadcasts results.</summary>
     [Fact]
     public async Task EndPoll_Success()
     {
@@ -192,6 +203,7 @@ public class PollServiceTests
         await _broadcaster.Received(1).BroadcastPollEndedAsync(Arg.Any<object>(), Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that ending a poll fails when none is active.</summary>
     [Fact]
     public async Task EndPoll_NoPoll_Fails()
     {
@@ -203,6 +215,7 @@ public class PollServiceTests
         result.Error.Should().Contain("No active poll");
     }
 
+    /// <summary>Verifies that an expired poll is automatically closed.</summary>
     [Fact]
     public async Task CheckExpired_ClosesExpiredPoll()
     {
@@ -224,6 +237,7 @@ public class PollServiceTests
         await _pollRepo.Received(1).UpdateAsync(poll, Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that a custom vote error template overrides the default message.</summary>
     [Fact]
     public async Task Vote_CustomTemplate_UsesOverride()
     {
@@ -237,6 +251,7 @@ public class PollServiceTests
         result.Error.Should().Be("Hey testuser, there is nothing to vote on!");
     }
 
+    /// <summary>Verifies that a custom start announcement template overrides the default message.</summary>
     [Fact]
     public async Task Create_CustomStartTemplate_UsesOverride()
     {

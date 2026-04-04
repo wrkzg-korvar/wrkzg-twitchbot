@@ -4,8 +4,13 @@ using Wrkzg.Core.Models;
 
 namespace Wrkzg.Infrastructure.Data.Configurations;
 
+/// <summary>
+/// EF Core entity type configuration for the <see cref="StreamSession"/> model.
+/// Configures cascade delete for category segments and viewer snapshots.
+/// </summary>
 public class StreamSessionConfiguration : IEntityTypeConfiguration<StreamSession>
 {
+    /// <summary>Configures the schema for the StreamSessions table.</summary>
     public void Configure(EntityTypeBuilder<StreamSession> builder)
     {
         builder.HasKey(s => s.Id);

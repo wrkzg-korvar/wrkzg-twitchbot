@@ -12,20 +12,33 @@ namespace Wrkzg.Core.SystemCommands;
 /// </summary>
 public class UptimeCommand : ISystemCommand
 {
+    /// <inheritdoc />
     public string Trigger => "!uptime";
+
+    /// <inheritdoc />
     public string[] Aliases => new[] { "!live" };
+
+    /// <inheritdoc />
     public string Description => "Shows how long the stream has been live.";
+
+    /// <inheritdoc />
     public string? DefaultResponseTemplate => "Stream has been live for {uptime}.";
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ITwitchChatClient _chatClient;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UptimeCommand"/> class.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating scoped service providers.</param>
+    /// <param name="chatClient">Twitch chat client used to resolve the current channel.</param>
     public UptimeCommand(IServiceScopeFactory scopeFactory, ITwitchChatClient chatClient)
     {
         _scopeFactory = scopeFactory;
         _chatClient = chatClient;
     }
 
+    /// <inheritdoc />
     public async Task<string?> ExecuteAsync(ChatMessage message, CancellationToken ct = default)
     {
         string? channel = _chatClient.JoinedChannel;

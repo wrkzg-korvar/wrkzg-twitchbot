@@ -29,6 +29,13 @@ public class SpamFilterService
         @"(https?://|www\.)\S+|[a-zA-Z0-9][-a-zA-Z0-9]*\.(com|net|org|tv|gg|me|io|co|de|uk|fr|ru)\b",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="SpamFilterService"/>.
+    /// </summary>
+    /// <param name="settings">Repository for loading spam filter configuration.</param>
+    /// <param name="chat">The Twitch IRC chat client for sending warning messages.</param>
+    /// <param name="helix">The Twitch Helix API client for issuing timeouts.</param>
+    /// <param name="logger">Logger instance for diagnostics.</param>
     public SpamFilterService(
         ISettingsRepository settings,
         ITwitchChatClient chat,
@@ -287,4 +294,10 @@ public class SpamFilterService
     }
 }
 
+/// <summary>
+/// Represents a spam filter violation with the filter that triggered it, the timeout duration, and the warning message.
+/// </summary>
+/// <param name="FilterName">Name of the spam filter that was violated (e.g., "Links", "Caps", "BannedWord", "Repetition").</param>
+/// <param name="TimeoutSeconds">Duration of the timeout to apply (0 means warning only).</param>
+/// <param name="WarningMessage">The warning message to send in chat.</param>
 public record SpamViolation(string FilterName, int TimeoutSeconds, string WarningMessage);

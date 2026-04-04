@@ -17,12 +17,18 @@ public class PollTimerService : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<PollTimerService> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="PollTimerService"/>.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating DI scopes to resolve the scoped <see cref="PollService"/>.</param>
+    /// <param name="logger">Logger instance for diagnostics.</param>
     public PollTimerService(IServiceScopeFactory scopeFactory, ILogger<PollTimerService> logger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
     }
 
+    /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("PollTimerService starting");

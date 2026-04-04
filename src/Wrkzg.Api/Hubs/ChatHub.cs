@@ -11,6 +11,7 @@ namespace Wrkzg.Api.Hubs;
 /// </summary>
 public class ChatHub : Hub
 {
+    /// <summary>Assigns the connecting client to the appropriate SignalR group based on the source query parameter.</summary>
     public override async Task OnConnectedAsync()
     {
         string? source = Context.GetHttpContext()?.Request.Query["source"];
@@ -27,6 +28,7 @@ public class ChatHub : Hub
         await base.OnConnectedAsync();
     }
 
+    /// <summary>Removes the disconnecting client from all SignalR groups.</summary>
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, "dashboard");

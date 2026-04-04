@@ -24,6 +24,9 @@ public class HotkeyListenerService : IHostedService
     private readonly ILogger<HotkeyListenerService> _logger;
     private readonly Dictionary<int, HotkeyBinding> _bindings = new();
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HotkeyListenerService"/> class.
+    /// </summary>
     public HotkeyListenerService(
         IHotkeyListener listener,
         HotkeyActionExecutor executor,
@@ -36,6 +39,7 @@ public class HotkeyListenerService : IHostedService
         _logger = logger;
     }
 
+    /// <summary>Starts the platform hotkey listener and loads bindings from the database.</summary>
     public async Task StartAsync(CancellationToken ct)
     {
         _logger.LogInformation("HotkeyListenerService starting");
@@ -45,6 +49,7 @@ public class HotkeyListenerService : IHostedService
         await RefreshBindingsAsync(ct);
     }
 
+    /// <summary>Stops the platform hotkey listener and unwires event handlers.</summary>
     public async Task StopAsync(CancellationToken ct)
     {
         _logger.LogInformation("HotkeyListenerService stopping");

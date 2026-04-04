@@ -34,6 +34,7 @@ public static class NotificationEndpoints
         ["raid"] = new[] { "user", "viewers" }
     };
 
+    /// <summary>Registers event notification settings and test API endpoints.</summary>
     public static void MapNotificationEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/notifications").WithTags("Notifications");

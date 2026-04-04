@@ -26,7 +26,7 @@ export function NotificationsPage() {
         helpKey="notifications"
       />
 
-      <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-4 text-sm text-blue-300">
+      <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-4 text-sm text-blue-700 dark:text-blue-300">
         <p>
           EventSub connects automatically when your Broadcaster account is linked.
           If notifications are not working, try reconnecting your Broadcaster account in{" "}

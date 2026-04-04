@@ -7,8 +7,13 @@ using Wrkzg.Core.Models;
 
 namespace Wrkzg.Infrastructure.Data.Configurations;
 
+/// <summary>
+/// EF Core entity type configuration for the <see cref="Poll"/> model.
+/// Configures JSON value conversion for the Options array stored as TEXT in SQLite.
+/// </summary>
 public class PollConfiguration : IEntityTypeConfiguration<Poll>
 {
+    /// <summary>Configures the schema for the Polls table.</summary>
     public void Configure(EntityTypeBuilder<Poll> builder)
     {
         builder.HasKey(p => p.Id);
@@ -38,8 +43,13 @@ public class PollConfiguration : IEntityTypeConfiguration<Poll>
     }
 }
 
+/// <summary>
+/// EF Core entity type configuration for the <see cref="PollVote"/> model.
+/// Enforces one vote per user per poll via a unique composite index.
+/// </summary>
 public class PollVoteConfiguration : IEntityTypeConfiguration<PollVote>
 {
+    /// <summary>Configures the schema for the PollVotes table.</summary>
     public void Configure(EntityTypeBuilder<PollVote> builder)
     {
         builder.HasKey(v => v.Id);

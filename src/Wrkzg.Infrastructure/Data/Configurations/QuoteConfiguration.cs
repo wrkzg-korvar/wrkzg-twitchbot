@@ -4,8 +4,12 @@ using Wrkzg.Core.Models;
 
 namespace Wrkzg.Infrastructure.Data.Configurations;
 
+/// <summary>
+/// EF Core entity type configuration for the <see cref="Quote"/> model.
+/// </summary>
 public class QuoteConfiguration : IEntityTypeConfiguration<Quote>
 {
+    /// <summary>Configures the schema for the Quotes table.</summary>
     public void Configure(EntityTypeBuilder<Quote> builder)
     {
         builder.HasKey(q => q.Id);

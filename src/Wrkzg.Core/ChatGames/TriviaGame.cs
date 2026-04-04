@@ -24,11 +24,22 @@ public class TriviaGame : IChatGame
     private TriviaRound? _activeRound;
     private DateTimeOffset _lastRoundEnd = DateTimeOffset.MinValue;
 
+    /// <inheritdoc />
     public string Trigger => "!trivia";
+
+    /// <inheritdoc />
     public string[] Aliases => Array.Empty<string>();
+
+    /// <inheritdoc />
     public string Name => "Trivia";
+
+    /// <inheritdoc />
     public string Description => "Answer trivia questions to win points!";
+
+    /// <inheritdoc />
     public bool IsEnabled { get; set; } = true;
+
+    /// <inheritdoc />
     public int MinRolePriority { get; set; }
 
     private int _answerDuration = 30;
@@ -45,6 +56,12 @@ public class TriviaGame : IChatGame
         ["Correct"] = "{user} got it right! The answer was: {answer}. +{reward} points!",
     };
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="TriviaGame"/>.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating DI scopes to resolve scoped repositories.</param>
+    /// <param name="chatClient">The Twitch IRC chat client for sending game messages.</param>
+    /// <param name="logger">Logger instance for diagnostics.</param>
     public TriviaGame(
         IServiceScopeFactory scopeFactory,
         ITwitchChatClient chatClient,
@@ -56,9 +73,13 @@ public class TriviaGame : IChatGame
         _msg = new GameMessageTemplates("Trivia", DefaultMessages);
     }
 
+    /// <inheritdoc />
     public Dictionary<string, string> GetMessageTemplates() => _msg.GetAll();
+
+    /// <inheritdoc />
     public Dictionary<string, string> GetDefaultMessageTemplates() => _msg.GetDefaults();
 
+    /// <inheritdoc />
     public async Task<string?> HandleAsync(ChatMessage message, CancellationToken ct = default)
     {
         await LoadSettingsAsync(ct);
@@ -116,6 +137,7 @@ public class TriviaGame : IChatGame
             ("duration", _answerDuration.ToString()));
     }
 
+    /// <inheritdoc />
     public async Task<bool> HandleActiveRoundMessageAsync(ChatMessage message, CancellationToken ct = default)
     {
         if (_activeRound is null)

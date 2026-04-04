@@ -12,6 +12,7 @@ using Xunit;
 
 namespace Wrkzg.Core.Tests.Services;
 
+/// <summary>Tests for the RaffleService including creation, entry, drawing, redrawing, and cancellation.</summary>
 public class RaffleServiceTests
 {
     private readonly IRaffleRepository _raffleRepo;
@@ -21,6 +22,7 @@ public class RaffleServiceTests
     private readonly ITwitchChatClient _chatClient;
     private readonly RaffleService _sut;
 
+    /// <summary>Initializes test dependencies with NSubstitute mocks.</summary>
     public RaffleServiceTests()
     {
         _raffleRepo = Substitute.For<IRaffleRepository>();
@@ -35,6 +37,7 @@ public class RaffleServiceTests
         _sut = new RaffleService(_raffleRepo, _userRepo, _settings, _broadcaster, _chatClient, logger);
     }
 
+    /// <summary>Verifies that creating a raffle with valid parameters succeeds.</summary>
     [Fact]
     public async Task CreateRaffle_Success()
     {
@@ -55,6 +58,7 @@ public class RaffleServiceTests
         await _raffleRepo.Received(1).CreateAsync(Arg.Any<Raffle>(), Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that creating a raffle fails when one is already active.</summary>
     [Fact]
     public async Task CreateRaffle_AlreadyActive_Fails()
     {
@@ -67,6 +71,7 @@ public class RaffleServiceTests
         result.Error.Should().Contain("already open");
     }
 
+    /// <summary>Verifies that creating a raffle with an empty title fails.</summary>
     [Fact]
     public async Task CreateRaffle_EmptyTitle_Fails()
     {
@@ -78,6 +83,7 @@ public class RaffleServiceTests
         result.Error.Should().Contain("title");
     }
 
+    /// <summary>Verifies that a keyword starting with exclamation mark is rejected.</summary>
     [Fact]
     public async Task CreateRaffle_InvalidKeyword_WithExclamation_Fails()
     {
@@ -89,6 +95,7 @@ public class RaffleServiceTests
         result.Error.Should().Contain("!");
     }
 
+    /// <summary>Verifies that a user can successfully enter an active raffle.</summary>
     [Fact]
     public async Task Enter_Success()
     {
@@ -112,6 +119,7 @@ public class RaffleServiceTests
         await _raffleRepo.Received(1).AddEntryAsync(Arg.Any<RaffleEntry>(), Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that a user cannot enter the same raffle twice.</summary>
     [Fact]
     public async Task Enter_AlreadyEntered_Fails()
     {
@@ -133,6 +141,7 @@ public class RaffleServiceTests
         result.Error.Should().Contain("already entered");
     }
 
+    /// <summary>Verifies that entering fails when no raffle is active.</summary>
     [Fact]
     public async Task Enter_NoRaffle_Fails()
     {
@@ -144,6 +153,7 @@ public class RaffleServiceTests
         result.Error.Should().Contain("no active raffle");
     }
 
+    /// <summary>Verifies that entering fails when the raffle has reached its maximum entry count.</summary>
     [Fact]
     public async Task Enter_MaxReached_Fails()
     {
@@ -164,6 +174,7 @@ public class RaffleServiceTests
         result.Error.Should().Contain("full");
     }
 
+    /// <summary>Verifies that drawing sets a pending winner without closing the raffle.</summary>
     [Fact]
     public async Task Draw_SetsPendingWinner_DoesNotCloseRaffle()
     {
@@ -192,6 +203,7 @@ public class RaffleServiceTests
             1, "Winner", "123", 1, 1, Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that drawing fails when a winner is already pending verification.</summary>
     [Fact]
     public async Task Draw_AlreadyPending_Fails()
     {
@@ -215,6 +227,7 @@ public class RaffleServiceTests
         result.Error.Should().Contain("pending verification");
     }
 
+    /// <summary>Verifies that accepting a winner clears the pending state while keeping the raffle open.</summary>
     [Fact]
     public async Task AcceptWinner_ClearsPending_RaffleStaysOpen()
     {
@@ -248,6 +261,7 @@ public class RaffleServiceTests
             1, "Winner", 1, Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that ending a raffle closes it and sets the final winner.</summary>
     [Fact]
     public async Task EndRaffle_ClosesRaffle()
     {
@@ -277,6 +291,7 @@ public class RaffleServiceTests
         await _broadcaster.Received(1).BroadcastRaffleEndedAsync(1, Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that ending a raffle fails when none is active.</summary>
     [Fact]
     public async Task EndRaffle_NoActiveRaffle_Fails()
     {
@@ -288,6 +303,7 @@ public class RaffleServiceTests
         result.Error.Should().Contain("No active raffle");
     }
 
+    /// <summary>Verifies that ending a raffle with a pending winner rejects the pending draw.</summary>
     [Fact]
     public async Task EndRaffle_WithPendingWinner_RejectsPending()
     {
@@ -317,6 +333,7 @@ public class RaffleServiceTests
         raffle.Draws[0].RedrawReason.Should().Be("Raffle ended");
     }
 
+    /// <summary>Verifies that accepting a winner fails when no winner is pending.</summary>
     [Fact]
     public async Task AcceptWinner_NoPending_Fails()
     {
@@ -337,6 +354,7 @@ public class RaffleServiceTests
         result.Error.Should().Contain("No pending winner");
     }
 
+    /// <summary>Verifies that drawing fails when the raffle has no entries.</summary>
     [Fact]
     public async Task Draw_NoEntries_Fails()
     {
@@ -356,6 +374,7 @@ public class RaffleServiceTests
         result.Error.Should().Contain("No entries");
     }
 
+    /// <summary>Verifies that drawing fails when no raffle is active.</summary>
     [Fact]
     public async Task Draw_NoRaffle_Fails()
     {
@@ -367,6 +386,7 @@ public class RaffleServiceTests
         result.Error.Should().Contain("No active raffle");
     }
 
+    /// <summary>Verifies that cancelling a raffle closes it with the Cancelled end reason.</summary>
     [Fact]
     public async Task Cancel_Success()
     {
@@ -380,6 +400,7 @@ public class RaffleServiceTests
         raffle.EndReason.Should().Be(RaffleEndReason.Cancelled);
     }
 
+    /// <summary>Verifies that a matching keyword message enters the user into the raffle.</summary>
     [Fact]
     public async Task TryKeywordEntry_MatchingKeyword_EntersUser()
     {
@@ -403,6 +424,7 @@ public class RaffleServiceTests
         await _raffleRepo.Received(1).AddEntryAsync(Arg.Any<RaffleEntry>(), Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that a non-matching message does not enter the user.</summary>
     [Fact]
     public async Task TryKeywordEntry_NonMatchingMessage_ReturnsFalse()
     {
@@ -421,6 +443,7 @@ public class RaffleServiceTests
         result.Should().BeFalse();
     }
 
+    /// <summary>Verifies that a redraw excludes previously drawn users and selects a new winner.</summary>
     [Fact]
     public async Task Redraw_ExcludesPreviouslyDrawnUsers()
     {
@@ -451,6 +474,7 @@ public class RaffleServiceTests
         raffle.PendingWinnerId.Should().Be(20);
     }
 
+    /// <summary>Verifies that drawing fails when all entries have already been drawn.</summary>
     [Fact]
     public async Task Draw_AllDrawn_Fails()
     {
@@ -477,6 +501,7 @@ public class RaffleServiceTests
         result.Error.Should().Contain("All entries have been drawn");
     }
 
+    /// <summary>Verifies that an expired raffle with entries auto-draws a pending winner.</summary>
     [Fact]
     public async Task CheckExpired_AutoDraws_SetsPending()
     {
@@ -501,6 +526,7 @@ public class RaffleServiceTests
         raffle.IsOpen.Should().BeTrue();
     }
 
+    /// <summary>Verifies that an expired raffle with no entries is automatically cancelled.</summary>
     [Fact]
     public async Task CheckExpired_NoEntries_Cancels()
     {

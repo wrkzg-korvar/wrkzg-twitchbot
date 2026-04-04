@@ -6,15 +6,18 @@ using Xunit;
 
 namespace Wrkzg.Api.Tests;
 
+/// <summary>Tests for the user management API endpoints.</summary>
 public class UserEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
+    /// <summary>Initializes the test with an authenticated HTTP client.</summary>
     public UserEndpointsTests(CustomWebApplicationFactory factory)
     {
         _client = factory.CreateAuthenticatedClient();
     }
 
+    /// <summary>Verifies that listing users on an empty database returns an empty JSON array.</summary>
     [Fact]
     public async Task GetUsers_EmptyDatabase_ReturnsEmptyArray()
     {
@@ -25,6 +28,7 @@ public class UserEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         body.Should().Be("[]");
     }
 
+    /// <summary>Verifies that fetching a non-existent user returns HTTP 404 Not Found.</summary>
     [Fact]
     public async Task GetUser_NonExistent_ReturnsNotFound()
     {

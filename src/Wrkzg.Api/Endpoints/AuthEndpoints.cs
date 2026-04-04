@@ -15,11 +15,15 @@ using Wrkzg.Core.Models;
 
 namespace Wrkzg.Api.Endpoints;
 
+/// <summary>
+/// REST endpoints for Twitch OAuth authentication and credential management.
+/// </summary>
 public static class AuthEndpoints
 {
     private static readonly ConcurrentDictionary<string, DateTimeOffset> _pendingStates = new();
     private static readonly TimeSpan StateMaxAge = TimeSpan.FromMinutes(10);
 
+    /// <summary>Registers Twitch OAuth authentication API endpoints.</summary>
     public static void MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/auth").WithTags("Authentication");
@@ -434,4 +438,5 @@ public static class AuthEndpoints
     }
 }
 
+/// <summary>Request payload for saving Twitch application credentials.</summary>
 public sealed record SaveCredentialsRequest(string ClientId, string ClientSecret);

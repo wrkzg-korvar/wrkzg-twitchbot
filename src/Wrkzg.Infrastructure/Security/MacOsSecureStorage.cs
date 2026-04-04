@@ -25,6 +25,10 @@ public class MacOsSecureStorage : ISecureStorage
         WriteIndented = false
     };
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MacOsSecureStorage"/> class.
+    /// </summary>
+    /// <param name="logger">The logger for Keychain operation diagnostics.</param>
     public MacOsSecureStorage(ILogger<MacOsSecureStorage> logger)
     {
         _logger = logger;
@@ -32,6 +36,7 @@ public class MacOsSecureStorage : ISecureStorage
 
     // ─── OAuth Tokens ─────────────────────────────────────────────────
 
+    /// <summary>Saves OAuth tokens to the macOS Keychain for the specified token type.</summary>
     public async Task SaveTokensAsync(TokenType type, TwitchTokens tokens, CancellationToken ct = default)
     {
         string json = JsonSerializer.Serialize(tokens, _jsonOptions);
@@ -39,6 +44,7 @@ public class MacOsSecureStorage : ISecureStorage
         _logger.LogDebug("Saved {TokenType} tokens to macOS Keychain", type);
     }
 
+    /// <summary>Loads OAuth tokens from the macOS Keychain for the specified token type.</summary>
     public async Task<TwitchTokens?> LoadTokensAsync(TokenType type, CancellationToken ct = default)
     {
         string? json = await LoadFromKeychainAsync($"token_{type.ToString().ToLowerInvariant()}", ct);
@@ -59,6 +65,7 @@ public class MacOsSecureStorage : ISecureStorage
         }
     }
 
+    /// <summary>Deletes OAuth tokens from the macOS Keychain for the specified token type.</summary>
     public async Task DeleteTokensAsync(TokenType type, CancellationToken ct = default)
     {
         await DeleteFromKeychainAsync($"token_{type.ToString().ToLowerInvariant()}", ct);
@@ -67,30 +74,35 @@ public class MacOsSecureStorage : ISecureStorage
 
     // ─── Twitch App Credentials ───────────────────────────────────────
 
+    /// <summary>Saves the Twitch application Client ID to the macOS Keychain.</summary>
     public async Task SaveClientIdAsync(string clientId, CancellationToken ct = default)
     {
         await SaveToKeychainAsync("client_id", clientId, ct);
         _logger.LogDebug("Saved Client ID to macOS Keychain");
     }
 
+    /// <summary>Loads the Twitch application Client ID from the macOS Keychain.</summary>
     public async Task<string?> LoadClientIdAsync(CancellationToken ct = default)
     {
         string? value = await LoadFromKeychainAsync("client_id", ct);
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
+    /// <summary>Saves the Twitch application Client Secret to the macOS Keychain.</summary>
     public async Task SaveClientSecretAsync(string clientSecret, CancellationToken ct = default)
     {
         await SaveToKeychainAsync("client_secret", clientSecret, ct);
         _logger.LogDebug("Saved Client Secret to macOS Keychain");
     }
 
+    /// <summary>Loads the Twitch application Client Secret from the macOS Keychain.</summary>
     public async Task<string?> LoadClientSecretAsync(CancellationToken ct = default)
     {
         string? value = await LoadFromKeychainAsync("client_secret", ct);
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
+    /// <summary>Deletes both Client ID and Client Secret from the macOS Keychain.</summary>
     public async Task DeleteCredentialsAsync(CancellationToken ct = default)
     {
         await DeleteFromKeychainAsync("client_id", ct);
@@ -98,6 +110,7 @@ public class MacOsSecureStorage : ISecureStorage
         _logger.LogInformation("Deleted Twitch app credentials from macOS Keychain");
     }
 
+    /// <summary>Checks whether both Client ID and Client Secret are stored in the macOS Keychain.</summary>
     public async Task<bool> HasCredentialsAsync(CancellationToken ct = default)
     {
         string? clientId = await LoadClientIdAsync(ct);
