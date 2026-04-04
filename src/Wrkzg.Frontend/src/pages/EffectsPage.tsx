@@ -80,7 +80,7 @@ export function EffectsPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  const { data: effectLists } = useQuery<EffectList[]>({
+  const { data: effectLists, isLoading, isError } = useQuery<EffectList[]>({
     queryKey: ["effects"],
     queryFn: effectsApi.getAll,
   });
@@ -94,6 +94,7 @@ export function EffectsPage() {
     mutationFn: ({ id, isEnabled }: { id: number; isEnabled: boolean }) =>
       effectsApi.update(id, { isEnabled }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["effects"] }),
+    onError: () => showToast("error", "Failed to toggle automation."),
   });
 
   const deleteMutation = useMutation({
@@ -125,6 +126,7 @@ export function EffectsPage() {
       queryClient.invalidateQueries({ queryKey: ["effects"] });
       showToast("success", "Example automation created!");
     },
+    onError: () => showToast("error", "Failed to create example automation."),
   });
 
   const triggerLabel = (typeId: string) =>
@@ -137,6 +139,23 @@ export function EffectsPage() {
     types?.conditions.find((c) => c.id === typeId)?.displayName ?? typeId;
 
   const hasAutomations = effectLists && effectLists.length > 0;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--color-border)] border-t-[var(--color-brand)]" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-[var(--color-text-muted)]">
+        <p className="text-lg font-medium">Failed to load data</p>
+        <p className="mt-1 text-sm">Please check your connection and try again.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6">

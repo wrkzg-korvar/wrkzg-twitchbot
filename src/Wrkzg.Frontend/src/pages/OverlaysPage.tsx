@@ -127,7 +127,7 @@ export function OverlaysPage() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
 
-  const { data: customOverlays } = useQuery<CustomOverlay[]>({
+  const { data: customOverlays, isLoading, isError } = useQuery<CustomOverlay[]>({
     queryKey: ["custom-overlays"],
     queryFn: customOverlaysApi.getAll,
   });
@@ -157,6 +157,23 @@ export function OverlaysPage() {
       setDeleteId(null);
     },
   });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--color-border)] border-t-[var(--color-brand)]" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-[var(--color-text-muted)]">
+        <p className="text-lg font-medium">Failed to load data</p>
+        <p className="mt-1 text-sm">Please check your connection and try again.</p>
+      </div>
+    );
+  }
 
   function copyUrl(id: number) {
     const url = `${window.location.origin}/overlay/custom/${id}`;

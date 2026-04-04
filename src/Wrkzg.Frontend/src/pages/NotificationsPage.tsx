@@ -5,7 +5,7 @@ import { NotificationCard } from "../components/features/notifications/Notificat
 import type { NotificationSettings } from "../types/notifications";
 
 export function NotificationsPage() {
-  const { data: settings, isLoading } = useQuery<NotificationSettings>({
+  const { data: settings, isLoading, isError } = useQuery<NotificationSettings>({
     queryKey: ["notificationSettings"],
     queryFn: notificationsApi.getSettings,
   });
@@ -14,6 +14,15 @@ export function NotificationsPage() {
     return (
       <div className="p-6 text-sm text-[var(--color-text-muted)]">
         Loading notifications...
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-[var(--color-text-muted)]">
+        <p className="text-lg font-medium">Failed to load data</p>
+        <p className="mt-1 text-sm">Please check your connection and try again.</p>
       </div>
     );
   }

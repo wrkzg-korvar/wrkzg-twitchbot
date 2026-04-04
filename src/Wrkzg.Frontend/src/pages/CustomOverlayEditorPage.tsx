@@ -28,7 +28,7 @@ export function CustomOverlayEditorPage() {
 
   const overlayId = Number(id);
 
-  const { data: overlay } = useQuery<CustomOverlay>({
+  const { data: overlay, isLoading, isError } = useQuery<CustomOverlay>({
     queryKey: ["custom-overlay", overlayId],
     queryFn: () => customOverlaysApi.getById(overlayId),
     enabled: !isNaN(overlayId),
@@ -74,6 +74,23 @@ export function CustomOverlayEditorPage() {
     const url = `${window.location.origin}/overlay/custom/${overlayId}`;
     navigator.clipboard.writeText(url);
     showToast("success", "URL copied!");
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--color-border)] border-t-[var(--color-brand)]" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-[var(--color-text-muted)]">
+        <p className="text-lg font-medium">Failed to load data</p>
+        <p className="mt-1 text-sm">Please check your connection and try again.</p>
+      </div>
+    );
   }
 
   const codeValue = { html, css, js, fields: fieldDefs }[codeTab];

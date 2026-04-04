@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Keyboard, Trash2, Pencil, Play, AlertTriangle } from "lucide-react";
 import { hotkeysApi } from "../api/hotkeys";
 import { countersApi } from "../api/counters";
+import { effectsApi } from "../api/effects";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Toggle } from "../components/ui/Toggle";
 import { Modal } from "../components/ui/Modal";
@@ -12,6 +13,7 @@ import { showToast } from "../hooks/useToast";
 import type { HotkeyBinding } from "../types/hotkeys";
 import { ACTION_TYPES } from "../types/hotkeys";
 import type { Counter } from "../types/counters";
+import type { EffectList } from "../types/effects";
 
 export function HotkeysPage() {
   const queryClient = useQueryClient();
@@ -20,7 +22,7 @@ export function HotkeysPage() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
 
-  const { data: bindings } = useQuery<HotkeyBinding[]>({
+  const { data: bindings, isLoading, isError } = useQuery<HotkeyBinding[]>({
     queryKey: ["hotkeys"],
     queryFn: hotkeysApi.getAll,
   });
@@ -35,7 +37,11 @@ export function HotkeysPage() {
   const toggleMutation = useMutation({
     mutationFn: ({ id, isEnabled }: { id: number; isEnabled: boolean }) =>
       hotkeysApi.update(id, { isEnabled }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["hotkeys"] }),
+    onSuccess: (_data, { isEnabled }) => {
+      showToast("success", `Hotkey ${isEnabled ? "enabled" : "disabled"}`);
+      queryClient.invalidateQueries({ queryKey: ["hotkeys"] });
+    },
+    onError: () => showToast("error", "Failed to toggle hotkey."),
   });
 
   const deleteMutation = useMutation({
@@ -56,7 +62,25 @@ export function HotkeysPage() {
         queryClient.invalidateQueries({ queryKey: ["counters"] });
       }
     },
+    onError: () => showToast("error", "Failed to trigger hotkey."),
   });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--color-border)] border-t-[var(--color-brand)]" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-[var(--color-text-muted)]">
+        <p className="text-lg font-medium">Failed to load data</p>
+        <p className="mt-1 text-sm">Please check your connection and try again.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -322,6 +346,9 @@ function useKeyRecorder(onRecord: (combo: string) => void) {
 
 // ─── Form Modal ─────────────────────────────────────────────
 
+// Actions that require no payload configuration
+const NO_PAYLOAD_ACTIONS = ["PollEnd", "SongSkip"];
+
 function HotkeyFormModal({
   editingBinding,
   onClose,
@@ -336,7 +363,41 @@ function HotkeyFormModal({
   const [actionPayload, setActionPayload] = useState(editingBinding?.actionPayload ?? "");
   const [description, setDescription] = useState(editingBinding?.description ?? "");
 
+  // Structured state for PollStart
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptions, setPollOptions] = useState("");
+  const [pollDuration, setPollDuration] = useState(60);
+
+  // Structured state for RaffleStart
+  const [raffleTitle, setRaffleTitle] = useState("");
+  const [raffleKeyword, setRaffleKeyword] = useState("!join");
+  const [raffleDuration, setRaffleDuration] = useState(120);
+  const [raffleMaxEntries, setRaffleMaxEntries] = useState(0);
+
   const isCounterAction = actionType.startsWith("Counter");
+  const isNoPayloadAction = NO_PAYLOAD_ACTIONS.includes(actionType);
+
+  // Initialize structured state from existing payload when editing
+  useEffect(() => {
+    if (!editingBinding) { return; }
+    if (editingBinding.actionType === "PollStart" && editingBinding.actionPayload) {
+      try {
+        const parsed = JSON.parse(editingBinding.actionPayload);
+        setPollQuestion(parsed.question ?? "");
+        setPollOptions((parsed.options ?? []).join("\n"));
+        setPollDuration(parsed.durationSeconds ?? 60);
+      } catch { /* ignore parse errors */ }
+    }
+    if (editingBinding.actionType === "RaffleStart" && editingBinding.actionPayload) {
+      try {
+        const parsed = JSON.parse(editingBinding.actionPayload);
+        setRaffleTitle(parsed.title ?? "");
+        setRaffleKeyword(parsed.keyword ?? "!join");
+        setRaffleDuration(parsed.durationSeconds ?? 120);
+        setRaffleMaxEntries(parsed.maxEntries ?? 0);
+      } catch { /* ignore parse errors */ }
+    }
+  }, [editingBinding]);
 
   const { data: counters } = useQuery<Counter[]>({
     queryKey: ["counters"],
@@ -344,21 +405,76 @@ function HotkeyFormModal({
     enabled: isCounterAction,
   });
 
+  const { data: effects } = useQuery<EffectList[]>({
+    queryKey: ["effects"],
+    queryFn: effectsApi.getAll,
+    enabled: actionType === "RunEffect",
+  });
+
   const { isRecording, startRecording } = useKeyRecorder((combo) => {
     setKeyCombination(combo);
   });
 
+  // Build the final payload based on action type
+  const buildPayload = (): string => {
+    if (isNoPayloadAction) { return ""; }
+    if (actionType === "PollStart") {
+      const options = pollOptions.split("\n").map((o) => o.trim()).filter((o) => o.length > 0);
+      return JSON.stringify({ question: pollQuestion, options, durationSeconds: pollDuration });
+    }
+    if (actionType === "RaffleStart") {
+      return JSON.stringify({
+        title: raffleTitle,
+        keyword: raffleKeyword,
+        durationSeconds: raffleDuration,
+        maxEntries: raffleMaxEntries,
+      });
+    }
+    return actionPayload;
+  };
+
+  // Validate the save button can be enabled
+  const canSave = (): boolean => {
+    if (!keyCombination.trim()) { return false; }
+    if (isNoPayloadAction) { return true; }
+    if (actionType === "PollStart") {
+      const options = pollOptions.split("\n").map((o) => o.trim()).filter((o) => o.length > 0);
+      return pollQuestion.trim().length > 0 && options.length >= 2;
+    }
+    if (actionType === "RaffleStart") {
+      return raffleTitle.trim().length > 0;
+    }
+    return actionPayload.trim().length > 0;
+  };
+
   const mutation = useMutation({
-    mutationFn: () =>
-      editingBinding
-        ? hotkeysApi.update(editingBinding.id, { keyCombination, actionType, actionPayload, description: description || undefined })
-        : hotkeysApi.create({ keyCombination, actionType, actionPayload, description: description || undefined }),
+    mutationFn: () => {
+      const payload = buildPayload();
+      return editingBinding
+        ? hotkeysApi.update(editingBinding.id, { keyCombination, actionType, actionPayload: payload, description: description || undefined })
+        : hotkeysApi.create({ keyCombination, actionType, actionPayload: payload, description: description || undefined });
+    },
     onSuccess: () => {
       showToast("success", editingBinding ? "Hotkey updated." : "Hotkey created.");
       onSaved();
     },
     onError: () => showToast("error", "Failed to save hotkey."),
   });
+
+  const handleActionTypeChange = (newType: string) => {
+    setActionType(newType);
+    setActionPayload("");
+    // Reset structured state
+    setPollQuestion("");
+    setPollOptions("");
+    setPollDuration(60);
+    setRaffleTitle("");
+    setRaffleKeyword("!join");
+    setRaffleDuration(120);
+    setRaffleMaxEntries(0);
+  };
+
+  const fieldClass = "w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]";
 
   return (
     <Modal open={true} title={editingBinding ? "Edit Hotkey" : "Add Hotkey"} onClose={onClose} size="md">
@@ -398,8 +514,8 @@ function HotkeyFormModal({
           <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Action</label>
           <select
             value={actionType}
-            onChange={(e) => { setActionType(e.target.value); setActionPayload(""); }}
-            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
+            onChange={(e) => handleActionTypeChange(e.target.value)}
+            className={fieldClass}
           >
             {ACTION_TYPES.map((t) => (
               <option key={t.value} value={t.value}>{t.label}</option>
@@ -407,24 +523,27 @@ function HotkeyFormModal({
           </select>
         </div>
 
-        {/* Payload — Chat Message or Counter Dropdown */}
-        <div>
-          <label className="block text-sm font-medium text-[var(--color-text)] mb-1">
-            {actionType === "ChatMessage" ? "Message" : "Counter"}
-          </label>
-          {actionType === "ChatMessage" ? (
+        {/* Payload editors by action type */}
+        {actionType === "ChatMessage" && (
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Message</label>
             <input
               type="text"
               value={actionPayload}
               onChange={(e) => setActionPayload(e.target.value)}
               placeholder="Message to send in chat"
-              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
+              className={fieldClass}
             />
-          ) : (
+          </div>
+        )}
+
+        {isCounterAction && (
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Counter</label>
             <select
               value={actionPayload}
               onChange={(e) => setActionPayload(e.target.value)}
-              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
+              className={fieldClass}
             >
               <option value="">Select a counter...</option>
               {(counters ?? []).map((c) => (
@@ -433,8 +552,142 @@ function HotkeyFormModal({
                 </option>
               ))}
             </select>
-          )}
-        </div>
+          </div>
+        )}
+
+        {actionType === "RunEffect" && (
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Automation</label>
+            <select
+              value={actionPayload}
+              onChange={(e) => setActionPayload(e.target.value)}
+              className={fieldClass}
+            >
+              <option value="">Select an automation...</option>
+              {(effects ?? []).map((ef) => (
+                <option key={ef.id} value={ef.id.toString()}>
+                  {ef.name}{ef.description ? ` -- ${ef.description}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {actionType === "PollStart" && (
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Question</label>
+              <input
+                type="text"
+                value={pollQuestion}
+                onChange={(e) => setPollQuestion(e.target.value)}
+                placeholder="What should we play next?"
+                className={fieldClass}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Options (one per line)</label>
+              <textarea
+                value={pollOptions}
+                onChange={(e) => setPollOptions(e.target.value)}
+                placeholder={"Option A\nOption B\nOption C"}
+                rows={4}
+                className={fieldClass}
+              />
+              <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                At least 2 options required
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Duration (seconds)</label>
+              <input
+                type="number"
+                min={15}
+                max={1800}
+                value={pollDuration}
+                onChange={(e) => setPollDuration(Number(e.target.value))}
+                className="w-32 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
+              />
+            </div>
+          </div>
+        )}
+
+        {actionType === "PollEnd" && (
+          <div className="rounded-lg bg-[var(--color-elevated)] border border-[var(--color-border)] p-3">
+            <p className="text-sm text-[var(--color-text-secondary)]">
+              Ends the currently active poll. No configuration needed.
+            </p>
+          </div>
+        )}
+
+        {actionType === "RaffleStart" && (
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Title</label>
+              <input
+                type="text"
+                value={raffleTitle}
+                onChange={(e) => setRaffleTitle(e.target.value)}
+                placeholder="Win a gift sub!"
+                className={fieldClass}
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Keyword</label>
+                <input
+                  type="text"
+                  value={raffleKeyword}
+                  onChange={(e) => setRaffleKeyword(e.target.value)}
+                  placeholder="!join"
+                  className={fieldClass}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Duration (s)</label>
+                <input
+                  type="number"
+                  min={10}
+                  value={raffleDuration}
+                  onChange={(e) => setRaffleDuration(Number(e.target.value))}
+                  className={fieldClass}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Max Entries</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={raffleMaxEntries}
+                  onChange={(e) => setRaffleMaxEntries(Number(e.target.value))}
+                  className={fieldClass}
+                />
+                <p className="text-xs text-[var(--color-text-muted)] mt-1">0 = unlimited</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {actionType === "SongSkip" && (
+          <div className="rounded-lg bg-[var(--color-elevated)] border border-[var(--color-border)] p-3">
+            <p className="text-sm text-[var(--color-text-secondary)]">
+              Skips the current song. No configuration needed.
+            </p>
+          </div>
+        )}
+
+        {actionType === "PlayAlert" && (
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Alert Message</label>
+            <input
+              type="text"
+              value={actionPayload}
+              onChange={(e) => setActionPayload(e.target.value)}
+              placeholder="Alert text to display on the overlay"
+              className={fieldClass}
+            />
+          </div>
+        )}
 
         {/* Description */}
         <div>
@@ -444,7 +697,7 @@ function HotkeyFormModal({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="e.g. Increment death counter"
-            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
+            className={fieldClass}
           />
         </div>
 
@@ -452,7 +705,7 @@ function HotkeyFormModal({
           <button onClick={onClose} className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm text-[var(--color-text-secondary)]">Cancel</button>
           <button
             onClick={() => mutation.mutate()}
-            disabled={!keyCombination.trim() || !actionPayload.trim() || mutation.isPending}
+            disabled={!canSave() || mutation.isPending}
             className="rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-[var(--color-bg)] disabled:opacity-50"
           >
             {editingBinding ? "Save" : "Create"}

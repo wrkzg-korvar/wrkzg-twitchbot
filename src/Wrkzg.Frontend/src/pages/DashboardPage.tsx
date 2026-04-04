@@ -3,20 +3,27 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSignalR } from "../hooks/useSignalR";
 import { useAuthStatus } from "../hooks/useAuthStatus";
 import { statusApi } from "../api/status";
+import { countersApi } from "../api/counters";
 import { StatusCards } from "../components/dashboard/StatusCards";
 import { LiveChat } from "../components/dashboard/LiveChat";
 import { EventFeed } from "../components/dashboard/EventFeed";
 import type { StatusResponse, ChatMsg, LiveEvent } from "../types/status";
+import type { Counter } from "../types/counters";
 
 export function DashboardPage() {
   const queryClient = useQueryClient();
   const { isConnected: signalRConnected, on, off } = useSignalR("/hubs/chat");
   const { bot: botAuth, broadcaster: broadcasterAuth } = useAuthStatus();
 
-  const { data: status } = useQuery<StatusResponse>({
+  const { data: status, isError } = useQuery<StatusResponse>({
     queryKey: ["status"],
     queryFn: () => statusApi.get(),
     refetchInterval: 15_000,
+  });
+
+  const { data: counters } = useQuery<Counter[]>({
+    queryKey: ["counters"],
+    queryFn: countersApi.getAll,
   });
 
   const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -115,6 +122,10 @@ export function DashboardPage() {
       },
     );
 
+    on("CounterUpdated", () => {
+      queryClient.invalidateQueries({ queryKey: ["counters"] });
+    });
+
     return () => {
       off("ChatMessage");
       off("BotStatus");
@@ -124,8 +135,18 @@ export function DashboardPage() {
       off("GiftSubEvent");
       off("ResubEvent");
       off("RaidEvent");
+      off("CounterUpdated");
     };
   }, [signalRConnected, on, off, queryClient]);
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-[var(--color-text-muted)]">
+        <p className="text-lg font-medium">Failed to load data</p>
+        <p className="mt-1 text-sm">Please check your connection and try again.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full flex-col gap-6 overflow-hidden p-6">
@@ -139,6 +160,27 @@ export function DashboardPage() {
       </div>
 
       <StatusCards status={status} />
+
+      {counters && counters.length > 0 && (
+        <div>
+          <h2 className="text-sm font-semibold text-[var(--color-text-secondary)] mb-2">Counters</h2>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {counters.map((c) => (
+              <div
+                key={c.id}
+                className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-center"
+              >
+                <div className="text-xs text-[var(--color-text-muted)] truncate" title={c.name}>
+                  {c.name}
+                </div>
+                <div className="text-lg font-bold text-[var(--color-text)] tabular-nums">
+                  {c.value}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <EventFeed events={events} />
 

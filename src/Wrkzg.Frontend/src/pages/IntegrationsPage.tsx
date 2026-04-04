@@ -6,12 +6,14 @@ import type { DiscordStatus } from "../api/integrations";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Card } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
+import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { showToast } from "../hooks/useToast";
 
 export function IntegrationsPage() {
   const queryClient = useQueryClient();
   const [webhookUrl, setWebhookUrl] = useState("");
   const [showInput, setShowInput] = useState(false);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
   const { data: discord } = useQuery<DiscordStatus>({
     queryKey: ["integration-discord"],
@@ -35,6 +37,7 @@ export function IntegrationsPage() {
       queryClient.invalidateQueries({ queryKey: ["integration-discord"] });
       showToast("success", "Discord webhook removed.");
     },
+    onError: () => showToast("error", "Failed to remove webhook."),
   });
 
   const testMutation = useMutation({
@@ -93,7 +96,7 @@ export function IntegrationsPage() {
                 Change
               </button>
               <button
-                onClick={() => removeMutation.mutate()}
+                onClick={() => setShowRemoveConfirm(true)}
                 className="rounded p-1.5 text-[var(--color-error)] hover:bg-[var(--color-elevated)]"
               >
                 <Trash2 className="h-4 w-4" />
@@ -137,6 +140,14 @@ export function IntegrationsPage() {
           </div>
         </div>
       </Card>
+
+      <ConfirmDialog
+        open={showRemoveConfirm}
+        title="Remove Webhook"
+        message="Remove the Discord webhook? You can re-add it later."
+        onConfirm={() => { removeMutation.mutate(); setShowRemoveConfirm(false); }}
+        onCancel={() => setShowRemoveConfirm(false)}
+      />
 
       {/* Future integrations placeholder */}
       <div className="rounded-lg border border-dashed border-[var(--color-border)] p-6 text-center">

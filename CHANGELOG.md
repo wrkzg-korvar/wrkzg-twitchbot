@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.3] — 2026-04-04
+
+### Added
+- **6 new hotkey actions:** Run Automation, Start Poll, End Poll, Start Raffle, Skip Song, Show Alert
+- Counter summary cards on Dashboard with real-time SignalR updates
+- Delete confirmation dialogs on Timers and Counters pages
+- Toast notifications on command toggle and timer toggle mutations
+
+### Improved
+- Hotkey form now shows context-specific payload editors (poll config, raffle config, automation dropdown)
+- Light theme contrast improvements on Notifications, Automations, and Timers pages
+
+### Fixed
+- macOS hotkeys: Ctrl maps to Command (⌘) key matching Mac UX conventions
+- macOS hotkeys: CapsLock no longer prevents hotkey matching
+- macOS hotkeys: RequestPermission now auto-starts event tap after granting
+- TwitchHelixClient: guard against empty channel login (prevents 400 Bad Request spam)
+- EF Core: AsSplitQuery on Raffle queries (eliminates MultipleCollectionIncludeWarning)
+- SignalR: PascalCase → camelCase property names on Poll, Raffle, Analytics, Effects endpoints
+- EventListOverlay: `user` → `username` property name matching backend
+- Program.cs: 5 missing endpoint mappings in fallback block
+- StatusEndpoints: now returns app version from version.json
+- CSP: allows api.github.com for update banner
+- HotkeyEndpoints: RefreshBindingsAsync after create/update/delete
+
 ## [2.3.0] — 2026-04-03
 
 ### Added

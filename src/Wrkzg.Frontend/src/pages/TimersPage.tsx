@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { timersApi } from "../api/timers";
 import { PageHeader } from "../components/ui/PageHeader";
+import { SearchInput } from "../components/ui/SearchInput";
 import { TimerForm } from "../components/features/timers/TimerForm";
 import { TimerList } from "../components/features/timers/TimerList";
 import type { TimedMessage } from "../types/timers";
@@ -10,11 +11,19 @@ import type { TimedMessage } from "../types/timers";
 export function TimersPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [editingTimer, setEditingTimer] = useState<TimedMessage | null>(null);
+  const [search, setSearch] = useState("");
 
   const { data: timers } = useQuery<TimedMessage[]>({
     queryKey: ["timers"],
     queryFn: timersApi.getAll,
   });
+
+  const filteredTimers = (timers ?? []).filter(
+    (t) =>
+      search === "" ||
+      t.name.toLowerCase().includes(search.toLowerCase()) ||
+      t.messages.join(" ").toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="space-y-6 p-6">
@@ -45,13 +54,27 @@ export function TimersPage() {
         />
       )}
 
+      {(timers ?? []).length > 3 && (
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search timers..."
+        />
+      )}
+
       <TimerList
-        timers={timers ?? []}
+        timers={filteredTimers}
         onEdit={(timer) => {
           setShowCreate(false);
           setEditingTimer(timer);
         }}
       />
+
+      {search !== "" && filteredTimers.length === 0 && (
+        <p className="text-sm text-[var(--color-text-muted)] text-center py-4">
+          No timers matching "{search}"
+        </p>
+      )}
     </div>
   );
 }

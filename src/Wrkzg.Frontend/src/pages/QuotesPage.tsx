@@ -13,10 +13,19 @@ export function QuotesPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [search, setSearch] = useState("");
 
-  const { data: quotes, isLoading } = useQuery<Quote[]>({
+  const { data: quotes, isLoading, isError } = useQuery<Quote[]>({
     queryKey: ["quotes"],
     queryFn: quotesApi.getAll,
   });
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-[var(--color-text-muted)]">
+        <p className="text-lg font-medium">Failed to load data</p>
+        <p className="mt-1 text-sm">Please check your connection and try again.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6">
