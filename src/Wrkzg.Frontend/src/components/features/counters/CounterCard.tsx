@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Minus, RotateCcw, Pencil, Trash2 } from "lucide-react";
 import { countersApi } from "../../../api/counters";
+import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { showToast } from "../../../hooks/useToast";
 import { inputClass } from "../../../lib/constants";
 import type { Counter } from "../../../types/counters";
@@ -13,6 +14,7 @@ interface CounterCardProps {
 export function CounterCard({ counter }: CounterCardProps) {
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [editName, setEditName] = useState(counter.name);
   const [editValue, setEditValue] = useState(counter.value);
   const [editTemplate, setEditTemplate] = useState(counter.responseTemplate);
@@ -125,7 +127,7 @@ export function CounterCard({ counter }: CounterCardProps) {
             <Pencil className="h-3.5 w-3.5" />
           </button>
           <button
-            onClick={() => deleteMut.mutate()}
+            onClick={() => setConfirmDelete(true)}
             disabled={deleteMut.isPending}
             className="rounded p-1 text-[var(--color-text-muted)] hover:text-red-400 hover:bg-[var(--color-elevated)] transition-colors"
             title="Delete counter"
@@ -165,6 +167,18 @@ export function CounterCard({ counter }: CounterCardProps) {
           <RotateCcw className="h-4 w-4" />
         </button>
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete Counter"
+        message={`Are you sure you want to delete "${counter.name}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={() => {
+          deleteMut.mutate();
+          setConfirmDelete(false);
+        }}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </div>
   );
 }

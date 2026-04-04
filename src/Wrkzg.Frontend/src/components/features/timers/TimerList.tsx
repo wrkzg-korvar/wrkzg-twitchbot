@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2 } from "lucide-react";
 import { timersApi } from "../../../api/timers";
+import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { DataTable } from "../../../components/ui/DataTable";
 import { showToast } from "../../../hooks/useToast";
 import type { TimedMessage } from "../../../types/timers";
@@ -12,11 +14,15 @@ interface TimerListProps {
 
 export function TimerList({ timers, onEdit }: TimerListProps) {
   const queryClient = useQueryClient();
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const toggleMutation = useMutation({
     mutationFn: (timer: TimedMessage) =>
       timersApi.update(timer.id, { isEnabled: !timer.isEnabled }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["timers"] }),
+    onSuccess: (_data, timer) => {
+      showToast("success", `Timer "${timer.name}" ${timer.isEnabled ? "disabled" : "enabled"}`);
+      queryClient.invalidateQueries({ queryKey: ["timers"] });
+    },
     onError: (err: Error) => showToast("error", err.message),
   });
 
@@ -25,6 +31,7 @@ export function TimerList({ timers, onEdit }: TimerListProps) {
     onSuccess: () => {
       showToast("success", "Timer deleted");
       queryClient.invalidateQueries({ queryKey: ["timers"] });
+      setDeleteId(null);
     },
     onError: (err: Error) => showToast("error", err.message),
   });
@@ -39,6 +46,7 @@ export function TimerList({ timers, onEdit }: TimerListProps) {
   }
 
   return (
+    <>
     <div>
       <div className="rounded-t-lg border border-b-0 border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3">
         <h2 className="text-sm font-semibold text-[var(--color-text)]">Timers</h2>
@@ -112,7 +120,7 @@ export function TimerList({ timers, onEdit }: TimerListProps) {
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
-                      onClick={() => deleteMutation.mutate(timer.id)}
+                      onClick={() => setDeleteId(timer.id)}
                       className="rounded p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-elevated)] hover:text-red-400 transition-colors"
                       title="Delete"
                     >
@@ -125,5 +133,15 @@ export function TimerList({ timers, onEdit }: TimerListProps) {
           </tbody>
       </DataTable>
     </div>
+
+    <ConfirmDialog
+      open={deleteId !== null}
+      title="Delete Timer"
+      message="Are you sure you want to delete this timer? This action cannot be undone."
+      confirmLabel="Delete"
+      onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
+      onCancel={() => setDeleteId(null)}
+    />
+    </>
   );
 }

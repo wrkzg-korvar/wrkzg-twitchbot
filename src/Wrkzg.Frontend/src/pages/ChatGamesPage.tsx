@@ -25,7 +25,7 @@ export function ChatGamesPage() {
   const [showTrivia, setShowTrivia] = useState(false);
   const [messagesGame, setMessagesGame] = useState<string | null>(null);
 
-  const { data: games } = useQuery<ChatGame[]>({
+  const { data: games, isError } = useQuery<ChatGame[]>({
     queryKey: ["games"],
     queryFn: gamesApi.getAll,
   });
@@ -34,6 +34,15 @@ export function ChatGamesPage() {
     mutationFn: (name: string) => gamesApi.toggle(name),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["games"] }),
   });
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-[var(--color-text-muted)]">
+        <p className="text-lg font-medium">Failed to load data</p>
+        <p className="mt-1 text-sm">Please check your connection and try again.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6">

@@ -7,6 +7,7 @@ import {
 import { rafflesApi } from "../../../api/raffles";
 import { statusApi } from "../../../api/status";
 import { showToast } from "../../../hooks/useToast";
+import { ConfirmDialog } from "../../ui/ConfirmDialog";
 import type { RaffleDto, RaffleDrawDto } from "../../../types/raffles";
 import type { ChatMsg } from "../../../types/status";
 
@@ -51,6 +52,7 @@ interface ActiveRaffleProps {
 export function ActiveRafflePanel({ raffle, participants }: ActiveRaffleProps) {
   const queryClient = useQueryClient();
   const { remaining, display } = useCountdown(raffle.entriesCloseAt || null);
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   const drawMutation = useMutation({
     mutationFn: rafflesApi.draw,
@@ -130,13 +132,21 @@ export function ActiveRafflePanel({ raffle, participants }: ActiveRaffleProps) {
           {drawMutation.isPending ? "Drawing..." : "Draw Winner"}
         </button>
         <button
-          onClick={() => cancelMutation.mutate()}
+          onClick={() => setConfirmCancel(true)}
           disabled={cancelMutation.isPending}
           className="rounded-lg bg-[var(--color-elevated)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border)] disabled:opacity-40 transition-colors"
         >
           Cancel Raffle
         </button>
       </div>
+
+      <ConfirmDialog
+        open={confirmCancel}
+        title="Cancel Raffle"
+        message="Cancel this raffle? All entries will be discarded."
+        onConfirm={() => { cancelMutation.mutate(); setConfirmCancel(false); }}
+        onCancel={() => setConfirmCancel(false)}
+      />
 
       {drawMutation.isError && (
         <p className="mt-2 text-xs text-red-400">{(drawMutation.error as Error).message}</p>

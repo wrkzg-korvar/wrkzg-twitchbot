@@ -43,7 +43,7 @@ export function SpamFilterPage() {
   const [config, setConfig] = useState<SpamFilterConfig>(defaultConfig);
   const [saved, setSaved] = useState(false);
 
-  const { data } = useQuery<SpamFilterConfig>({
+  const { data, isLoading, isError } = useQuery<SpamFilterConfig>({
     queryKey: ["spamFilter"],
     queryFn: spamFilterApi.get,
   });
@@ -63,6 +63,23 @@ export function SpamFilterPage() {
     },
     onError: (err: Error) => showToast("error", err.message),
   });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--color-border)] border-t-[var(--color-brand)]" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-[var(--color-text-muted)]">
+        <p className="text-lg font-medium">Failed to load data</p>
+        <p className="mt-1 text-sm">Please check your connection and try again.</p>
+      </div>
+    );
+  }
 
   const update = <K extends keyof SpamFilterConfig>(key: K, value: SpamFilterConfig[K]) => {
     setConfig((prev) => {

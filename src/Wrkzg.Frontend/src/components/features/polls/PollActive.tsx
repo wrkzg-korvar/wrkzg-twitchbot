@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Clock } from "lucide-react";
 import { pollsApi } from "../../../api/polls";
 import { showToast } from "../../../hooks/useToast";
+import { ConfirmDialog } from "../../ui/ConfirmDialog";
 import type { PollResults } from "../../../types/polls";
 
 const BAR_COLORS = ["bg-blue-500", "bg-green-500", "bg-yellow-500", "bg-purple-500", "bg-red-500"];
@@ -14,6 +15,8 @@ interface PollActiveProps {
 export function PollActive({ poll }: PollActiveProps) {
   const queryClient = useQueryClient();
   const { remaining, display } = useCountdown(poll.endsAt);
+  const [confirmEnd, setConfirmEnd] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   const endMutation = useMutation({
     mutationFn: pollsApi.end,
@@ -62,20 +65,36 @@ export function PollActive({ poll }: PollActiveProps) {
 
       <div className="flex gap-2">
         <button
-          onClick={() => endMutation.mutate()}
+          onClick={() => setConfirmEnd(true)}
           disabled={endMutation.isPending}
           className="rounded-lg bg-[var(--color-brand)] px-3 py-1.5 text-xs font-medium text-[var(--color-bg)] hover:bg-[var(--color-brand-hover)] disabled:opacity-40 transition-colors"
         >
           End Poll
         </button>
         <button
-          onClick={() => cancelMutation.mutate()}
+          onClick={() => setConfirmCancel(true)}
           disabled={cancelMutation.isPending}
           className="rounded-lg bg-[var(--color-elevated)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border)] disabled:opacity-40 transition-colors"
         >
           Cancel Poll
         </button>
       </div>
+
+      <ConfirmDialog
+        open={confirmEnd}
+        title="End Poll"
+        message="End the poll now and show results?"
+        onConfirm={() => { endMutation.mutate(); setConfirmEnd(false); }}
+        onCancel={() => setConfirmEnd(false)}
+      />
+
+      <ConfirmDialog
+        open={confirmCancel}
+        title="Cancel Poll"
+        message="Cancel the poll? All votes will be discarded."
+        onConfirm={() => { cancelMutation.mutate(); setConfirmCancel(false); }}
+        onCancel={() => setConfirmCancel(false)}
+      />
     </div>
   );
 }

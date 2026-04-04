@@ -2,7 +2,7 @@
 <assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
 
   <assemblyIdentity
-    version="2.3.2.0"
+    version="2.3.3.0"
     processorArchitecture="AMD64"
     name="Wrkzg"
     type="win32" />

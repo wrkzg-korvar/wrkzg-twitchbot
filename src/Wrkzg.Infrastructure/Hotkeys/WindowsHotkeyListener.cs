@@ -111,6 +111,9 @@ public class WindowsHotkeyListener : IHotkeyListener
                 return false;
             }
 
+            // Always unregister first to avoid ERROR_HOTKEY_ALREADY_REGISTERED (1408)
+            // when re-registering after a binding change or app restart without clean shutdown
+            UnregisterHotKey(_hwnd, id);
             bool result = RegisterHotKey(_hwnd, id, modifiers, vk);
             if (result)
             {

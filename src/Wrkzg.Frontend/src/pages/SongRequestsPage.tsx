@@ -9,6 +9,7 @@ import { Card } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
 import { Modal } from "../components/ui/Modal";
 import { EmptyState } from "../components/ui/EmptyState";
+import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { showToast } from "../hooks/useToast";
 import type { SongRequest } from "../types/songRequests";
 
@@ -23,8 +24,10 @@ export function SongRequestsPage() {
   const { isConnected, on, off } = useSignalR("/hubs/chat");
   const [showMessages, setShowMessages] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [removeSongId, setRemoveSongId] = useState<number | null>(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
-  const { data: queue, isLoading: queueLoading } = useQuery<SongRequest[]>({
+  const { data: queue, isLoading: queueLoading, isError } = useQuery<SongRequest[]>({
     queryKey: ["song-queue"],
     queryFn: songRequestsApi.getQueue,
     refetchInterval: 5000,
@@ -50,6 +53,7 @@ export function SongRequestsPage() {
       queryClient.invalidateQueries({ queryKey: ["song-queue"] });
       showToast("success", result.message);
     },
+    onError: () => showToast("error", "Failed to skip song."),
   });
 
   const removeMutation = useMutation({
@@ -58,6 +62,7 @@ export function SongRequestsPage() {
       queryClient.invalidateQueries({ queryKey: ["song-queue"] });
       showToast("success", "Song removed.");
     },
+    onError: () => showToast("error", "Failed to remove song."),
   });
 
   const clearMutation = useMutation({
@@ -66,6 +71,7 @@ export function SongRequestsPage() {
       queryClient.invalidateQueries({ queryKey: ["song-queue"] });
       showToast("success", "Queue cleared.");
     },
+    onError: () => showToast("error", "Failed to clear queue."),
   });
 
   const toggleMutation = useMutation({
@@ -74,12 +80,23 @@ export function SongRequestsPage() {
       queryClient.invalidateQueries({ queryKey: ["song-status"] });
       showToast("success", result.queueOpen ? "Queue opened." : "Queue closed.");
     },
+    onError: () => showToast("error", "Failed to toggle queue."),
   });
 
   const playNextMutation = useMutation({
     mutationFn: songRequestsApi.playNext,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["song-queue"] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["song-queue"] }); showToast("success", "Playing next song."); },
+    onError: () => showToast("error", "Failed to play next song."),
   });
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-[var(--color-text-muted)]">
+        <p className="text-lg font-medium">Failed to load data</p>
+        <p className="mt-1 text-sm">Please check your connection and try again.</p>
+      </div>
+    );
+  }
 
   const allSongs = queue ?? [];
   const currentSong = allSongs.find((s) => s.status === 1);
@@ -127,7 +144,7 @@ export function SongRequestsPage() {
         </button>
 
         <button
-          onClick={() => clearMutation.mutate()}
+          onClick={() => setShowClearConfirm(true)}
           disabled={queuedSongs.length === 0 || clearMutation.isPending}
           className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-elevated)] disabled:opacity-40 transition-colors"
         >
@@ -207,7 +224,7 @@ export function SongRequestsPage() {
                   <Badge>{song.pointsCost} pts</Badge>
                 )}
                 <button
-                  onClick={() => removeMutation.mutate(song.id)}
+                  onClick={() => setRemoveSongId(song.id)}
                   className="rounded p-1.5 text-[var(--color-error)] hover:bg-[var(--color-elevated)]"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -217,6 +234,22 @@ export function SongRequestsPage() {
           </div>
         </Card>
       )}
+
+      <ConfirmDialog
+        open={removeSongId !== null}
+        title="Remove Song"
+        message="Remove this song from the queue?"
+        onConfirm={() => { if (removeSongId !== null) { removeMutation.mutate(removeSongId); } setRemoveSongId(null); }}
+        onCancel={() => setRemoveSongId(null)}
+      />
+
+      <ConfirmDialog
+        open={showClearConfirm}
+        title="Clear Queue"
+        message="Remove all songs from the queue? This cannot be undone."
+        onConfirm={() => { clearMutation.mutate(); setShowClearConfirm(false); }}
+        onCancel={() => setShowClearConfirm(false)}
+      />
 
       {showMessages && <SRMessagesModal onClose={() => setShowMessages(false)} />}
       {showSettings && <SRSettingsModal status={status} onClose={() => setShowSettings(false)} />}

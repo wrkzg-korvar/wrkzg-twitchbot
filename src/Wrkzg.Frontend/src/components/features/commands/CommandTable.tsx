@@ -19,7 +19,10 @@ export function CommandTable({ commands }: CommandTableProps) {
   const toggleMutation = useMutation({
     mutationFn: ({ id, isEnabled }: { id: number; isEnabled: boolean }) =>
       commandsApi.update(id, { isEnabled }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["commands"] }),
+    onSuccess: (_data, { isEnabled }) => {
+      showToast("success", `Command ${isEnabled ? "enabled" : "disabled"}`);
+      queryClient.invalidateQueries({ queryKey: ["commands"] });
+    },
     onError: (err: Error) => showToast("error", err.message),
   });
 

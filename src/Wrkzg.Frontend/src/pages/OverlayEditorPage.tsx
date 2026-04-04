@@ -73,7 +73,7 @@ export function OverlayEditorPage() {
   const title = OVERLAY_TITLES[overlayType] ?? overlayType;
   const isAlerts = overlayType === "alerts";
 
-  const { data: settings } = useQuery({
+  const { data: settings, isLoading, isError } = useQuery({
     queryKey: ["overlay-settings", overlayType],
     queryFn: () => fetchSettings(overlayType),
   });
@@ -127,6 +127,23 @@ export function OverlayEditorPage() {
     const url = `${window.location.origin}/overlay/${overlayType}`;
     navigator.clipboard.writeText(url);
     showToast("success", "URL copied!");
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--color-border)] border-t-[var(--color-brand)]" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-[var(--color-text-muted)]">
+        <p className="text-lg font-medium">Failed to load data</p>
+        <p className="mt-1 text-sm">Please check your connection and try again.</p>
+      </div>
+    );
   }
 
   const tabs = isAlerts
