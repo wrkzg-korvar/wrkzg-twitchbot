@@ -12,6 +12,7 @@ using Xunit;
 
 namespace Wrkzg.Core.Tests.Services;
 
+/// <summary>Tests for the CommandProcessor handling of chat commands, permissions, cooldowns, and template resolution.</summary>
 public class CommandProcessorTests
 {
     private readonly ICommandRepository _commandRepo;
@@ -20,6 +21,7 @@ public class CommandProcessorTests
     private readonly ILogger<CommandProcessor> _logger;
     private readonly CommandProcessor _sut;
 
+    /// <summary>Initializes test dependencies with NSubstitute mocks and a real service scope factory.</summary>
     public CommandProcessorTests()
     {
         _commandRepo = Substitute.For<ICommandRepository>();
@@ -112,6 +114,7 @@ public class CommandProcessorTests
     // Basic Command Execution
     // ═══════════════════════════════════════════════════════════════════
 
+    /// <summary>Verifies that a valid command sends a response and returns true.</summary>
     [Fact]
     public async Task HandleMessageAsync_ValidCommand_SendsResponseAndReturnsTrue()
     {
@@ -128,6 +131,7 @@ public class CommandProcessorTests
         await _chatClient.Received(1).SendMessageAsync("Hello TestUser!", Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that executing a command increments its use count.</summary>
     [Fact]
     public async Task HandleMessageAsync_ValidCommand_IncrementsUseCount()
     {
@@ -144,6 +148,7 @@ public class CommandProcessorTests
         await _commandRepo.Received(1).UpdateAsync(cmd, Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that a message without the command prefix returns false.</summary>
     [Fact]
     public async Task HandleMessageAsync_MessageWithoutPrefix_ReturnsFalse()
     {
@@ -155,6 +160,7 @@ public class CommandProcessorTests
         await _chatClient.DidNotReceive().SendMessageAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that an empty message returns false.</summary>
     [Fact]
     public async Task HandleMessageAsync_EmptyMessage_ReturnsFalse()
     {
@@ -165,6 +171,7 @@ public class CommandProcessorTests
         result.Should().BeFalse();
     }
 
+    /// <summary>Verifies that an unknown command trigger returns false.</summary>
     [Fact]
     public async Task HandleMessageAsync_UnknownCommand_ReturnsFalse()
     {
@@ -179,6 +186,7 @@ public class CommandProcessorTests
         await _chatClient.DidNotReceive().SendMessageAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that a disabled command is not executed.</summary>
     [Fact]
     public async Task HandleMessageAsync_DisabledCommand_ReturnsFalse()
     {
@@ -192,6 +200,7 @@ public class CommandProcessorTests
         result.Should().BeFalse();
     }
 
+    /// <summary>Verifies that command trigger matching is case-insensitive.</summary>
     [Fact]
     public async Task HandleMessageAsync_TriggerIsCaseInsensitive()
     {
@@ -207,6 +216,7 @@ public class CommandProcessorTests
         result.Should().BeTrue();
     }
 
+    /// <summary>Verifies that only the trigger word is extracted when the message contains extra arguments.</summary>
     [Fact]
     public async Task HandleMessageAsync_MessageWithArguments_ExtractsOnlyTrigger()
     {
@@ -226,6 +236,7 @@ public class CommandProcessorTests
     // Permission Checks
     // ═══════════════════════════════════════════════════════════════════
 
+    /// <summary>Verifies that a broadcaster can execute commands at any permission level.</summary>
     [Fact]
     public async Task HandleMessageAsync_BroadcasterCanUseAnyCommand()
     {
@@ -241,6 +252,7 @@ public class CommandProcessorTests
         result.Should().BeTrue();
     }
 
+    /// <summary>Verifies that a moderator can execute moderator-level commands.</summary>
     [Fact]
     public async Task HandleMessageAsync_ModCanUseModCommand()
     {
@@ -256,6 +268,7 @@ public class CommandProcessorTests
         result.Should().BeTrue();
     }
 
+    /// <summary>Verifies that a regular viewer cannot execute moderator-level commands.</summary>
     [Fact]
     public async Task HandleMessageAsync_ViewerCannotUseModCommand()
     {
@@ -272,6 +285,7 @@ public class CommandProcessorTests
         await _chatClient.DidNotReceive().SendMessageAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that a subscriber can execute subscriber-level commands.</summary>
     [Fact]
     public async Task HandleMessageAsync_SubscriberCanUseSubCommand()
     {
@@ -287,6 +301,7 @@ public class CommandProcessorTests
         result.Should().BeTrue();
     }
 
+    /// <summary>Verifies that a follower can execute follower-level commands.</summary>
     [Fact]
     public async Task HandleMessageAsync_FollowerCanUseFollowerCommand()
     {
@@ -302,6 +317,7 @@ public class CommandProcessorTests
         result.Should().BeTrue();
     }
 
+    /// <summary>Verifies that a non-follower cannot execute follower-level commands.</summary>
     [Fact]
     public async Task HandleMessageAsync_NonFollowerCannotUseFollowerCommand()
     {
@@ -317,6 +333,7 @@ public class CommandProcessorTests
         result.Should().BeFalse();
     }
 
+    /// <summary>Verifies that a user flagged as mod in the database can use mod commands even without the IRC mod badge.</summary>
     [Fact]
     public async Task HandleMessageAsync_UserIsMod_FromDbFlag_CanUseModCommand()
     {
@@ -337,6 +354,7 @@ public class CommandProcessorTests
     // Cooldowns
     // ═══════════════════════════════════════════════════════════════════
 
+    /// <summary>Verifies that a global cooldown blocks a second execution of the same command.</summary>
     [Fact]
     public async Task HandleMessageAsync_GlobalCooldown_BlocksSecondCall()
     {
@@ -356,6 +374,7 @@ public class CommandProcessorTests
         second.Should().BeFalse();
     }
 
+    /// <summary>Verifies that a per-user cooldown blocks the same user from executing again.</summary>
     [Fact]
     public async Task HandleMessageAsync_UserCooldown_BlocksSameUser()
     {
@@ -374,6 +393,7 @@ public class CommandProcessorTests
         second.Should().BeFalse();
     }
 
+    /// <summary>Verifies that a per-user cooldown does not block a different user.</summary>
     [Fact]
     public async Task HandleMessageAsync_UserCooldown_AllowsDifferentUser()
     {
@@ -396,6 +416,7 @@ public class CommandProcessorTests
         second.Should().BeTrue();
     }
 
+    /// <summary>Verifies that commands without cooldowns allow immediate repeated execution.</summary>
     [Fact]
     public async Task HandleMessageAsync_NoCooldown_AllowsRepeat()
     {
@@ -417,6 +438,7 @@ public class CommandProcessorTests
     // Template Resolution
     // ═══════════════════════════════════════════════════════════════════
 
+    /// <summary>Verifies that the {user} template variable resolves to the display name.</summary>
     [Fact]
     public async Task HandleMessageAsync_ResolvesUserVariable()
     {
@@ -432,6 +454,7 @@ public class CommandProcessorTests
         await _chatClient.Received(1).SendMessageAsync("Welcome CoolStreamer!", Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that the {points} template variable resolves to the user's point balance.</summary>
     [Fact]
     public async Task HandleMessageAsync_ResolvesPointsVariable()
     {
@@ -447,6 +470,7 @@ public class CommandProcessorTests
         await _chatClient.Received(1).SendMessageAsync("You have 4200 points!", Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that the {watchtime} template variable formats hours and minutes correctly.</summary>
     [Fact]
     public async Task HandleMessageAsync_ResolvesWatchtimeVariable()
     {
@@ -462,6 +486,7 @@ public class CommandProcessorTests
         await _chatClient.Received(1).SendMessageAsync("Watchtime: 2h 14m", Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that the {watchtime} variable shows only minutes when under one hour.</summary>
     [Fact]
     public async Task HandleMessageAsync_ResolvesWatchtime_LessThanOneHour()
     {
@@ -477,6 +502,7 @@ public class CommandProcessorTests
         await _chatClient.Received(1).SendMessageAsync("Watchtime: 45m", Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that the {random:min:max} template variable resolves to a numeric value.</summary>
     [Fact]
     public async Task HandleMessageAsync_ResolvesRandomVariable()
     {
@@ -495,6 +521,7 @@ public class CommandProcessorTests
             Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that multiple template variables resolve correctly in a single response.</summary>
     [Fact]
     public async Task HandleMessageAsync_ResolvesMultipleVariables()
     {

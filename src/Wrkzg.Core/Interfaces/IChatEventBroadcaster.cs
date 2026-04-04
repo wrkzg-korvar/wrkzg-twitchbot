@@ -11,10 +11,40 @@ namespace Wrkzg.Core.Interfaces;
 /// </summary>
 public interface IChatEventBroadcaster
 {
+    /// <summary>
+    /// Broadcasts a chat message to the dashboard and overlay clients.
+    /// </summary>
+    /// <param name="message">The chat message to broadcast.</param>
+    /// <param name="ct">Cancellation token.</param>
     Task BroadcastChatMessageAsync(ChatMessage message, CancellationToken ct = default);
+
+    /// <summary>
+    /// Broadcasts the current viewer count to the dashboard.
+    /// </summary>
+    /// <param name="count">The current number of viewers.</param>
+    /// <param name="ct">Cancellation token.</param>
     Task BroadcastViewerCountAsync(int count, CancellationToken ct = default);
+
+    /// <summary>
+    /// Broadcasts a new follower event to the dashboard and alert overlay.
+    /// </summary>
+    /// <param name="username">The display name of the new follower.</param>
+    /// <param name="ct">Cancellation token.</param>
     Task BroadcastFollowEventAsync(string username, CancellationToken ct = default);
+
+    /// <summary>
+    /// Broadcasts a subscription event to the dashboard and alert overlay.
+    /// </summary>
+    /// <param name="username">The display name of the subscriber.</param>
+    /// <param name="tier">The subscription tier (1000 = Tier 1, 2000 = Tier 2, 3000 = Tier 3).</param>
+    /// <param name="ct">Cancellation token.</param>
     Task BroadcastSubscribeEventAsync(string username, int tier, CancellationToken ct = default);
+
+    /// <summary>
+    /// Broadcasts the current bot connection status to the dashboard.
+    /// </summary>
+    /// <param name="status">An object describing the bot's connection state.</param>
+    /// <param name="ct">Cancellation token.</param>
     Task BroadcastBotStatusAsync(object status, CancellationToken ct = default);
 
     /// <summary>Notifies the dashboard that a new poll was created.</summary>

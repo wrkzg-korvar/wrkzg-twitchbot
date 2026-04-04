@@ -16,6 +16,7 @@ namespace Wrkzg.Api.Endpoints;
 /// </summary>
 public static class AnalyticsEndpoints
 {
+    /// <summary>Registers stream analytics API endpoints.</summary>
     public static void MapAnalyticsEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/analytics").WithTags("Analytics");
@@ -28,20 +29,20 @@ public static class AnalyticsEndpoints
 
             return Results.Ok(sessions.Select(s => new
             {
-                s.Id,
-                s.TwitchStreamId,
-                s.StartedAt,
-                s.EndedAt,
-                s.DurationMinutes,
-                s.PeakViewers,
-                s.AverageViewers,
-                s.Title,
+                id = s.Id,
+                twitchStreamId = s.TwitchStreamId,
+                startedAt = s.StartedAt,
+                endedAt = s.EndedAt,
+                durationMinutes = s.DurationMinutes,
+                peakViewers = s.PeakViewers,
+                averageViewers = s.AverageViewers,
+                title = s.Title,
                 categories = s.CategorySegments.Select(c => new
                 {
-                    c.CategoryName,
-                    c.DurationMinutes,
-                    c.StartedAt,
-                    c.EndedAt
+                    categoryName = c.CategoryName,
+                    durationMinutes = c.DurationMinutes,
+                    startedAt = c.StartedAt,
+                    endedAt = c.EndedAt
                 })
             }));
         });
@@ -54,32 +55,7 @@ public static class AnalyticsEndpoints
                 return Results.NotFound(new { error = "No stream sessions recorded yet." });
             }
 
-            return Results.Ok(new
-            {
-                session.Id,
-                session.TwitchStreamId,
-                session.StartedAt,
-                session.EndedAt,
-                session.DurationMinutes,
-                session.PeakViewers,
-                session.AverageViewers,
-                session.Title,
-                categories = session.CategorySegments.Select(c => new
-                {
-                    c.CategoryName,
-                    c.TwitchCategoryId,
-                    c.DurationMinutes,
-                    c.PeakViewers,
-                    c.AverageViewers,
-                    c.StartedAt,
-                    c.EndedAt
-                }),
-                snapshots = session.ViewerSnapshots.Select(v => new
-                {
-                    v.ViewerCount,
-                    v.Timestamp
-                })
-            });
+            return Results.Ok(MapSessionDetail(session));
         });
 
         group.MapGet("/sessions/{id:int}", async (int id, IStreamAnalyticsRepository repo, CancellationToken ct) =>
@@ -90,32 +66,7 @@ public static class AnalyticsEndpoints
                 return Results.NotFound();
             }
 
-            return Results.Ok(new
-            {
-                session.Id,
-                session.TwitchStreamId,
-                session.StartedAt,
-                session.EndedAt,
-                session.DurationMinutes,
-                session.PeakViewers,
-                session.AverageViewers,
-                session.Title,
-                categories = session.CategorySegments.Select(c => new
-                {
-                    c.CategoryName,
-                    c.TwitchCategoryId,
-                    c.DurationMinutes,
-                    c.PeakViewers,
-                    c.AverageViewers,
-                    c.StartedAt,
-                    c.EndedAt
-                }),
-                snapshots = session.ViewerSnapshots.Select(v => new
-                {
-                    v.ViewerCount,
-                    v.Timestamp
-                })
-            });
+            return Results.Ok(MapSessionDetail(session));
         });
 
         group.MapGet("/summary", async (IStreamAnalyticsRepository repo,
@@ -204,5 +155,35 @@ public static class AnalyticsEndpoints
 
             return Results.Ok(categories);
         });
+    }
+
+    private static object MapSessionDetail(StreamSession session)
+    {
+        return new
+        {
+            id = session.Id,
+            twitchStreamId = session.TwitchStreamId,
+            startedAt = session.StartedAt,
+            endedAt = session.EndedAt,
+            durationMinutes = session.DurationMinutes,
+            peakViewers = session.PeakViewers,
+            averageViewers = session.AverageViewers,
+            title = session.Title,
+            categories = session.CategorySegments.Select(c => new
+            {
+                categoryName = c.CategoryName,
+                twitchCategoryId = c.TwitchCategoryId,
+                durationMinutes = c.DurationMinutes,
+                peakViewers = c.PeakViewers,
+                averageViewers = c.AverageViewers,
+                startedAt = c.StartedAt,
+                endedAt = c.EndedAt
+            }),
+            snapshots = session.ViewerSnapshots.Select(v => new
+            {
+                viewerCount = v.ViewerCount,
+                timestamp = v.Timestamp
+            })
+        };
     }
 }

@@ -5,8 +5,10 @@ using Xunit;
 
 namespace Wrkzg.Core.Tests.Models;
 
+/// <summary>Tests for the TwitchTokens model and its expiration logic.</summary>
 public class TwitchTokensTests
 {
+    /// <summary>Verifies that a freshly obtained token is not considered expired.</summary>
     [Fact]
     public void IsLikelyExpired_FreshToken_ReturnsFalse()
     {
@@ -21,6 +23,7 @@ public class TwitchTokensTests
         tokens.IsLikelyExpired.Should().BeFalse();
     }
 
+    /// <summary>Verifies that a token obtained past its expiry time is considered expired.</summary>
     [Fact]
     public void IsLikelyExpired_ExpiredToken_ReturnsTrue()
     {
@@ -35,6 +38,7 @@ public class TwitchTokensTests
         tokens.IsLikelyExpired.Should().BeTrue();
     }
 
+    /// <summary>Verifies that a token within the five-minute safety margin is considered expired.</summary>
     [Fact]
     public void IsLikelyExpired_WithinSafetyMargin_ReturnsTrue()
     {
@@ -50,6 +54,7 @@ public class TwitchTokensTests
         tokens.IsLikelyExpired.Should().BeTrue();
     }
 
+    /// <summary>Verifies that a token just outside the safety margin is not considered expired.</summary>
     [Fact]
     public void IsLikelyExpired_JustOutsideSafetyMargin_ReturnsFalse()
     {
@@ -65,6 +70,7 @@ public class TwitchTokensTests
         tokens.IsLikelyExpired.Should().BeFalse();
     }
 
+    /// <summary>Verifies that a token with zero ExpiresIn is considered expired.</summary>
     [Fact]
     public void IsLikelyExpired_ZeroExpiresIn_ReturnsTrue()
     {
@@ -78,6 +84,7 @@ public class TwitchTokensTests
         tokens.IsLikelyExpired.Should().BeTrue();
     }
 
+    /// <summary>Verifies that a new TwitchTokens has correct default property values.</summary>
     [Fact]
     public void DefaultValues_AreCorrect()
     {

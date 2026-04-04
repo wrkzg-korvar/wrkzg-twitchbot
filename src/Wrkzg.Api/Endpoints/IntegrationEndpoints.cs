@@ -12,6 +12,7 @@ namespace Wrkzg.Api.Endpoints;
 /// </summary>
 public static class IntegrationEndpoints
 {
+    /// <summary>Registers third-party integration settings API endpoints (Discord webhooks).</summary>
     public static void MapIntegrationEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/integrations").WithTags("Integrations");
@@ -87,4 +88,5 @@ public static class IntegrationEndpoints
     }
 }
 
+/// <summary>Request payload for updating the Discord webhook URL.</summary>
 public record UpdateDiscordRequest(string WebhookUrl);

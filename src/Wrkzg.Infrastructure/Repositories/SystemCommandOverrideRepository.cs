@@ -8,25 +8,36 @@ using Wrkzg.Infrastructure.Data;
 
 namespace Wrkzg.Infrastructure.Repositories;
 
+/// <summary>
+/// SQLite-backed repository for system command override persistence.
+/// Allows customizing built-in command response templates and toggling them on/off.
+/// </summary>
 public class SystemCommandOverrideRepository : ISystemCommandOverrideRepository
 {
     private readonly BotDbContext _db;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SystemCommandOverrideRepository"/> class.
+    /// </summary>
+    /// <param name="db">The bot database context.</param>
     public SystemCommandOverrideRepository(BotDbContext db)
     {
         _db = db;
     }
 
+    /// <summary>Gets a system command override by its trigger word.</summary>
     public async Task<SystemCommandOverride?> GetByTriggerAsync(string trigger, CancellationToken ct = default)
     {
         return await _db.SystemCommandOverrides.FindAsync(new object[] { trigger }, ct);
     }
 
+    /// <summary>Gets all system command overrides.</summary>
     public async Task<IReadOnlyList<SystemCommandOverride>> GetAllAsync(CancellationToken ct = default)
     {
         return await _db.SystemCommandOverrides.ToListAsync(ct);
     }
 
+    /// <summary>Creates or updates a system command override by its trigger.</summary>
     public async Task SaveAsync(SystemCommandOverride entity, CancellationToken ct = default)
     {
         SystemCommandOverride? existing = await _db.SystemCommandOverrides.FindAsync(new object[] { entity.Trigger }, ct);
@@ -43,6 +54,7 @@ public class SystemCommandOverrideRepository : ISystemCommandOverrideRepository
         await _db.SaveChangesAsync(ct);
     }
 
+    /// <summary>Deletes a system command override by its trigger word.</summary>
     public async Task DeleteAsync(string trigger, CancellationToken ct = default)
     {
         SystemCommandOverride? existing = await _db.SystemCommandOverrides.FindAsync(new object[] { trigger }, ct);

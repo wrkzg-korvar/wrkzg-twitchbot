@@ -4,8 +4,13 @@ using Wrkzg.Core.Models;
 
 namespace Wrkzg.Infrastructure.Data.Configurations;
 
+/// <summary>
+/// EF Core entity type configuration for the <see cref="Setting"/> model.
+/// Seeds default application settings on initial database creation.
+/// </summary>
 public class SettingConfiguration : IEntityTypeConfiguration<Setting>
 {
+    /// <summary>Configures the schema for the Settings table and seeds default values.</summary>
     public void Configure(EntityTypeBuilder<Setting> builder)
     {
         builder.HasKey(s => s.Key);

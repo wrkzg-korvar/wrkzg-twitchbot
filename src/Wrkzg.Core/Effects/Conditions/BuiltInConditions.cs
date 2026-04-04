@@ -10,10 +10,19 @@ namespace Wrkzg.Core.Effects.Conditions;
 /// <summary>Checks if the user has a minimum role priority.</summary>
 public class RoleCheckCondition : IConditionType
 {
+    /// <inheritdoc />
     public string Id => "role_check";
+
+    /// <inheritdoc />
     public string DisplayName => "Role Check";
+
+    /// <inheritdoc />
     public string[] ParameterKeys => new[] { "min_priority" };
 
+    /// <summary>
+    /// Evaluates whether the triggering user's highest role priority meets the configured minimum.
+    /// Returns <c>true</c> when the parameter is missing or invalid, allowing the effect to proceed.
+    /// </summary>
     public async Task<bool> EvaluateAsync(EffectConditionContext context, CancellationToken ct = default)
     {
         if (!int.TryParse(context.GetParameter("min_priority"), out int minPriority) || minPriority <= 0)
@@ -42,10 +51,19 @@ public class RoleCheckCondition : IConditionType
 /// <summary>Checks if the user has enough points.</summary>
 public class PointsCheckCondition : IConditionType
 {
+    /// <inheritdoc />
     public string Id => "points_check";
+
+    /// <inheritdoc />
     public string DisplayName => "Points Check";
+
+    /// <inheritdoc />
     public string[] ParameterKeys => new[] { "min_points" };
 
+    /// <summary>
+    /// Evaluates whether the triggering user has at least the configured minimum point balance.
+    /// Returns <c>true</c> when the parameter is missing or unparseable.
+    /// </summary>
     public async Task<bool> EvaluateAsync(EffectConditionContext context, CancellationToken ct = default)
     {
         if (!long.TryParse(context.GetParameter("min_points"), out long minPoints))
@@ -64,13 +82,22 @@ public class PointsCheckCondition : IConditionType
     }
 }
 
-/// <summary>Random chance gate — passes with a given probability.</summary>
+/// <summary>Random chance gate -- passes with a given probability.</summary>
 public class RandomChanceCondition : IConditionType
 {
+    /// <inheritdoc />
     public string Id => "random_chance";
+
+    /// <inheritdoc />
     public string DisplayName => "Random Chance";
+
+    /// <inheritdoc />
     public string[] ParameterKeys => new[] { "percent" };
 
+    /// <summary>
+    /// Rolls a random number 0-99 and passes when it falls below the configured percent threshold.
+    /// Returns <c>true</c> when the parameter is missing or unparseable.
+    /// </summary>
     public Task<bool> EvaluateAsync(EffectConditionContext context, CancellationToken ct = default)
     {
         if (!int.TryParse(context.GetParameter("percent"), out int percent))
@@ -86,10 +113,19 @@ public class RandomChanceCondition : IConditionType
 /// <summary>Checks if the stream is currently live or offline.</summary>
 public class StreamStatusCondition : IConditionType
 {
+    /// <inheritdoc />
     public string Id => "stream_status";
+
+    /// <inheritdoc />
     public string DisplayName => "Stream Status";
+
+    /// <inheritdoc />
     public string[] ParameterKeys => new[] { "require_live" };
 
+    /// <summary>
+    /// Queries the Twitch Helix API to determine whether the channel is live,
+    /// then compares against the <c>require_live</c> parameter.
+    /// </summary>
     public async Task<bool> EvaluateAsync(EffectConditionContext context, CancellationToken ct = default)
     {
         if (context.Scope is null)

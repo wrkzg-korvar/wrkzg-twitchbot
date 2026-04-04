@@ -5,8 +5,10 @@ using Xunit;
 
 namespace Wrkzg.Core.Tests.Models;
 
+/// <summary>Tests for the User model default values and initialization.</summary>
 public class UserTests
 {
+    /// <summary>Verifies that a new User has correct default property values.</summary>
     [Fact]
     public void User_DefaultValues_AreCorrect()
     {
@@ -26,6 +28,7 @@ public class UserTests
         user.IsMod.Should().BeFalse();
     }
 
+    /// <summary>Verifies that navigation collection properties are initialized as empty lists.</summary>
     [Fact]
     public void User_NavigationProperties_AreInitialized()
     {
@@ -35,6 +38,7 @@ public class UserTests
         user.PollVotes.Should().NotBeNull().And.BeEmpty();
     }
 
+    /// <summary>Verifies that FirstSeenAt and LastSeenAt are initialized to the current time.</summary>
     [Fact]
     public void User_FirstSeenAt_IsSetToNow()
     {

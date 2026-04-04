@@ -6,8 +6,13 @@ using Wrkzg.Core.Models;
 
 namespace Wrkzg.Infrastructure.Data.Configurations;
 
+/// <summary>
+/// EF Core entity type configuration for the <see cref="TimedMessage"/> model.
+/// Configures JSON value conversion for the Messages array stored as TEXT in SQLite.
+/// </summary>
 public class TimedMessageConfiguration : IEntityTypeConfiguration<TimedMessage>
 {
+    /// <summary>Configures the schema for the TimedMessages table.</summary>
     public void Configure(EntityTypeBuilder<TimedMessage> builder)
     {
         builder.HasKey(t => t.Id);

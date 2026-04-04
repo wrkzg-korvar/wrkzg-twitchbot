@@ -8,6 +8,7 @@ namespace Wrkzg.Core.Models;
 /// </summary>
 public class TriviaQuestion
 {
+    /// <summary>Primary key.</summary>
     public int Id { get; set; }
 
     /// <summary>The question text.</summary>
@@ -25,5 +26,6 @@ public class TriviaQuestion
     /// <summary>True if user-created, false if built-in.</summary>
     public bool IsCustom { get; set; }
 
+    /// <summary>When this question was created.</summary>
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

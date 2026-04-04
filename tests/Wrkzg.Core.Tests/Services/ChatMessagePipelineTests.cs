@@ -13,6 +13,7 @@ using Xunit;
 
 namespace Wrkzg.Core.Tests.Services;
 
+/// <summary>Tests for the ChatMessagePipeline including user stats, command processing, and resilience.</summary>
 public class ChatMessagePipelineTests
 {
     private readonly ICommandProcessor _commandProcessor;
@@ -21,6 +22,7 @@ public class ChatMessagePipelineTests
     private readonly ILogger<ChatMessagePipeline> _logger;
     private readonly ChatMessagePipeline _sut;
 
+    /// <summary>Initializes test dependencies with NSubstitute mocks and a real service scope factory.</summary>
     public ChatMessagePipelineTests()
     {
         _commandProcessor = Substitute.For<ICommandProcessor>();
@@ -82,6 +84,7 @@ public class ChatMessagePipelineTests
         };
     }
 
+    /// <summary>Verifies that processing a message increments the user's message count and updates the display name.</summary>
     [Fact]
     public async Task ProcessAsync_UpdatesUserStats()
     {
@@ -97,6 +100,7 @@ public class ChatMessagePipelineTests
         await _userRepo.Received(1).UpdateAsync(user, Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that processing a message marks the user as active for watch time tracking.</summary>
     [Fact]
     public async Task ProcessAsync_MarksUserActive()
     {
@@ -110,6 +114,7 @@ public class ChatMessagePipelineTests
         _trackingService.Received(1).MarkUserActive("99999");
     }
 
+    /// <summary>Verifies that the pipeline delegates command messages to the command processor.</summary>
     [Fact]
     public async Task ProcessAsync_CallsCommandProcessor()
     {
@@ -123,6 +128,7 @@ public class ChatMessagePipelineTests
         await _commandProcessor.Received(1).HandleMessageAsync(msg, Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that the pipeline syncs moderator status from the chat message to the user record.</summary>
     [Fact]
     public async Task ProcessAsync_SyncsModStatus()
     {
@@ -136,6 +142,7 @@ public class ChatMessagePipelineTests
         user.IsMod.Should().BeTrue();
     }
 
+    /// <summary>Verifies that the pipeline syncs subscriber status from the chat message to the user record.</summary>
     [Fact]
     public async Task ProcessAsync_SyncsSubscriberStatus()
     {
@@ -149,6 +156,7 @@ public class ChatMessagePipelineTests
         user.IsSubscriber.Should().BeTrue();
     }
 
+    /// <summary>Verifies that a database failure during stats update does not prevent command processing.</summary>
     [Fact]
     public async Task ProcessAsync_StatsFailure_DoesNotBreakCommandProcessing()
     {

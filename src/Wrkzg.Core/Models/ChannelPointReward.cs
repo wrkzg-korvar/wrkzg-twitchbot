@@ -9,6 +9,7 @@ namespace Wrkzg.Core.Models;
 /// </summary>
 public class ChannelPointReward
 {
+    /// <summary>Primary key.</summary>
     public int Id { get; set; }
 
     /// <summary>Twitch Reward ID (UUID from Twitch API).</summary>
@@ -38,15 +39,30 @@ public class ChannelPointReward
     /// <summary>Whether this handler is active.</summary>
     public bool IsEnabled { get; set; } = true;
 
+    /// <summary>When this reward handler was created.</summary>
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }
 
+/// <summary>
+/// Defines the action the bot performs when a channel point reward is redeemed.
+/// </summary>
 public enum RewardActionType
 {
+    /// <summary>Send a templated message to chat.</summary>
     ChatMessage = 0,
+
+    /// <summary>Increment a named counter by one.</summary>
     CounterIncrement = 1,
+
+    /// <summary>Decrement a named counter by one.</summary>
     CounterDecrement = 2,
+
+    /// <summary>Timeout the redeeming user for the configured duration.</summary>
     Timeout = 3,
+
+    /// <summary>Highlight the redemption in the dashboard overlay.</summary>
     Highlight = 4,
+
+    /// <summary>Play a sound alert (reserved for future implementation).</summary>
     SoundAlert = 5
 }

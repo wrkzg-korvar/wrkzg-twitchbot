@@ -4,8 +4,13 @@ using Wrkzg.Core.Models;
 
 namespace Wrkzg.Infrastructure.Data.Configurations;
 
+/// <summary>
+/// EF Core entity type configuration for the <see cref="UserRole"/> join entity.
+/// Uses a composite key of UserId and RoleId.
+/// </summary>
 public class UserRoleConfiguration : IEntityTypeConfiguration<UserRole>
 {
+    /// <summary>Configures the schema for the UserRoles table.</summary>
     public void Configure(EntityTypeBuilder<UserRole> builder)
     {
         builder.HasKey(ur => new { ur.UserId, ur.RoleId });

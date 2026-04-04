@@ -14,6 +14,7 @@ namespace Wrkzg.Api.Endpoints;
 /// </summary>
 public static class ImportEndpoints
 {
+    /// <summary>Registers bot data import preview and execution API endpoints.</summary>
     public static void MapImportEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/import").WithTags("Import");

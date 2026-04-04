@@ -4,8 +4,12 @@ using Wrkzg.Core.Models;
 
 namespace Wrkzg.Infrastructure.Data.Configurations;
 
+/// <summary>
+/// EF Core entity type configuration for the <see cref="EffectList"/> model.
+/// </summary>
 public class EffectListConfiguration : IEntityTypeConfiguration<EffectList>
 {
+    /// <summary>Configures the schema for the EffectLists table.</summary>
     public void Configure(EntityTypeBuilder<EffectList> builder)
     {
         builder.HasKey(e => e.Id);

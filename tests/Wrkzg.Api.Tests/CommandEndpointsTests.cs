@@ -8,16 +8,19 @@ using Xunit;
 
 namespace Wrkzg.Api.Tests;
 
+/// <summary>Tests for the command management API endpoints.</summary>
 public class CommandEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client;
     private static readonly JsonSerializerOptions _json = new() { PropertyNameCaseInsensitive = true };
 
+    /// <summary>Initializes the test with an authenticated HTTP client.</summary>
     public CommandEndpointsTests(CustomWebApplicationFactory factory)
     {
         _client = factory.CreateAuthenticatedClient();
     }
 
+    /// <summary>Verifies that listing all commands returns HTTP 200 OK.</summary>
     [Fact]
     public async Task GetCommands_ReturnsOk()
     {
@@ -26,6 +29,7 @@ public class CommandEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
+    /// <summary>Verifies that creating a command with valid data returns HTTP 201 Created.</summary>
     [Fact]
     public async Task CreateCommand_ValidRequest_ReturnsCreated()
     {
@@ -41,6 +45,7 @@ public class CommandEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         response.StatusCode.Should().Be(HttpStatusCode.Created);
     }
 
+    /// <summary>Verifies that creating a command with an empty trigger returns HTTP 400 Bad Request.</summary>
     [Fact]
     public async Task CreateCommand_MissingTrigger_ReturnsBadRequest()
     {
@@ -53,6 +58,7 @@ public class CommandEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
+    /// <summary>Verifies that creating a command whose trigger lacks the required prefix returns HTTP 400 Bad Request.</summary>
     [Fact]
     public async Task CreateCommand_TriggerWithoutPrefix_ReturnsBadRequest()
     {
@@ -65,6 +71,7 @@ public class CommandEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
+    /// <summary>Verifies that fetching a non-existent command returns HTTP 404 Not Found.</summary>
     [Fact]
     public async Task GetCommand_NonExistent_ReturnsNotFound()
     {
@@ -73,6 +80,7 @@ public class CommandEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
+    /// <summary>Verifies that deleting a non-existent command returns HTTP 404 Not Found.</summary>
     [Fact]
     public async Task DeleteCommand_NonExistent_ReturnsNotFound()
     {

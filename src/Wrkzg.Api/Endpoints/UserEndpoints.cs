@@ -8,8 +8,12 @@ using Wrkzg.Core.Models;
 
 namespace Wrkzg.Api.Endpoints;
 
+/// <summary>
+/// REST endpoints for viewer/user data management.
+/// </summary>
 public static class UserEndpoints
 {
+    /// <summary>Registers user listing and update API endpoints.</summary>
     public static void MapUserEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/users").WithTags("Users");
@@ -66,6 +70,7 @@ public static class UserEndpoints
     }
 }
 
+/// <summary>Request payload for updating a user's points or ban status.</summary>
 public sealed record UpdateUserRequest(
     long? Points = null,
     bool? IsBanned = null

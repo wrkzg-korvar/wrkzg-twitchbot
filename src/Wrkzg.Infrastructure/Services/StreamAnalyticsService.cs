@@ -25,6 +25,11 @@ public class StreamAnalyticsService : IHostedService, IDisposable
     private string? _channelLogin;
     private bool _isPolling;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="StreamAnalyticsService"/> class.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating scoped service providers to access repositories.</param>
+    /// <param name="logger">The logger for analytics polling diagnostics.</param>
     public StreamAnalyticsService(
         IServiceScopeFactory scopeFactory,
         ILogger<StreamAnalyticsService> logger)
@@ -33,6 +38,7 @@ public class StreamAnalyticsService : IHostedService, IDisposable
         _logger = logger;
     }
 
+    /// <summary>Starts the analytics polling timer and resumes any unclosed session from a previous crash.</summary>
     public async Task StartAsync(CancellationToken ct)
     {
         _logger.LogInformation("StreamAnalyticsService starting");
@@ -64,6 +70,7 @@ public class StreamAnalyticsService : IHostedService, IDisposable
         _timer = new Timer(OnTimerTick, null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(60));
     }
 
+    /// <summary>Stops the analytics polling timer.</summary>
     public Task StopAsync(CancellationToken ct)
     {
         _logger.LogInformation("StreamAnalyticsService stopping");
@@ -71,6 +78,7 @@ public class StreamAnalyticsService : IHostedService, IDisposable
         return Task.CompletedTask;
     }
 
+    /// <summary>Disposes the polling timer.</summary>
     public void Dispose()
     {
         _timer?.Dispose();

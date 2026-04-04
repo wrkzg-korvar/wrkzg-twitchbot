@@ -21,11 +21,22 @@ public class SlotsGame : IChatGame
 
     private static readonly string[] DefaultSymbols = { "🍒", "🍋", "🍊", "💎", "7️⃣" };
 
+    /// <inheritdoc />
     public string Trigger => "!slots";
+
+    /// <inheritdoc />
     public string[] Aliases => new[] { "!slot" };
+
+    /// <inheritdoc />
     public string Name => "Slots";
+
+    /// <inheritdoc />
     public string Description => "Pull the lever! Match symbols to win big.";
+
+    /// <inheritdoc />
     public bool IsEnabled { get; set; } = true;
+
+    /// <inheritdoc />
     public int MinRolePriority { get; set; }
 
     private int _minBet = 10;
@@ -41,6 +52,11 @@ public class SlotsGame : IChatGame
         ["NoMatch"] = "🎰 [{s1} {s2} {s3}] — No match. -{amount} points.",
     };
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="SlotsGame"/>.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating DI scopes to resolve scoped repositories.</param>
+    /// <param name="logger">Logger instance for diagnostics.</param>
     public SlotsGame(IServiceScopeFactory scopeFactory, ILogger<SlotsGame> logger)
     {
         _scopeFactory = scopeFactory;
@@ -48,6 +64,7 @@ public class SlotsGame : IChatGame
         _msg = new GameMessageTemplates("Slots", DefaultMessages);
     }
 
+    /// <inheritdoc />
     public async Task<string?> HandleAsync(ChatMessage message, CancellationToken ct = default)
     {
         await LoadSettingsAsync(ct);
@@ -111,12 +128,16 @@ public class SlotsGame : IChatGame
             ("amount", bet.ToString()));
     }
 
+    /// <inheritdoc />
     public Task<bool> HandleActiveRoundMessageAsync(ChatMessage message, CancellationToken ct = default)
     {
         return Task.FromResult(false);
     }
 
+    /// <inheritdoc />
     public Dictionary<string, string> GetMessageTemplates() => _msg.GetAll();
+
+    /// <inheritdoc />
     public Dictionary<string, string> GetDefaultMessageTemplates() => _msg.GetDefaults();
 
     private async Task LoadSettingsAsync(CancellationToken ct)

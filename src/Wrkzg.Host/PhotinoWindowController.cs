@@ -20,18 +20,22 @@ public class PhotinoWindowController : IWindowController
     private int _dragStartWindowX;
     private int _dragStartWindowY;
 
+    /// <summary>Gets whether the Photino window is currently maximized.</summary>
     public bool IsMaximized => _window?.Maximized ?? false;
 
+    /// <summary>Sets the Photino window instance after creation.</summary>
     public void SetWindow(PhotinoWindow window)
     {
         _window = window;
     }
 
+    /// <summary>Minimizes the Photino window.</summary>
     public void Minimize()
     {
         _window?.SetMinimized(true);
     }
 
+    /// <summary>Toggles the Photino window between maximized and restored state.</summary>
     public void ToggleMaximize()
     {
         if (_window is null)
@@ -42,11 +46,13 @@ public class PhotinoWindowController : IWindowController
         _window.SetMaximized(!_window.Maximized);
     }
 
+    /// <summary>Closes the Photino window, triggering application shutdown.</summary>
     public void Close()
     {
         _window?.Close();
     }
 
+    /// <summary>Records the initial mouse and window positions to begin a drag operation.</summary>
     public void DragStart(int screenX, int screenY)
     {
         if (_window is null)
@@ -60,6 +66,7 @@ public class PhotinoWindowController : IWindowController
         _dragStartWindowY = _window.Top;
     }
 
+    /// <summary>Moves the window by the delta between the current and initial mouse positions.</summary>
     public void DragMove(int screenX, int screenY)
     {
         if (_window is null)
@@ -74,6 +81,7 @@ public class PhotinoWindowController : IWindowController
         _window.SetTop(_dragStartWindowY + deltaY);
     }
 
+    /// <summary>Initiates a native window resize operation in the specified direction (Windows only).</summary>
     public void StartResize(string direction)
     {
         if (_window is null || !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

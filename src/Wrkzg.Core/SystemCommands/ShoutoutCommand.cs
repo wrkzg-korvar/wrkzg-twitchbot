@@ -14,19 +14,31 @@ namespace Wrkzg.Core.SystemCommands;
 /// </summary>
 public class ShoutoutCommand : ISystemCommand
 {
+    /// <inheritdoc />
     public string Trigger => "!so";
+
+    /// <inheritdoc />
     public string[] Aliases => new[] { "!shoutout" };
+
+    /// <inheritdoc />
     public string Description => "Give a shoutout to another streamer. Usage: !so @username";
+
+    /// <inheritdoc />
     public string? DefaultResponseTemplate =>
         "Go check out {target} at https://twitch.tv/{target_login} — they were last playing {game}!";
 
     private readonly IServiceScopeFactory _scopeFactory;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ShoutoutCommand"/> class.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating scoped service providers.</param>
     public ShoutoutCommand(IServiceScopeFactory scopeFactory)
     {
         _scopeFactory = scopeFactory;
     }
 
+    /// <inheritdoc />
     public async Task<string?> ExecuteAsync(ChatMessage message, CancellationToken ct = default)
     {
         // Permission: Mod + Broadcaster only

@@ -7,15 +7,18 @@ using Xunit;
 
 namespace Wrkzg.Api.Tests;
 
+/// <summary>Tests for the timed message API endpoints.</summary>
 public class TimerEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
+    /// <summary>Initializes the test with an authenticated HTTP client.</summary>
     public TimerEndpointsTests(CustomWebApplicationFactory factory)
     {
         _client = factory.CreateAuthenticatedClient();
     }
 
+    /// <summary>Verifies that listing all timers returns HTTP 200 OK.</summary>
     [Fact]
     public async Task GetTimers_ReturnsOk()
     {
@@ -24,6 +27,7 @@ public class TimerEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
+    /// <summary>Verifies that creating a timer with valid data returns HTTP 201 Created.</summary>
     [Fact]
     public async Task CreateTimer_ValidRequest_ReturnsCreated()
     {
@@ -41,6 +45,7 @@ public class TimerEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         response.StatusCode.Should().Be(HttpStatusCode.Created);
     }
 
+    /// <summary>Verifies that creating a timer with an empty name returns HTTP 400 Bad Request.</summary>
     [Fact]
     public async Task CreateTimer_EmptyName_ReturnsBadRequest()
     {
@@ -54,6 +59,7 @@ public class TimerEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
+    /// <summary>Verifies that deleting a non-existent timer returns HTTP 204 No Content.</summary>
     [Fact]
     public async Task DeleteTimer_NonExistent_ReturnsNoContent()
     {

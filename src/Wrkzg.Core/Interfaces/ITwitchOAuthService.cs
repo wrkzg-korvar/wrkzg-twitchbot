@@ -44,9 +44,18 @@ public interface ITwitchOAuthService
 /// </summary>
 public sealed class TwitchTokenValidation
 {
+    /// <summary>The client identifier the token was issued to.</summary>
     public string ClientId { get; init; } = string.Empty;
+
+    /// <summary>The login name of the authenticated user.</summary>
     public string Login { get; init; } = string.Empty;
+
+    /// <summary>The Twitch-assigned user identifier of the authenticated user.</summary>
     public string UserId { get; init; } = string.Empty;
+
+    /// <summary>The OAuth scopes granted to this token.</summary>
     public string[] Scopes { get; init; } = Array.Empty<string>();
+
+    /// <summary>The number of seconds until the token expires.</summary>
     public int ExpiresIn { get; init; }
 }

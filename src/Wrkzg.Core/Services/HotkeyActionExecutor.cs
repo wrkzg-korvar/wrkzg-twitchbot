@@ -19,6 +19,13 @@ public class HotkeyActionExecutor
     private readonly IChatEventBroadcaster _broadcaster;
     private readonly ILogger<HotkeyActionExecutor> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="HotkeyActionExecutor"/> with the required dependencies.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating DI scopes to resolve scoped services.</param>
+    /// <param name="chatClient">The Twitch IRC chat client for sending chat messages.</param>
+    /// <param name="broadcaster">Broadcasts real-time counter updates to the dashboard.</param>
+    /// <param name="logger">Logger instance for diagnostics.</param>
     public HotkeyActionExecutor(
         IServiceScopeFactory scopeFactory,
         ITwitchChatClient chatClient,
@@ -31,6 +38,11 @@ public class HotkeyActionExecutor
         _logger = logger;
     }
 
+    /// <summary>
+    /// Executes the action defined by the given hotkey binding (e.g., send chat message, modify counter).
+    /// </summary>
+    /// <param name="binding">The hotkey binding containing the action type and payload.</param>
+    /// <param name="ct">Cancellation token.</param>
     public async Task ExecuteAsync(HotkeyBinding binding, CancellationToken ct = default)
     {
         try

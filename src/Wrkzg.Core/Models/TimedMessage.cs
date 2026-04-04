@@ -8,6 +8,7 @@ namespace Wrkzg.Core.Models;
 /// </summary>
 public class TimedMessage
 {
+    /// <summary>Primary key.</summary>
     public int Id { get; set; }
 
     /// <summary>Display name for the timer (shown in dashboard).</summary>
@@ -40,5 +41,6 @@ public class TimedMessage
     /// <summary>When this timer last fired.</summary>
     public DateTimeOffset? LastFiredAt { get; set; }
 
+    /// <summary>When this timed message was created.</summary>
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

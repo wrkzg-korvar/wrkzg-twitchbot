@@ -12,6 +12,7 @@ using Xunit;
 
 namespace Wrkzg.Core.Tests.Services;
 
+/// <summary>Tests for the UserTrackingService background service.</summary>
 public class UserTrackingServiceTests
 {
     private readonly ITwitchHelixClient _helix;
@@ -22,6 +23,7 @@ public class UserTrackingServiceTests
     private readonly ILogger<UserTrackingService> _logger;
     private readonly UserTrackingService _sut;
 
+    /// <summary>Initializes test dependencies with NSubstitute mocks and a real service scope factory.</summary>
     public UserTrackingServiceTests()
     {
         _helix = Substitute.For<ITwitchHelixClient>();
@@ -40,6 +42,7 @@ public class UserTrackingServiceTests
         _sut = new UserTrackingService(_helix, _chatClient, _broadcaster, scopeFactory, _logger);
     }
 
+    /// <summary>Verifies that marking a user active does not throw.</summary>
     [Fact]
     public void MarkUserActive_TracksUser()
     {
@@ -50,6 +53,7 @@ public class UserTrackingServiceTests
         // The actual verification happens in TickAsync tests
     }
 
+    /// <summary>Verifies that marking the same user active twice does not cause an error.</summary>
     [Fact]
     public void MarkUserActive_SameUserTwice_DoesNotDuplicate()
     {
@@ -59,6 +63,7 @@ public class UserTrackingServiceTests
         // Should not throw — dictionary overwrites the timestamp
     }
 
+    /// <summary>Verifies that the service starts without errors.</summary>
     [Fact]
     public async Task StartAsync_DoesNotThrow()
     {
@@ -69,6 +74,7 @@ public class UserTrackingServiceTests
         _sut.Dispose();
     }
 
+    /// <summary>Verifies that the service stops cleanly after being started.</summary>
     [Fact]
     public async Task StopAsync_DoesNotThrow()
     {

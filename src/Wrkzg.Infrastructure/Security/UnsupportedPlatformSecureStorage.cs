@@ -18,30 +18,39 @@ public class UnsupportedPlatformSecureStorage : ISecureStorage
             "Currently only Windows (DPAPI) and macOS (Keychain) are supported. " +
             "Please run the application on a supported operating system.");
 
+    /// <summary>Throws <see cref="PlatformNotSupportedException"/>. Secure storage is not available on this platform.</summary>
     public Task SaveTokensAsync(TokenType type, TwitchTokens tokens, CancellationToken ct = default)
         => throw NotSupported();
 
+    /// <summary>Throws <see cref="PlatformNotSupportedException"/>. Secure storage is not available on this platform.</summary>
     public Task<TwitchTokens?> LoadTokensAsync(TokenType type, CancellationToken ct = default)
         => throw NotSupported();
 
+    /// <summary>Throws <see cref="PlatformNotSupportedException"/>. Secure storage is not available on this platform.</summary>
     public Task DeleteTokensAsync(TokenType type, CancellationToken ct = default)
         => throw NotSupported();
 
+    /// <summary>Throws <see cref="PlatformNotSupportedException"/>. Secure storage is not available on this platform.</summary>
     public Task SaveClientIdAsync(string clientId, CancellationToken ct = default)
         => throw NotSupported();
 
+    /// <summary>Throws <see cref="PlatformNotSupportedException"/>. Secure storage is not available on this platform.</summary>
     public Task<string?> LoadClientIdAsync(CancellationToken ct = default)
         => throw NotSupported();
 
+    /// <summary>Throws <see cref="PlatformNotSupportedException"/>. Secure storage is not available on this platform.</summary>
     public Task SaveClientSecretAsync(string clientSecret, CancellationToken ct = default)
         => throw NotSupported();
 
+    /// <summary>Throws <see cref="PlatformNotSupportedException"/>. Secure storage is not available on this platform.</summary>
     public Task<string?> LoadClientSecretAsync(CancellationToken ct = default)
         => throw NotSupported();
 
+    /// <summary>Throws <see cref="PlatformNotSupportedException"/>. Secure storage is not available on this platform.</summary>
     public Task DeleteCredentialsAsync(CancellationToken ct = default)
         => throw NotSupported();
 
+    /// <summary>Throws <see cref="PlatformNotSupportedException"/>. Secure storage is not available on this platform.</summary>
     public Task<bool> HasCredentialsAsync(CancellationToken ct = default)
         => throw NotSupported();
 }

@@ -14,18 +14,30 @@ namespace Wrkzg.Core.SystemCommands;
 /// </summary>
 public class PollResultCommand : ISystemCommand
 {
+    /// <inheritdoc />
     public string Trigger => "!pollresult";
+
+    /// <inheritdoc />
     public string[] Aliases => new[] { "!pollresults", "!results" };
+
+    /// <inheritdoc />
     public string Description => "Show current poll results.";
+
+    /// <inheritdoc />
     public string? DefaultResponseTemplate => null;
 
     private readonly IServiceScopeFactory _scopeFactory;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PollResultCommand"/> class.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating scoped service providers.</param>
     public PollResultCommand(IServiceScopeFactory scopeFactory)
     {
         _scopeFactory = scopeFactory;
     }
 
+    /// <inheritdoc />
     public async Task<string?> ExecuteAsync(ChatMessage message, CancellationToken ct = default)
     {
         using IServiceScope scope = _scopeFactory.CreateScope();

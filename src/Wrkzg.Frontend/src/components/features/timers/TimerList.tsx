@@ -74,12 +74,12 @@ export function TimerList({ timers, onEdit }: TimerListProps) {
                 <td className="px-4 py-2.5">
                   <div className="flex gap-1">
                     {timer.runWhenOnline && (
-                      <span className="inline-block rounded px-1.5 py-0.5 text-xs bg-green-500/10 text-green-400">
+                      <span className="inline-block rounded px-1.5 py-0.5 text-xs bg-green-500/10 text-green-700 dark:text-green-400">
                         Online
                       </span>
                     )}
                     {timer.runWhenOffline && (
-                      <span className="inline-block rounded px-1.5 py-0.5 text-xs bg-blue-500/10 text-blue-400">
+                      <span className="inline-block rounded px-1.5 py-0.5 text-xs bg-blue-500/10 text-blue-700 dark:text-blue-400">
                         Offline
                       </span>
                     )}

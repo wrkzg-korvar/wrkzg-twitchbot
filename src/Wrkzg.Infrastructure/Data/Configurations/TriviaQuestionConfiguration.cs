@@ -9,8 +9,13 @@ using Wrkzg.Core.Models;
 
 namespace Wrkzg.Infrastructure.Data.Configurations;
 
+/// <summary>
+/// EF Core entity type configuration for the <see cref="TriviaQuestion"/> model.
+/// Configures JSON value conversion for the AcceptedAnswers list stored as TEXT in SQLite.
+/// </summary>
 public class TriviaQuestionConfiguration : IEntityTypeConfiguration<TriviaQuestion>
 {
+    /// <summary>Configures the schema for the TriviaQuestions table.</summary>
     public void Configure(EntityTypeBuilder<TriviaQuestion> builder)
     {
         builder.HasKey(q => q.Id);

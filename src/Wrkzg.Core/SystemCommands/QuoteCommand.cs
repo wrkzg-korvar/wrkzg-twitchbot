@@ -17,20 +17,33 @@ namespace Wrkzg.Core.SystemCommands;
 /// </summary>
 public class QuoteCommand : ISystemCommand
 {
+    /// <inheritdoc />
     public string Trigger => "!quote";
+
+    /// <inheritdoc />
     public string[] Aliases => new[] { "!q", "!addquote", "!quoteadd" };
+
+    /// <inheritdoc />
     public string Description => "View, add, or delete quotes. Usage: !quote [number|add <text>|delete <number>]";
+
+    /// <inheritdoc />
     public string? DefaultResponseTemplate => "Quote #{number}: \"{text}\" — {quoteduser} [{game}]";
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ITwitchChatClient _chatClient;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="QuoteCommand"/> class.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating scoped service providers.</param>
+    /// <param name="chatClient">Twitch chat client used to resolve the current channel.</param>
     public QuoteCommand(IServiceScopeFactory scopeFactory, ITwitchChatClient chatClient)
     {
         _scopeFactory = scopeFactory;
         _chatClient = chatClient;
     }
 
+    /// <inheritdoc />
     public async Task<string?> ExecuteAsync(ChatMessage message, CancellationToken ct = default)
     {
         string content = message.Content.Trim();

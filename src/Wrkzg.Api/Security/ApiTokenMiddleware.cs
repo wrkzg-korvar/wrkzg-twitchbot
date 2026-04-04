@@ -18,12 +18,14 @@ public sealed class ApiTokenMiddleware
 
     private const string TokenHeaderName = "X-Wrkzg-Token";
 
+    /// <summary>Initializes the middleware with the next delegate and the token validation service.</summary>
     public ApiTokenMiddleware(RequestDelegate next, ApiTokenService tokenService)
     {
         _next = next;
         _tokenService = tokenService;
     }
 
+    /// <summary>Validates the API token on protected routes and rejects unauthorized requests with 401.</summary>
     public async Task InvokeAsync(HttpContext context)
     {
         string path = context.Request.Path.Value ?? string.Empty;

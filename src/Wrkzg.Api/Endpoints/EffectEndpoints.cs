@@ -16,6 +16,7 @@ namespace Wrkzg.Api.Endpoints;
 /// </summary>
 public static class EffectEndpoints
 {
+    /// <summary>Registers effect list CRUD and trigger testing API endpoints.</summary>
     public static void MapEffectEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/effects").WithTags("Effects");
@@ -95,21 +96,21 @@ public static class EffectEndpoints
             {
                 triggers = engine.GetTriggerTypes().Select(t => new
                 {
-                    t.Id,
-                    t.DisplayName,
-                    t.ParameterKeys
+                    id = t.Id,
+                    displayName = t.DisplayName,
+                    parameterKeys = t.ParameterKeys
                 }),
                 conditions = engine.GetConditionTypes().Select(c => new
                 {
-                    c.Id,
-                    c.DisplayName,
-                    c.ParameterKeys
+                    id = c.Id,
+                    displayName = c.DisplayName,
+                    parameterKeys = c.ParameterKeys
                 }),
                 effects = engine.GetEffectTypes().Select(e => new
                 {
-                    e.Id,
-                    e.DisplayName,
-                    e.ParameterKeys
+                    id = e.Id,
+                    displayName = e.DisplayName,
+                    parameterKeys = e.ParameterKeys
                 })
             });
         });
@@ -174,6 +175,7 @@ public static class EffectEndpoints
     }
 }
 
+/// <summary>Request payload for creating a new effect list.</summary>
 public record CreateEffectListRequest(
     string Name,
     string? Description,
@@ -183,6 +185,7 @@ public record CreateEffectListRequest(
     string? EffectsConfig,
     int? Cooldown);
 
+/// <summary>Request payload for updating an existing effect list.</summary>
 public record UpdateEffectListRequest(
     string? Name,
     string? Description,

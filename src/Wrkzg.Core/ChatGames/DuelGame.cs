@@ -23,11 +23,22 @@ public class DuelGame : IChatGame
     private DuelChallenge? _pendingDuel;
     private DateTimeOffset _lastDuelEnd = DateTimeOffset.MinValue;
 
+    /// <inheritdoc />
     public string Trigger => "!duel";
+
+    /// <inheritdoc />
     public string[] Aliases => Array.Empty<string>();
+
+    /// <inheritdoc />
     public string Name => "Duel";
+
+    /// <inheritdoc />
     public string Description => "Challenge another viewer to a 1v1 points duel!";
+
+    /// <inheritdoc />
     public bool IsEnabled { get; set; } = true;
+
+    /// <inheritdoc />
     public int MinRolePriority { get; set; }
 
     private int _acceptTimeout = 60;
@@ -51,6 +62,12 @@ public class DuelGame : IChatGame
         ["Winner"] = "{winner} wins the duel! +{amount} points.",
     };
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="DuelGame"/>.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating DI scopes to resolve scoped repositories.</param>
+    /// <param name="chatClient">The Twitch IRC chat client for sending game messages.</param>
+    /// <param name="logger">Logger instance for diagnostics.</param>
     public DuelGame(
         IServiceScopeFactory scopeFactory,
         ITwitchChatClient chatClient,
@@ -62,6 +79,7 @@ public class DuelGame : IChatGame
         _msg = new GameMessageTemplates("Duel", DefaultMessages);
     }
 
+    /// <inheritdoc />
     public async Task<string?> HandleAsync(ChatMessage message, CancellationToken ct = default)
     {
         await LoadSettingsAsync(ct);
@@ -135,9 +153,13 @@ public class DuelGame : IChatGame
             ("timeout", _acceptTimeout.ToString()));
     }
 
+    /// <inheritdoc />
     public Dictionary<string, string> GetMessageTemplates() => _msg.GetAll();
+
+    /// <inheritdoc />
     public Dictionary<string, string> GetDefaultMessageTemplates() => _msg.GetDefaults();
 
+    /// <inheritdoc />
     public async Task<bool> HandleActiveRoundMessageAsync(ChatMessage message, CancellationToken ct = default)
     {
         if (_pendingDuel is null)

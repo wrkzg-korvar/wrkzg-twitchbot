@@ -13,6 +13,11 @@ namespace Wrkzg.Core;
 /// </summary>
 public static class DependencyInjection
 {
+    /// <summary>
+    /// Registers all Core-layer services, system commands, chat games, and the effect engine in the DI container.
+    /// </summary>
+    /// <param name="services">The service collection to add registrations to.</param>
+    /// <returns>The same <see cref="IServiceCollection"/> for chaining.</returns>
     public static IServiceCollection AddCoreServices(this IServiceCollection services)
     {
         // System Commands (Singleton — stateless, use IServiceScopeFactory internally)

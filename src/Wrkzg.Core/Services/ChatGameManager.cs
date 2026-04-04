@@ -21,6 +21,13 @@ public class ChatGameManager
     private readonly ITwitchChatClient _chatClient;
     private readonly ILogger<ChatGameManager> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="ChatGameManager"/> with the registered games and dependencies.
+    /// </summary>
+    /// <param name="games">All registered chat game implementations.</param>
+    /// <param name="scopeFactory">Factory for creating DI scopes to resolve scoped services.</param>
+    /// <param name="chatClient">The Twitch IRC chat client for sending responses.</param>
+    /// <param name="logger">Logger instance for diagnostics.</param>
     public ChatGameManager(
         IEnumerable<IChatGame> games,
         IServiceScopeFactory scopeFactory,

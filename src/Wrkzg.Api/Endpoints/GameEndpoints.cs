@@ -16,6 +16,7 @@ namespace Wrkzg.Api.Endpoints;
 /// </summary>
 public static class GameEndpoints
 {
+    /// <summary>Registers chat game configuration and trivia question API endpoints.</summary>
     public static void MapGameEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/games").WithTags("Games");
@@ -186,10 +187,13 @@ public static class GameEndpoints
     }
 }
 
+/// <summary>Request payload for updating game-specific settings.</summary>
 public record UpdateGameSettingsRequest(Dictionary<string, string>? Settings);
 
+/// <summary>Request payload for updating game message templates.</summary>
 public record UpdateGameMessagesRequest(Dictionary<string, string>? Messages);
 
+/// <summary>Request payload for creating a custom trivia question.</summary>
 public record CreateTriviaQuestionRequest(
     string Question,
     string Answer,

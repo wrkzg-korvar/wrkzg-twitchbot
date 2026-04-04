@@ -23,13 +23,20 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IDisp
 {
     private readonly SqliteConnection _connection;
 
+    /// <summary>In-memory secure storage fake for testing without platform-specific credential stores.</summary>
     public InMemorySecureStorage SecureStorage { get; } = new();
+    /// <summary>Mock Twitch IRC chat client.</summary>
     public ITwitchChatClient TwitchChatClient { get; } = Substitute.For<ITwitchChatClient>();
+    /// <summary>Mock Twitch Helix API client.</summary>
     public ITwitchHelixClient TwitchHelixClient { get; } = Substitute.For<ITwitchHelixClient>();
+    /// <summary>Mock Twitch OAuth service.</summary>
     public ITwitchOAuthService TwitchOAuthService { get; } = Substitute.For<ITwitchOAuthService>();
+    /// <summary>Mock chat event broadcaster.</summary>
     public IChatEventBroadcaster ChatEventBroadcaster { get; } = Substitute.For<IChatEventBroadcaster>();
+    /// <summary>Mock auth state notifier.</summary>
     public IAuthStateNotifier AuthStateNotifier { get; } = Substitute.For<IAuthStateNotifier>();
 
+    /// <summary>Creates the factory and opens a shared in-memory SQLite connection.</summary>
     public CustomWebApplicationFactory()
     {
         // Keep an open connection so the in-memory DB persists across scopes
@@ -37,6 +44,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IDisp
         _connection.Open();
     }
 
+    /// <summary>Configures the web host with in-memory SQLite and mock dependencies for testing.</summary>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -93,6 +101,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IDisp
         return client;
     }
 
+    /// <summary>Disposes the factory and closes the shared in-memory SQLite connection.</summary>
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);

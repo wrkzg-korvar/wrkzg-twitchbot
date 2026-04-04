@@ -1,4 +1,7 @@
+using System;
+using System.IO;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Threading;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -9,10 +12,13 @@ namespace Wrkzg.Api.Endpoints;
 
 /// <summary>
 /// Status endpoint for the dashboard overview.
-/// Returns bot connection status, stream live status, and auth state.
+/// Returns bot connection status, stream live status, auth state, and app version.
 /// </summary>
 public static class StatusEndpoints
 {
+    private static string? _cachedVersion;
+
+    /// <summary>Registers the dashboard status overview API endpoint.</summary>
     public static void MapStatusEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/status").WithTags("Status");
@@ -57,6 +63,9 @@ public static class StatusEndpoints
                 : RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "windows"
                 : "linux";
 
+            // App version from version.json
+            string version = GetAppVersion();
+
             return Results.Ok(new
             {
                 bot,
@@ -66,8 +75,52 @@ public static class StatusEndpoints
                     botTokenPresent = hasBot,
                     broadcasterTokenPresent = hasBroadcaster
                 },
-                platform
+                platform,
+                version
             });
         });
+    }
+
+    /// <summary>
+    /// Reads the app version from version.json. Cached after first read.
+    /// Searches next to the executable and in common development paths.
+    /// </summary>
+    private static string GetAppVersion()
+    {
+        if (_cachedVersion is not null)
+        {
+            return _cachedVersion;
+        }
+
+        string[] candidates = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "version.json"),
+            Path.GetFullPath("version.json"),
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "version.json")),
+        };
+
+        foreach (string path in candidates)
+        {
+            if (File.Exists(path))
+            {
+                try
+                {
+                    string json = File.ReadAllText(path);
+                    using JsonDocument doc = JsonDocument.Parse(json);
+                    if (doc.RootElement.TryGetProperty("version", out JsonElement versionElement))
+                    {
+                        _cachedVersion = versionElement.GetString() ?? "0.0.0";
+                        return _cachedVersion;
+                    }
+                }
+                catch
+                {
+                    // Ignore parse errors, try next candidate
+                }
+            }
+        }
+
+        _cachedVersion = "0.0.0";
+        return _cachedVersion;
     }
 }

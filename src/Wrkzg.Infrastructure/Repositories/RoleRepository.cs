@@ -9,25 +9,35 @@ using Wrkzg.Infrastructure.Data;
 
 namespace Wrkzg.Infrastructure.Repositories;
 
+/// <summary>
+/// SQLite-backed repository for role and user-role assignment persistence.
+/// </summary>
 public class RoleRepository : IRoleRepository
 {
     private readonly BotDbContext _db;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RoleRepository"/> class.
+    /// </summary>
+    /// <param name="db">The bot database context.</param>
     public RoleRepository(BotDbContext db)
     {
         _db = db;
     }
 
+    /// <summary>Gets all roles ordered by priority descending (highest first).</summary>
     public async Task<IReadOnlyList<Role>> GetAllAsync(CancellationToken ct = default)
     {
         return await _db.Roles.OrderByDescending(r => r.Priority).ToListAsync(ct);
     }
 
+    /// <summary>Gets a role by its database identifier.</summary>
     public async Task<Role?> GetByIdAsync(int id, CancellationToken ct = default)
     {
         return await _db.Roles.FindAsync(new object[] { id }, ct);
     }
 
+    /// <summary>Creates a new role and persists it to the database.</summary>
     public async Task<Role> CreateAsync(Role role, CancellationToken ct = default)
     {
         _db.Roles.Add(role);
@@ -35,12 +45,14 @@ public class RoleRepository : IRoleRepository
         return role;
     }
 
+    /// <summary>Updates an existing role in the database.</summary>
     public async Task UpdateAsync(Role role, CancellationToken ct = default)
     {
         _db.Roles.Update(role);
         await _db.SaveChangesAsync(ct);
     }
 
+    /// <summary>Deletes a role by its database identifier, removing all user assignments first.</summary>
     public async Task DeleteAsync(int id, CancellationToken ct = default)
     {
         Role? role = await _db.Roles.FindAsync(new object[] { id }, ct);
@@ -57,6 +69,7 @@ public class RoleRepository : IRoleRepository
         }
     }
 
+    /// <summary>Gets all roles assigned to a user, ordered by priority descending.</summary>
     public async Task<IReadOnlyList<Role>> GetUserRolesAsync(int userId, CancellationToken ct = default)
     {
         return await _db.UserRoles
@@ -67,6 +80,7 @@ public class RoleRepository : IRoleRepository
             .ToListAsync(ct);
     }
 
+    /// <summary>Assigns a role to a user if not already assigned.</summary>
     public async Task AssignRoleAsync(int userId, int roleId, bool isAutoAssigned, CancellationToken ct = default)
     {
         bool exists = await _db.UserRoles
@@ -84,6 +98,7 @@ public class RoleRepository : IRoleRepository
         }
     }
 
+    /// <summary>Removes a role assignment from a user.</summary>
     public async Task RemoveRoleAsync(int userId, int roleId, CancellationToken ct = default)
     {
         UserRole? assignment = await _db.UserRoles
@@ -96,6 +111,7 @@ public class RoleRepository : IRoleRepository
         }
     }
 
+    /// <summary>Gets the highest role priority value for a user, or 0 if the user has no roles.</summary>
     public async Task<int> GetHighestPriorityForUserAsync(int userId, CancellationToken ct = default)
     {
         bool hasRoles = await _db.UserRoles.AnyAsync(ur => ur.UserId == userId, ct);
@@ -110,6 +126,7 @@ public class RoleRepository : IRoleRepository
             .MaxAsync(ur => ur.Role.Priority, ct);
     }
 
+    /// <summary>Gets all users assigned to a specific role, ordered by display name.</summary>
     public async Task<IReadOnlyList<User>> GetUsersWithRoleAsync(int roleId, CancellationToken ct = default)
     {
         return await _db.UserRoles
@@ -120,11 +137,13 @@ public class RoleRepository : IRoleRepository
             .ToListAsync(ct);
     }
 
+    /// <summary>Gets the number of users assigned to a specific role.</summary>
     public async Task<int> GetUserCountForRoleAsync(int roleId, CancellationToken ct = default)
     {
         return await _db.UserRoles.CountAsync(ur => ur.RoleId == roleId, ct);
     }
 
+    /// <summary>Checks whether a user's role assignment was auto-assigned by criteria rules.</summary>
     public async Task<bool> IsAutoAssignedAsync(int userId, int roleId, CancellationToken ct = default)
     {
         UserRole? assignment = await _db.UserRoles

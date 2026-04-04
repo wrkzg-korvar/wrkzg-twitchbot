@@ -25,6 +25,11 @@ public class DataImportService : IDataImportService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<DataImportService> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DataImportService"/> class.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating scoped service providers to access repositories.</param>
+    /// <param name="logger">The logger for import diagnostics.</param>
     public DataImportService(
         IServiceScopeFactory scopeFactory,
         ILogger<DataImportService> logger)
@@ -33,6 +38,10 @@ public class DataImportService : IDataImportService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Previews an import without modifying data, returning counts of records
+    /// that would be created, updated, or skipped.
+    /// </summary>
     public async Task<ImportResult> PreviewAsync(
         Stream fileStream, ImportConfiguration config, CancellationToken ct = default)
     {
@@ -77,6 +86,9 @@ public class DataImportService : IDataImportService
         return result;
     }
 
+    /// <summary>
+    /// Executes the import, creating or merging users and optionally assigning VIP roles.
+    /// </summary>
     public async Task<ImportResult> ExecuteAsync(
         Stream fileStream, ImportConfiguration config, CancellationToken ct = default)
     {

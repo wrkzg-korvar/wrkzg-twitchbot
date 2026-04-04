@@ -15,6 +15,7 @@ namespace Wrkzg.Api.Endpoints;
 /// </summary>
 public static class SpamFilterEndpoints
 {
+    /// <summary>Registers spam filter configuration read and update API endpoints.</summary>
     public static void MapSpamFilterEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/spam-filter").WithTags("SpamFilter");

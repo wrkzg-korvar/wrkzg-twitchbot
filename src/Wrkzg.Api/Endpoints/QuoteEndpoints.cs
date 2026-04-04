@@ -14,6 +14,7 @@ namespace Wrkzg.Api.Endpoints;
 /// </summary>
 public static class QuoteEndpoints
 {
+    /// <summary>Registers chat quote CRUD API endpoints.</summary>
     public static void MapQuoteEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/quotes").WithTags("Quotes");

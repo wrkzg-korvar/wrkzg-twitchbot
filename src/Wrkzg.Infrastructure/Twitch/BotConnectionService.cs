@@ -28,6 +28,15 @@ public class BotConnectionService : IHostedService, IBotConnectionService
     private readonly ChatMessagePipeline _pipeline;
     private readonly ILogger<BotConnectionService> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BotConnectionService"/> class.
+    /// </summary>
+    /// <param name="chatClient">The Twitch IRC chat client.</param>
+    /// <param name="storage">Secure storage for loading OAuth tokens.</param>
+    /// <param name="scopeFactory">Factory for creating scoped service providers.</param>
+    /// <param name="broadcaster">SignalR event broadcaster for the dashboard.</param>
+    /// <param name="pipeline">The chat message processing pipeline.</param>
+    /// <param name="logger">The logger for connection diagnostics.</param>
     public BotConnectionService(
         ITwitchChatClient chatClient,
         ISecureStorage storage,
@@ -44,6 +53,7 @@ public class BotConnectionService : IHostedService, IBotConnectionService
         _logger = logger;
     }
 
+    /// <summary>Wires up chat client events and attempts auto-connect if configured.</summary>
     public async Task StartAsync(CancellationToken ct)
     {
         _logger.LogInformation("BotConnectionService starting");
@@ -57,6 +67,7 @@ public class BotConnectionService : IHostedService, IBotConnectionService
         await TryConnectAsync(ct);
     }
 
+    /// <summary>Disconnects from IRC and unwires chat client events.</summary>
     public async Task StopAsync(CancellationToken ct)
     {
         _logger.LogInformation("BotConnectionService stopping — disconnecting from IRC");
@@ -68,6 +79,10 @@ public class BotConnectionService : IHostedService, IBotConnectionService
         await _chatClient.DisconnectAsync(ct);
     }
 
+    /// <summary>
+    /// Attempts to connect the bot to IRC using stored credentials and channel settings.
+    /// Returns true if the connection was successful, false if credentials are missing or an error occurred.
+    /// </summary>
     public async Task<bool> TryConnectAsync(CancellationToken ct = default)
     {
         try

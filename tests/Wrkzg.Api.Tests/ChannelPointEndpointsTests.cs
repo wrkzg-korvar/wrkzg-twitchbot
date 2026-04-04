@@ -8,15 +8,18 @@ using Xunit;
 
 namespace Wrkzg.Api.Tests;
 
+/// <summary>Tests for the channel point reward handler API endpoints.</summary>
 public class ChannelPointEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
+    /// <summary>Initializes the test with an authenticated HTTP client.</summary>
     public ChannelPointEndpointsTests(CustomWebApplicationFactory factory)
     {
         _client = factory.CreateAuthenticatedClient();
     }
 
+    /// <summary>Verifies that listing all channel point handlers returns HTTP 200 OK.</summary>
     [Fact]
     public async Task GetChannelPointHandlers_ReturnsOk()
     {
@@ -25,6 +28,7 @@ public class ChannelPointEndpointsTests : IClassFixture<CustomWebApplicationFact
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
+    /// <summary>Verifies that creating a channel point handler with valid data returns HTTP 201 Created.</summary>
     [Fact]
     public async Task CreateChannelPointHandler_ValidRequest_ReturnsCreated()
     {
@@ -47,6 +51,7 @@ public class ChannelPointEndpointsTests : IClassFixture<CustomWebApplicationFact
         body.GetProperty("isEnabled").GetBoolean().Should().BeTrue();
     }
 
+    /// <summary>Verifies that creating a handler with an empty reward ID returns HTTP 400 Bad Request.</summary>
     [Fact]
     public async Task CreateChannelPointHandler_EmptyRewardId_ReturnsBadRequest()
     {
@@ -59,6 +64,7 @@ public class ChannelPointEndpointsTests : IClassFixture<CustomWebApplicationFact
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
+    /// <summary>Verifies that creating a handler with a duplicate reward ID returns HTTP 400 Bad Request.</summary>
     [Fact]
     public async Task CreateChannelPointHandler_DuplicateRewardId_ReturnsBadRequest()
     {
@@ -81,6 +87,7 @@ public class ChannelPointEndpointsTests : IClassFixture<CustomWebApplicationFact
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
+    /// <summary>Verifies that deleting an existing channel point handler returns HTTP 204 No Content.</summary>
     [Fact]
     public async Task DeleteChannelPointHandler_ReturnsNoContent()
     {
@@ -100,6 +107,7 @@ public class ChannelPointEndpointsTests : IClassFixture<CustomWebApplicationFact
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
 
+    /// <summary>Verifies that fetching channel point rewards from the Helix client returns HTTP 200 OK.</summary>
     [Fact]
     public async Task GetChannelPointRewards_ReturnsOk()
     {

@@ -17,6 +17,7 @@ public sealed class ApiTokenService
 
     private readonly byte[] _tokenBytes;
 
+    /// <summary>Generates a cryptographically random session token on construction.</summary>
     public ApiTokenService()
     {
         byte[] bytes = RandomNumberGenerator.GetBytes(32);

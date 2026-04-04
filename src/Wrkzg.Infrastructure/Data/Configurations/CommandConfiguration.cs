@@ -8,8 +8,13 @@ using Wrkzg.Core.Models;
 
 namespace Wrkzg.Infrastructure.Data.Configurations;
 
+/// <summary>
+/// EF Core entity type configuration for the <see cref="Command"/> model.
+/// Configures JSON value conversion for the Aliases array stored as TEXT in SQLite.
+/// </summary>
 public class CommandConfiguration : IEntityTypeConfiguration<Command>
 {
+    /// <summary>Configures the schema for the Commands table.</summary>
     public void Configure(EntityTypeBuilder<Command> builder)
     {
         builder.HasKey(c => c.Id);
@@ -31,6 +36,7 @@ public class CommandConfiguration : IEntityTypeConfiguration<Command>
             .HasConversion<int>();
     }
 
+    /// <summary>Creates a value comparer for string arrays used in JSON-to-TEXT value conversions.</summary>
     internal static ValueComparer<string[]> StringArrayComparer() => new(
         (a, b) => (a == null && b == null) || (a != null && b != null && a.SequenceEqual(b)),
         v => v.Aggregate(0, (hash, item) => HashCode.Combine(hash, item.GetHashCode())),

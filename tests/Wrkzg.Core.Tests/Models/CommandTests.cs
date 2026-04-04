@@ -5,8 +5,10 @@ using Xunit;
 
 namespace Wrkzg.Core.Tests.Models;
 
+/// <summary>Tests for the Command model and PermissionLevel enum.</summary>
 public class CommandTests
 {
+    /// <summary>Verifies that a new Command has correct default property values.</summary>
     [Fact]
     public void Command_DefaultValues_AreCorrect()
     {
@@ -23,6 +25,7 @@ public class CommandTests
         cmd.UseCount.Should().Be(0);
     }
 
+    /// <summary>Verifies that permission levels are ordered from Everyone (lowest) to Broadcaster (highest).</summary>
     [Fact]
     public void PermissionLevel_Ordering_IsCorrect()
     {
@@ -33,6 +36,7 @@ public class CommandTests
         ((int)PermissionLevel.Follower).Should().BeGreaterThan((int)PermissionLevel.Everyone);
     }
 
+    /// <summary>Verifies that PermissionLevel integer values are sequential starting from zero.</summary>
     [Fact]
     public void PermissionLevel_IntValues_AreSequential()
     {

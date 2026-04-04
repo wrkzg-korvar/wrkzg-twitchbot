@@ -4,8 +4,12 @@ using Wrkzg.Core.Models;
 
 namespace Wrkzg.Infrastructure.Data.Configurations;
 
+/// <summary>
+/// EF Core entity type configuration for the <see cref="HotkeyBinding"/> model.
+/// </summary>
 public class HotkeyBindingConfiguration : IEntityTypeConfiguration<HotkeyBinding>
 {
+    /// <summary>Configures the schema for the HotkeyBindings table.</summary>
     public void Configure(EntityTypeBuilder<HotkeyBinding> builder)
     {
         builder.HasKey(h => h.Id);

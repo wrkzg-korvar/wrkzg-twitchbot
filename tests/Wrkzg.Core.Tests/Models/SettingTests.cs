@@ -4,8 +4,10 @@ using Xunit;
 
 namespace Wrkzg.Core.Tests.Models;
 
+/// <summary>Tests for the Setting model.</summary>
 public class SettingTests
 {
+    /// <summary>Verifies that a new Setting has empty default values for Key and Value.</summary>
     [Fact]
     public void Setting_DefaultValues_AreCorrect()
     {
@@ -15,6 +17,7 @@ public class SettingTests
         setting.Value.Should().BeEmpty();
     }
 
+    /// <summary>Verifies that Key and Value can be set via object initializer.</summary>
     [Fact]
     public void Setting_CanSetKeyAndValue()
     {

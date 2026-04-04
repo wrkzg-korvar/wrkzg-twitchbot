@@ -13,18 +13,30 @@ namespace Wrkzg.Core.SystemCommands;
 /// </summary>
 public class VoteCommand : ISystemCommand
 {
+    /// <inheritdoc />
     public string Trigger => "!vote";
+
+    /// <inheritdoc />
     public string[] Aliases => new[] { "!v" };
+
+    /// <inheritdoc />
     public string Description => "Vote in the active poll. Usage: !vote <number>";
+
+    /// <inheritdoc />
     public string? DefaultResponseTemplate => null;
 
     private readonly IServiceScopeFactory _scopeFactory;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VoteCommand"/> class.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating scoped service providers.</param>
     public VoteCommand(IServiceScopeFactory scopeFactory)
     {
         _scopeFactory = scopeFactory;
     }
 
+    /// <inheritdoc />
     public async Task<string?> ExecuteAsync(ChatMessage message, CancellationToken ct = default)
     {
         string args = message.Content.Length > Trigger.Length

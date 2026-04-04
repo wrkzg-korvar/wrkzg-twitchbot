@@ -8,15 +8,18 @@ using Xunit;
 
 namespace Wrkzg.Api.Tests;
 
+/// <summary>Tests for the settings API endpoints.</summary>
 public class SettingsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
+    /// <summary>Initializes the test with an authenticated HTTP client.</summary>
     public SettingsEndpointsTests(CustomWebApplicationFactory factory)
     {
         _client = factory.CreateAuthenticatedClient();
     }
 
+    /// <summary>Verifies that fetching all settings returns HTTP 200 OK.</summary>
     [Fact]
     public async Task GetSettings_ReturnsOk()
     {
@@ -25,6 +28,7 @@ public class SettingsEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
+    /// <summary>Verifies that updating settings via PUT returns HTTP 200 OK.</summary>
     [Fact]
     public async Task PutSettings_UpdatesValues()
     {

@@ -194,10 +194,20 @@ public static class GenericCsvParser
     }
 }
 
+/// <summary>
+/// Preview data from a CSV file, including detected headers, sample rows, and row counts.
+/// </summary>
 public class CsvPreview
 {
+    /// <summary>Gets or sets the detected header names (empty if the file has no header row).</summary>
     public string[] Headers { get; set; } = Array.Empty<string>();
+
+    /// <summary>Gets or sets the first few data rows for column mapping preview.</summary>
     public List<string[]> SampleRows { get; set; } = new();
+
+    /// <summary>Gets or sets the number of detected columns.</summary>
     public int ColumnCount { get; set; }
+
+    /// <summary>Gets or sets the total number of rows in the file.</summary>
     public int TotalRows { get; set; }
 }

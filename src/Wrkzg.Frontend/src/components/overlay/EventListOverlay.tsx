@@ -11,7 +11,7 @@ interface EventItem {
 }
 
 interface EventPayload {
-  user: string;
+  username: string;
   tier?: string;
   count?: number;
   viewers?: number;
@@ -28,17 +28,17 @@ const EventIcons: Record<string, string> = {
 function formatEventText(type: string, data: EventPayload): string {
   switch (type) {
     case "FollowEvent":
-      return `${data.user} followed`;
+      return `${data.username} followed`;
     case "SubscribeEvent":
-      return `${data.user} subscribed (T${data.tier ?? "1"})`;
+      return `${data.username} subscribed (T${data.tier ?? "1"})`;
     case "GiftSubEvent":
-      return `${data.user} gifted ${data.count ?? 1} sub${(data.count ?? 1) > 1 ? "s" : ""}`;
+      return `${data.username} gifted ${data.count ?? 1} sub${(data.count ?? 1) > 1 ? "s" : ""}`;
     case "ResubEvent":
-      return `${data.user} resubscribed`;
+      return `${data.username} resubscribed`;
     case "RaidEvent":
-      return `${data.user} raided with ${data.viewers ?? 0}`;
+      return `${data.username} raided with ${data.viewers ?? 0}`;
     default:
-      return `${data.user}`;
+      return `${data.username}`;
   }
 }
 

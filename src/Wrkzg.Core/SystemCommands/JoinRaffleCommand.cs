@@ -13,18 +13,30 @@ namespace Wrkzg.Core.SystemCommands;
 /// </summary>
 public class JoinRaffleCommand : ISystemCommand
 {
+    /// <inheritdoc />
     public string Trigger => "!join";
+
+    /// <inheritdoc />
     public string[] Aliases => new[] { "!enter" };
+
+    /// <inheritdoc />
     public string Description => "Enter the active raffle.";
+
+    /// <inheritdoc />
     public string? DefaultResponseTemplate => null;
 
     private readonly IServiceScopeFactory _scopeFactory;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JoinRaffleCommand"/> class.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating scoped service providers.</param>
     public JoinRaffleCommand(IServiceScopeFactory scopeFactory)
     {
         _scopeFactory = scopeFactory;
     }
 
+    /// <inheritdoc />
     public async Task<string?> ExecuteAsync(ChatMessage message, CancellationToken ct = default)
     {
         using IServiceScope scope = _scopeFactory.CreateScope();

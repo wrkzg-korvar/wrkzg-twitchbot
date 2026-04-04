@@ -14,6 +14,7 @@ namespace Wrkzg.Api.Endpoints;
 /// </summary>
 public static class ChannelPointEndpoints
 {
+    /// <summary>Registers channel point reward handler API endpoints.</summary>
     public static void MapChannelPointEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/channel-points").WithTags("ChannelPoints");
@@ -102,6 +103,7 @@ public static class ChannelPointEndpoints
     }
 }
 
+/// <summary>Request payload for creating a new channel point reward handler.</summary>
 public record CreateChannelPointHandlerRequest(
     string TwitchRewardId,
     string? Title,
@@ -110,6 +112,7 @@ public record CreateChannelPointHandlerRequest(
     string? ActionPayload,
     bool? AutoFulfill);
 
+/// <summary>Request payload for updating an existing channel point reward handler.</summary>
 public record UpdateChannelPointHandlerRequest(
     string? Title,
     RewardActionType? ActionType,

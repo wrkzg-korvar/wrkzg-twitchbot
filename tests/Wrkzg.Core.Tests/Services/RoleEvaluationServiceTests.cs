@@ -12,12 +12,14 @@ using Xunit;
 
 namespace Wrkzg.Core.Tests.Services;
 
+/// <summary>Tests for the RoleEvaluationService auto-assignment and removal logic.</summary>
 public class RoleEvaluationServiceTests
 {
     private readonly IRoleRepository _roleRepo;
     private readonly IUserRepository _userRepo;
     private readonly RoleEvaluationService _sut;
 
+    /// <summary>Initializes the test fixture.</summary>
     public RoleEvaluationServiceTests()
     {
         _roleRepo = Substitute.For<IRoleRepository>();
@@ -80,6 +82,7 @@ public class RoleEvaluationServiceTests
         };
     }
 
+    /// <summary>Verifies that a role is assigned when the user meets the auto-assign criteria.</summary>
     [Fact]
     public async Task EvaluateUser_AssignsRole_WhenCriteriaMet()
     {
@@ -99,6 +102,7 @@ public class RoleEvaluationServiceTests
         await _roleRepo.Received(1).AssignRoleAsync(1, role.Id, true, Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that an auto-assigned role is removed when the user no longer meets the criteria.</summary>
     [Fact]
     public async Task EvaluateUser_RemovesAutoRole_WhenCriteriaNotMet()
     {
@@ -119,6 +123,7 @@ public class RoleEvaluationServiceTests
         await _roleRepo.Received(1).RemoveRoleAsync(1, role.Id, Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that a manually assigned role is kept even when the criteria are not met.</summary>
     [Fact]
     public async Task EvaluateUser_KeepsManualRole_WhenCriteriaNotMet()
     {
@@ -139,6 +144,7 @@ public class RoleEvaluationServiceTests
         await _roleRepo.DidNotReceive().RemoveRoleAsync(1, role.Id, Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that a role is not assigned when only some criteria are met.</summary>
     [Fact]
     public async Task EvaluateUser_DoesNotAssign_WhenNotAllCriteriaMet()
     {
@@ -159,6 +165,7 @@ public class RoleEvaluationServiceTests
             Arg.Any<int>(), Arg.Any<int>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that roles without auto-assign criteria are skipped during evaluation.</summary>
     [Fact]
     public async Task EvaluateUser_SkipsRole_WithNullAutoAssign()
     {
@@ -185,6 +192,7 @@ public class RoleEvaluationServiceTests
             Arg.Any<int>(), Arg.Any<int>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that the subscriber requirement is enforced during role evaluation.</summary>
     [Fact]
     public async Task EvaluateUser_ChecksSubscriberCriteria()
     {
@@ -203,6 +211,7 @@ public class RoleEvaluationServiceTests
         changed.Should().BeFalse();
     }
 
+    /// <summary>Verifies that multiple roles are assigned when the user qualifies for all of them.</summary>
     [Fact]
     public async Task EvaluateUser_AssignsMultipleRoles()
     {
@@ -224,6 +233,7 @@ public class RoleEvaluationServiceTests
         await _roleRepo.Received(1).AssignRoleAsync(1, 2, true, Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that evaluation returns false for a nonexistent user.</summary>
     [Fact]
     public async Task EvaluateUser_ReturnsfalseForNonexistentUser()
     {

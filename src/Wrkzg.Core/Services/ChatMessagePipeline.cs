@@ -39,6 +39,17 @@ public class ChatMessagePipeline
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ChatMessagePipeline> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="ChatMessagePipeline"/> with all pipeline stage dependencies.
+    /// </summary>
+    /// <param name="commandProcessor">Handles system and custom chat commands.</param>
+    /// <param name="tracking">Tracks active users for watch time and point awards.</param>
+    /// <param name="timedMessageService">Manages timed message counters and scheduling.</param>
+    /// <param name="chatGameManager">Manages chat game triggers and active rounds.</param>
+    /// <param name="effectEngine">Evaluates effect lists against chat message events.</param>
+    /// <param name="broadcaster">Broadcasts real-time events to the dashboard via SignalR.</param>
+    /// <param name="scopeFactory">Factory for creating DI scopes to resolve scoped services.</param>
+    /// <param name="logger">Logger instance for diagnostics.</param>
     public ChatMessagePipeline(
         ICommandProcessor commandProcessor,
         IUserTrackingService tracking,

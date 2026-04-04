@@ -8,12 +8,16 @@ namespace Wrkzg.Core.Models;
 /// </summary>
 public class StreamSession
 {
+    /// <summary>Primary key.</summary>
     public int Id { get; set; }
 
     /// <summary>Twitch Stream ID (unique per stream).</summary>
     public string? TwitchStreamId { get; set; }
 
+    /// <summary>When the stream went live.</summary>
     public DateTimeOffset StartedAt { get; set; }
+
+    /// <summary>When the stream ended. Null if still live.</summary>
     public DateTimeOffset? EndedAt { get; set; }
 
     /// <summary>Duration in minutes. Calculated on close.</summary>

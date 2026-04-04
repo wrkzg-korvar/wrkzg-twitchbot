@@ -4,8 +4,12 @@ using Wrkzg.Core.Models;
 
 namespace Wrkzg.Infrastructure.Data.Configurations;
 
+/// <summary>
+/// EF Core entity type configuration for the <see cref="SongRequest"/> model.
+/// </summary>
 public class SongRequestConfiguration : IEntityTypeConfiguration<SongRequest>
 {
+    /// <summary>Configures the schema for the SongRequests table.</summary>
     public void Configure(EntityTypeBuilder<SongRequest> builder)
     {
         builder.HasKey(s => s.Id);

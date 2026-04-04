@@ -21,6 +21,12 @@ public class TimedMessageService : BackgroundService
     private readonly ILogger<TimedMessageService> _logger;
     private int _chatLinesSinceLastCheck;
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="TimedMessageService"/>.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating DI scopes to resolve scoped repositories.</param>
+    /// <param name="chat">The Twitch IRC chat client for sending timed messages.</param>
+    /// <param name="logger">Logger instance for diagnostics.</param>
     public TimedMessageService(
         IServiceScopeFactory scopeFactory,
         ITwitchChatClient chat,
@@ -37,6 +43,7 @@ public class TimedMessageService : BackgroundService
         Interlocked.Increment(ref _chatLinesSinceLastCheck);
     }
 
+    /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("TimedMessageService starting");

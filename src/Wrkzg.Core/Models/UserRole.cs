@@ -7,10 +7,16 @@ namespace Wrkzg.Core.Models;
 /// </summary>
 public class UserRole
 {
+    /// <summary>Foreign key to the user.</summary>
     public int UserId { get; set; }
+
+    /// <summary>Navigation property to the user.</summary>
     public User User { get; set; } = null!;
 
+    /// <summary>Foreign key to the role.</summary>
     public int RoleId { get; set; }
+
+    /// <summary>Navigation property to the role.</summary>
     public Role Role { get; set; } = null!;
 
     /// <summary>When this role was assigned to the user.</summary>

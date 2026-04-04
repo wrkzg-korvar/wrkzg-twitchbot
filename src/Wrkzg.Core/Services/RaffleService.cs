@@ -25,6 +25,15 @@ public class RaffleService
     private readonly ITwitchChatClient _chat;
     private readonly ILogger<RaffleService> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="RaffleService"/> with the required dependencies.
+    /// </summary>
+    /// <param name="raffles">Repository for raffle persistence.</param>
+    /// <param name="users">Repository for user lookup and creation.</param>
+    /// <param name="settings">Repository for customizable template settings.</param>
+    /// <param name="broadcaster">Broadcasts real-time raffle events to the dashboard.</param>
+    /// <param name="chat">The Twitch IRC chat client for sending announcements.</param>
+    /// <param name="logger">Logger instance for diagnostics.</param>
     public RaffleService(
         IRaffleRepository raffles,
         IUserRepository users,
@@ -519,20 +528,63 @@ public class RaffleService
 
 // ─── Result Types ────────────────────────────────────────
 
+/// <summary>
+/// Result of a raffle creation, closure, or cancellation operation.
+/// </summary>
+/// <param name="Success">Whether the operation succeeded.</param>
+/// <param name="Error">Error message if the operation failed; null on success.</param>
+/// <param name="Raffle">The raffle entity if the operation succeeded; null on failure.</param>
 public record RaffleResult(bool Success, string? Error, Raffle? Raffle)
 {
+    /// <summary>Creates a successful raffle result.</summary>
+    /// <param name="raffle">The raffle entity.</param>
+    /// <returns>A successful <see cref="RaffleResult"/>.</returns>
     public static RaffleResult Ok(Raffle raffle) => new(true, null, raffle);
+
+    /// <summary>Creates a failed raffle result with the given error message.</summary>
+    /// <param name="error">Description of why the operation failed.</param>
+    /// <returns>A failed <see cref="RaffleResult"/>.</returns>
     public static RaffleResult Fail(string error) => new(false, error, null);
 }
 
+/// <summary>
+/// Result of a raffle entry attempt, indicating whether the user was added.
+/// </summary>
+/// <param name="Success">Whether the entry was accepted.</param>
+/// <param name="Error">Error message if the entry failed; null on success.</param>
+/// <param name="AlreadyEntered">Whether the user had already entered this raffle.</param>
+/// <param name="EntryCount">Total number of entries in the raffle after this attempt.</param>
 public record EntryResult(bool Success, string? Error, bool AlreadyEntered, int EntryCount = 0)
 {
+    /// <summary>Creates a successful entry result.</summary>
+    /// <param name="entryCount">Total entries in the raffle after the new entry.</param>
+    /// <returns>A successful <see cref="EntryResult"/>.</returns>
     public static EntryResult Ok(int entryCount) => new(true, null, false, entryCount);
+
+    /// <summary>Creates a failed entry result with the given error message.</summary>
+    /// <param name="error">Description of why the entry failed.</param>
+    /// <param name="alreadyEntered">Whether the failure was due to a duplicate entry.</param>
+    /// <returns>A failed <see cref="EntryResult"/>.</returns>
     public static EntryResult Fail(string error, bool alreadyEntered) => new(false, error, alreadyEntered, 0);
 }
 
+/// <summary>
+/// Result of a raffle draw operation, containing the winner information.
+/// </summary>
+/// <param name="Success">Whether the draw succeeded.</param>
+/// <param name="Error">Error message if the draw failed; null on success.</param>
+/// <param name="WinnerName">Display name of the drawn winner; null on failure.</param>
+/// <param name="TotalEntries">Total number of entries in the raffle.</param>
 public record DrawResult(bool Success, string? Error, string? WinnerName, int TotalEntries = 0)
 {
+    /// <summary>Creates a successful draw result.</summary>
+    /// <param name="winner">Display name of the winner.</param>
+    /// <param name="entries">Total entries in the raffle.</param>
+    /// <returns>A successful <see cref="DrawResult"/>.</returns>
     public static DrawResult Ok(string winner, int entries) => new(true, null, winner, entries);
+
+    /// <summary>Creates a failed draw result with the given error message.</summary>
+    /// <param name="error">Description of why the draw failed.</param>
+    /// <returns>A failed <see cref="DrawResult"/>.</returns>
     public static DrawResult Fail(string error) => new(false, error, null, 0);
 }

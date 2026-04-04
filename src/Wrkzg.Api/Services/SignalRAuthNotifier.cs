@@ -14,11 +14,13 @@ public class SignalRAuthNotifier : IAuthStateNotifier
 {
     private readonly IHubContext<ChatHub> _hub;
 
+    /// <summary>Initializes the notifier with the SignalR hub context.</summary>
     public SignalRAuthNotifier(IHubContext<ChatHub> hub)
     {
         _hub = hub;
     }
 
+    /// <summary>Sends an authentication state change event to all dashboard clients.</summary>
     public async Task NotifyAuthStateChangedAsync(AuthState state, CancellationToken ct = default)
     {
         await _hub.Clients.Group("dashboard").SendAsync("AuthStateChanged", new

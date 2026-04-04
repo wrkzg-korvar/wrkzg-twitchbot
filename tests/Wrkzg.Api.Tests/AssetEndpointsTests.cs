@@ -9,6 +9,7 @@ namespace Wrkzg.Api.Tests;
 /// </summary>
 public class AssetEndpointsTests
 {
+    /// <summary>Verifies that special characters such as spaces and parentheses are stripped from filenames.</summary>
     [Fact]
     public void SanitizeFileName_RemovesSpecialCharacters()
     {
@@ -16,6 +17,7 @@ public class AssetEndpointsTests
         result.Should().Be("myfile1.mp3");
     }
 
+    /// <summary>Verifies that the file extension is preserved after sanitization.</summary>
     [Fact]
     public void SanitizeFileName_PreservesExtension()
     {
@@ -23,6 +25,7 @@ public class AssetEndpointsTests
         result.Should().Be("alert-sound_v2.wav");
     }
 
+    /// <summary>Verifies that a filename with only special characters falls back to a generated name.</summary>
     [Fact]
     public void SanitizeFileName_HandlesEmptyName()
     {
@@ -31,6 +34,7 @@ public class AssetEndpointsTests
         result.Should().EndWith(".png");
     }
 
+    /// <summary>Verifies that the file extension is lowercased after sanitization.</summary>
     [Fact]
     public void SanitizeFileName_LowercasesExtension()
     {
@@ -38,6 +42,7 @@ public class AssetEndpointsTests
         result.Should().EndWith(".png");
     }
 
+    /// <summary>Verifies that hyphens and underscores are kept intact during sanitization.</summary>
     [Fact]
     public void SanitizeFileName_PreservesHyphensAndUnderscores()
     {

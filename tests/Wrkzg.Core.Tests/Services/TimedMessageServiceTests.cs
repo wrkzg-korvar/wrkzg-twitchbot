@@ -13,6 +13,7 @@ using Xunit;
 
 namespace Wrkzg.Core.Tests.Services;
 
+/// <summary>Tests for the TimedMessageService background service.</summary>
 public class TimedMessageServiceTests
 {
     private readonly ITimedMessageRepository _timerRepo;
@@ -21,6 +22,7 @@ public class TimedMessageServiceTests
     private readonly ITwitchHelixClient _helix;
     private readonly TimedMessageService _sut;
 
+    /// <summary>Initializes the test fixture.</summary>
     public TimedMessageServiceTests()
     {
         _timerRepo = Substitute.For<ITimedMessageRepository>();
@@ -39,6 +41,7 @@ public class TimedMessageServiceTests
         _sut = new TimedMessageService(scopeFactory, _chatClient, Substitute.For<ILogger<TimedMessageService>>());
     }
 
+    /// <summary>Verifies that a timer fires immediately when it has never been fired before.</summary>
     [Fact]
     public async Task FiresImmediately_WhenLastFiredAtIsNull()
     {
@@ -68,6 +71,7 @@ public class TimedMessageServiceTests
         // (no interval check blocks it)
     }
 
+    /// <summary>Verifies that the chat line counter increments atomically without errors.</summary>
     [Fact]
     public void IncrementChatLineCounter_IncrementsAtomically()
     {

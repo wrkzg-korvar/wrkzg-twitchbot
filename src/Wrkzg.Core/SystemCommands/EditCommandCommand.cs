@@ -13,18 +13,30 @@ namespace Wrkzg.Core.SystemCommands;
 /// </summary>
 public class EditCommandCommand : ISystemCommand
 {
+    /// <inheritdoc />
     public string Trigger => "!editcmd";
+
+    /// <inheritdoc />
     public string[] Aliases => new[] { "!editcommand" };
+
+    /// <inheritdoc />
     public string Description => "Edit a custom command's response. Usage: !editcmd !trigger New response";
+
+    /// <inheritdoc />
     public string? DefaultResponseTemplate => null;
 
     private readonly IServiceScopeFactory _scopeFactory;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EditCommandCommand"/> class.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating scoped service providers.</param>
     public EditCommandCommand(IServiceScopeFactory scopeFactory)
     {
         _scopeFactory = scopeFactory;
     }
 
+    /// <inheritdoc />
     public async Task<string?> ExecuteAsync(ChatMessage message, CancellationToken ct = default)
     {
         // Permission check: Moderator+ only

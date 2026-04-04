@@ -15,6 +15,7 @@ namespace Wrkzg.Api.Endpoints;
 /// </summary>
 public static class CounterEndpoints
 {
+    /// <summary>Registers named counter CRUD and increment/decrement API endpoints.</summary>
     public static void MapCounterEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/counters").WithTags("Counters");
@@ -131,6 +132,8 @@ public static class CounterEndpoints
     }
 }
 
+/// <summary>Request payload for creating a new named counter.</summary>
 public record CreateCounterRequest(string Name, int? Value, string? ResponseTemplate);
 
+/// <summary>Request payload for updating an existing counter.</summary>
 public record UpdateCounterRequest(string? Name, int? Value, string? ResponseTemplate);

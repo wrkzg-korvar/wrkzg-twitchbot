@@ -4,8 +4,13 @@ using Wrkzg.Core.Models;
 
 namespace Wrkzg.Infrastructure.Data.Configurations;
 
+/// <summary>
+/// EF Core entity type configuration for the <see cref="Role"/> model.
+/// Configures the owned AutoAssign criteria type with flattened column names.
+/// </summary>
 public class RoleConfiguration : IEntityTypeConfiguration<Role>
 {
+    /// <summary>Configures the schema for the Roles table.</summary>
     public void Configure(EntityTypeBuilder<Role> builder)
     {
         builder.HasKey(r => r.Id);

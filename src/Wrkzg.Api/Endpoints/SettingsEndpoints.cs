@@ -8,6 +8,9 @@ using Wrkzg.Core.Interfaces;
 
 namespace Wrkzg.Api.Endpoints;
 
+/// <summary>
+/// REST endpoints for reading and writing application settings as key-value pairs.
+/// </summary>
 public static class SettingsEndpoints
 {
     private const int MaxKeyLength = 100;
@@ -18,6 +21,7 @@ public static class SettingsEndpoints
     /// </summary>
     private static readonly Regex ValidKeyPattern = new(@"^[A-Za-z0-9._-]{1,100}$", RegexOptions.Compiled);
 
+    /// <summary>Registers application settings read and update API endpoints.</summary>
     public static void MapSettingsEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/settings").WithTags("Settings");

@@ -25,6 +25,15 @@ public class PollService
     private readonly ISettingsRepository _settings;
     private readonly ILogger<PollService> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="PollService"/> with the required dependencies.
+    /// </summary>
+    /// <param name="polls">Repository for poll persistence.</param>
+    /// <param name="users">Repository for user lookup and creation.</param>
+    /// <param name="broadcaster">Broadcasts real-time poll events to the dashboard.</param>
+    /// <param name="chat">The Twitch IRC chat client for sending announcements.</param>
+    /// <param name="settings">Repository for customizable template settings.</param>
+    /// <param name="logger">Logger instance for diagnostics.</param>
     public PollService(
         IPollRepository polls,
         IUserRepository users,
@@ -283,20 +292,67 @@ public class PollService
 
 // ─── Result Types ────────────────────────────────────────
 
+/// <summary>
+/// Result of a poll creation or closure operation, indicating success or failure.
+/// </summary>
+/// <param name="Success">Whether the operation succeeded.</param>
+/// <param name="Error">Error message if the operation failed; null on success.</param>
+/// <param name="Poll">The poll entity if the operation succeeded; null on failure.</param>
 public record PollResult(bool Success, string? Error, Poll? Poll)
 {
+    /// <summary>Creates a successful poll result.</summary>
+    /// <param name="poll">The poll entity.</param>
+    /// <returns>A successful <see cref="PollResult"/>.</returns>
     public static PollResult Ok(Poll poll) => new(true, null, poll);
+
+    /// <summary>Creates a failed poll result with the given error message.</summary>
+    /// <param name="error">Description of why the operation failed.</param>
+    /// <returns>A failed <see cref="PollResult"/>.</returns>
     public static PollResult Fail(string error) => new(false, error, null);
 }
 
+/// <summary>
+/// Result of a vote operation, indicating success or failure.
+/// </summary>
+/// <param name="Success">Whether the vote was accepted.</param>
+/// <param name="Error">Error message if the vote failed; null on success.</param>
+/// <param name="OptionText">The label of the voted option on success; null on failure.</param>
 public record VoteResult(bool Success, string? Error, string? OptionText)
 {
+    /// <summary>Creates a successful vote result.</summary>
+    /// <param name="optionText">The label of the option the user voted for.</param>
+    /// <returns>A successful <see cref="VoteResult"/>.</returns>
     public static VoteResult Ok(string optionText) => new(true, null, optionText);
+
+    /// <summary>Creates a failed vote result with the given error message.</summary>
+    /// <param name="error">Description of why the vote failed.</param>
+    /// <returns>A failed <see cref="VoteResult"/>.</returns>
     public static VoteResult Fail(string error) => new(false, error, null);
 }
 
+/// <summary>
+/// Represents a single poll option with its vote count and percentage.
+/// </summary>
+/// <param name="Index">Zero-based index of the option.</param>
+/// <param name="Label">Display text of the option.</param>
+/// <param name="Votes">Number of votes received.</param>
+/// <param name="Percentage">Percentage of total votes (0-100), rounded to one decimal.</param>
 public record PollOptionResult(int Index, string Label, int Votes, double Percentage);
 
+/// <summary>
+/// Data transfer object containing the full results of a poll, including all option tallies.
+/// </summary>
+/// <param name="Id">Database ID of the poll.</param>
+/// <param name="Question">The poll question text.</param>
+/// <param name="IsActive">Whether the poll is still accepting votes.</param>
+/// <param name="Source">Where the poll originated (bot-native or Twitch-native).</param>
+/// <param name="CreatedBy">Username of the poll creator.</param>
+/// <param name="CreatedAt">When the poll was created.</param>
+/// <param name="EndsAt">When the poll is scheduled to end.</param>
+/// <param name="EndReason">The reason the poll ended (timer, manual, cancelled).</param>
+/// <param name="TotalVotes">Total number of votes cast.</param>
+/// <param name="Options">Per-option vote tallies and percentages.</param>
+/// <param name="WinnerIndex">Index of the winning option, or null if no votes were cast.</param>
 public record PollResultsDto(
     int Id,
     string Question,

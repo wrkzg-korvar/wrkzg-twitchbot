@@ -13,18 +13,30 @@ namespace Wrkzg.Core.SystemCommands;
 /// </summary>
 public class DrawRaffleCommand : ISystemCommand
 {
+    /// <inheritdoc />
     public string Trigger => "!draw";
+
+    /// <inheritdoc />
     public string[] Aliases => Array.Empty<string>();
+
+    /// <inheritdoc />
     public string Description => "Draw the raffle winner. Mod only.";
+
+    /// <inheritdoc />
     public string? DefaultResponseTemplate => null;
 
     private readonly IServiceScopeFactory _scopeFactory;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DrawRaffleCommand"/> class.
+    /// </summary>
+    /// <param name="scopeFactory">Factory for creating scoped service providers.</param>
     public DrawRaffleCommand(IServiceScopeFactory scopeFactory)
     {
         _scopeFactory = scopeFactory;
     }
 
+    /// <inheritdoc />
     public async Task<string?> ExecuteAsync(ChatMessage message, CancellationToken ct = default)
     {
         if (!message.IsModerator && !message.IsBroadcaster)

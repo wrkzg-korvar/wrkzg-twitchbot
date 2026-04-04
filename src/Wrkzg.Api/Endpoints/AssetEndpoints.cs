@@ -23,6 +23,7 @@ public static class AssetEndpoints
 
     private const long MaxFileSize = 10 * 1024 * 1024; // 10 MB
 
+    /// <summary>Registers asset upload and management API endpoints.</summary>
     public static void MapAssetEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/assets").WithTags("Assets");
@@ -141,6 +142,7 @@ public static class AssetEndpoints
         });
     }
 
+    /// <summary>Sanitizes a file name by removing special characters and lowercasing the extension.</summary>
     public static string SanitizeFileName(string fileName)
     {
         string name = Path.GetFileNameWithoutExtension(fileName);

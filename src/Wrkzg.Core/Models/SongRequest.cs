@@ -8,6 +8,7 @@ namespace Wrkzg.Core.Models;
 /// </summary>
 public class SongRequest
 {
+    /// <summary>Primary key.</summary>
     public int Id { get; set; }
 
     /// <summary>YouTube video ID (e.g. "dQw4w9WgXcQ").</summary>
@@ -31,14 +32,27 @@ public class SongRequest
     /// <summary>Current status in the queue.</summary>
     public SongRequestStatus Status { get; set; } = SongRequestStatus.Queued;
 
+    /// <summary>When the song was requested.</summary>
     public DateTimeOffset RequestedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    /// <summary>When the song started playing. Null if not yet played.</summary>
     public DateTimeOffset? PlayedAt { get; set; }
 }
 
+/// <summary>
+/// Lifecycle status of a song request in the playback queue.
+/// </summary>
 public enum SongRequestStatus
 {
+    /// <summary>Waiting in the queue to be played.</summary>
     Queued = 0,
+
+    /// <summary>Currently playing.</summary>
     Playing = 1,
+
+    /// <summary>Finished playing successfully.</summary>
     Played = 2,
+
+    /// <summary>Skipped by a moderator or the broadcaster.</summary>
     Skipped = 3
 }

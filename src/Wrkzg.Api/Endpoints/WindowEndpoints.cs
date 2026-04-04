@@ -10,6 +10,7 @@ namespace Wrkzg.Api.Endpoints;
 /// </summary>
 public static class WindowEndpoints
 {
+    /// <summary>Registers window control (minimize, maximize, close, drag, resize) API endpoints.</summary>
     public static void MapWindowEndpoints(this IEndpointRouteBuilder app)
     {
         RouteGroupBuilder group = app.MapGroup("/api/window").WithTags("Window");

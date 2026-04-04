@@ -4,8 +4,12 @@ using Wrkzg.Core.Models;
 
 namespace Wrkzg.Infrastructure.Data.Configurations;
 
+/// <summary>
+/// EF Core entity type configuration for the <see cref="User"/> model.
+/// </summary>
 public class UserConfiguration : IEntityTypeConfiguration<User>
 {
+    /// <summary>Configures the schema for the Users table.</summary>
     public void Configure(EntityTypeBuilder<User> builder)
     {
         builder.HasKey(u => u.Id);

@@ -14,6 +14,7 @@ namespace Wrkzg.Infrastructure.Import;
 /// </summary>
 public static class DeepbotJsonParser
 {
+    /// <summary>Parses a Deepbot JSON stream into a list of import user records.</summary>
     public static async Task<List<ImportUserRecord>> ParseAsync(
         Stream stream,
         CancellationToken ct = default)
