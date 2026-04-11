@@ -47,9 +47,13 @@ Wrkzg is a **locally-run desktop application** that combines an embedded web ser
 │                          │      Infrastructure       │  │
 │                          │  EF Core + SQLite         │  │
 │                          │  TwitchChatClient (IRC)   │  │
+│                          │  BroadcasterHelixClient   │  │
+│                          │  BotHelixClient           │  │
 │                          │  TwitchOAuthService       │  │
+│                          │  EmoteService             │  │
 │                          │  SecureStorage (DPAPI/KC) │  │
 │                          │  BotConnectionService     │  │
+│                          │  OBS WebSocket Client     │  │
 │                          └───────────────────────────┘  │
 └─────────────────────────────────────────────────────────┘
          │                              │
@@ -131,11 +135,14 @@ Implements all interfaces defined in Core using real external dependencies.
 - `BotDbContext` (EF Core + SQLite) with automatic migrations on startup
 - Repository implementations: `UserRepository`, `CommandRepository`, `PollRepository`, `RaffleRepository`, `TimedMessageRepository`, `CounterRepository`, `SettingsRepository`, `SystemCommandOverrideRepository`
 - `TwitchChatClient` (TwitchLib IRC) — Singleton, auto token refresh
+- `BroadcasterHelixClient` — Helix API with Broadcaster token (stream info, polls, channel points, emotes, chat messages) — 10+ consumers
+- `BotHelixClient` — Helix API with Bot token (announcements, timeouts, emotes) — 2 consumers
 - `TwitchOAuthService` — Authorization Code Flow, credential resolution (Keystore → Config fallback)
-- `TwitchAuthHandler` — DelegatingHandler for automatic Bearer token injection + 401 refresh
+- `TwitchAuthHandler` — DelegatingHandler for automatic Bearer token injection + 401 refresh; separate instances for Bot and Broadcaster token types
+- `EmoteService` — IHostedService + IEmoteService Singleton. Caches global + user emotes via Helix User Emotes API with pagination. Auto-refreshes every 30 minutes, with 30s retry on empty cache.
 - `BotConnectionService` — IHostedService managing IRC lifecycle
-- `EventSubConnectionService` — IHostedService managing Twitch EventSub WebSocket (follows, subs, raids, gifts, resubs, stream online); dispatches events to EffectEngine
-- `WindowsSecureStorage` (DPAPI) / `MacOsSecureStorage` (Keychain) — encrypted credential storage
+- `EventSubConnectionService` — IHostedService managing Twitch EventSub WebSocket (follows, subs, raids, gifts, resubs, stream online, channel point redemptions); dispatches events to EffectEngine
+- `WindowsSecureStorage` (DPAPI) / `MacOsSecureStorage` (Keychain) — encrypted credential storage with generic secret support for integration credentials (OBS WebSocket password, etc.)
 
 ### `Wrkzg.Updater`
 
@@ -330,6 +337,7 @@ builder.Services.AddApiServices();           // Wrkzg.Api
 | `EffectEngine` | Singleton | Processes automation triggers against EffectLists |
 | `IChatEventBroadcaster` | Singleton | Wraps SignalR HubContext |
 | `IAuthStateNotifier` | Singleton | Wraps SignalR HubContext |
+| `EmoteService` | Singleton (IHostedService + IEmoteService) | Caches Twitch emotes, refreshes every 30min |
 | `PollService` | Scoped | Poll lifecycle (create, vote, end) |
 | `RaffleService` | Scoped | Raffle lifecycle (create, enter, draw, verify) |
 | `SpamFilterService` | Scoped | Checks messages against spam rules |
@@ -399,6 +407,10 @@ HotkeyBindings       — Id, Keys, ActionType, ActionPayload, Description, IsEna
 
 EffectLists          — Id, Name, Description, TriggerTypeId, TriggerConfig,
                        ConditionsConfig, EffectsConfig, Cooldown, IsEnabled, CreatedAt
+
+ImportJobs           — Id, SourceType, FileName, Status, TotalRows, ProcessedRows,
+                       SuccessCount, SkippedCount, ErrorCount, Warnings (JSON),
+                       ConflictStrategy, StartedAt, CompletedAt
 ```
 
 ### Migrations
@@ -419,8 +431,17 @@ dotnet ef migrations add MigrationName \
 
 | Token | Account | Purpose | Scopes |
 |---|---|---|---|
-| Bot Token | Bot's Twitch account | Chat read/write via IRC, Helix chat send | `chat:read`, `chat:edit`, `user:write:chat` |
-| Broadcaster Token | Streamer's account | Helix API, EventSub, polls, chat send | `moderator:read:followers`, `channel:read:polls`, `channel:manage:polls`, `bits:read`, `channel:read:subscriptions`, `user:write:chat` |
+| Bot Token | Bot's Twitch account | Chat read/write via IRC, Helix chat send, announcements, timeouts, emotes | `chat:read`, `chat:edit`, `user:write:chat`, `moderator:manage:announcements`, `moderator:manage:banned_users`, `user:read:emotes` |
+| Broadcaster Token | Streamer's account | Helix API, EventSub, polls, chat messages, channel management, emotes | `moderator:read:followers`, `channel:read:polls`, `channel:manage:polls`, `bits:read`, `channel:read:subscriptions`, `moderator:manage:shoutouts`, `user:write:chat`, `channel:read:redemptions`, `channel:manage:redemptions`, `channel:manage:broadcast`, `user:read:emotes` |
+
+**Dual Helix Client Architecture:** The original `ITwitchHelixClient` interface was split into two typed HTTP clients with separate token management:
+
+| Client | Token | Consumers | Key Methods |
+|---|---|---|---|
+| `IBroadcasterHelixClient` | Broadcaster | 10+ | `GetStreamAsync`, `GetUserAsync`, `SendChatMessageAsync`, polls, channel info, emotes, channel management |
+| `IBotHelixClient` | Bot | 2 | `SendAnnouncementAsync`, `TimeoutUserAsync`, `GetGlobalEmotesAsync`, `GetUserEmotesAsync` |
+
+Both clients use `TwitchAuthHandler` as a `DelegatingHandler` for automatic Bearer token injection, proactive token refresh, and 401 retry logic.
 
 Both tokens are acquired via **OAuth 2.0 Authorization Code Flow** with Client Secret (Twitch does not support PKCE). Tokens are stored encrypted in the OS keychain and refreshed automatically.
 
@@ -433,6 +454,17 @@ Both Client ID and Client Secret are resolved in this order:
 ### IRC Connection
 
 `TwitchChatClient` connects to Twitch IRC via TwitchLib.Client (WebSocket). `BotConnectionService` manages the lifecycle as an `IHostedService`: auto-connects on startup if tokens and channel are configured, reconnects on disconnect (up to 10 attempts).
+
+---
+
+## OBS WebSocket Integration
+
+Wrkzg connects to OBS Studio via the OBS WebSocket 5.x protocol for scene switching and source toggling.
+
+- **Connection:** WebSocket client connects to `ws://localhost:4455` (configurable)
+- **Authentication:** OBS WebSocket password stored in OS keychain via `ISecureStorage.SaveSecretAsync("obs_websocket_password", ...)` — never in the settings database
+- **Available Actions:** `SwitchScene`, `ToggleSource` — usable as hotkey actions and automation effects
+- **Lifecycle:** Connects on-demand when an OBS action is triggered; auto-reconnects on disconnect
 
 ---
 

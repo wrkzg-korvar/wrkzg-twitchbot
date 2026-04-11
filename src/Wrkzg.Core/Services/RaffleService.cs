@@ -420,29 +420,30 @@ public class RaffleService
     /// <summary>
     /// Checks if the active raffle timer has expired and auto-draws a winner.
     /// Called periodically by RaffleTimerService.
+    /// Returns true if there is an active raffle (for adaptive polling interval).
     /// </summary>
-    public async Task CheckExpiredRafflesAsync(CancellationToken ct = default)
+    public async Task<bool> CheckExpiredRafflesAsync(CancellationToken ct = default)
     {
         Raffle? raffle = await _raffles.GetActiveAsync(ct);
         if (raffle is null)
         {
-            return;
+            return false;
         }
         if (!raffle.EntriesCloseAt.HasValue)
         {
-            return;
+            return true; // Active raffle without timer
         }
         if (DateTimeOffset.UtcNow < raffle.EntriesCloseAt.Value)
         {
-            return;
+            return true; // Active raffle, timer not yet expired
         }
         if (raffle.PendingWinnerId is not null)
         {
-            return; // Already drawn, waiting for verification
+            return true; // Already drawn, waiting for verification
         }
         if (raffle.Draws.Any(d => d.IsAccepted))
         {
-            return; // Has accepted draws — streamer is managing manually
+            return true; // Has accepted draws — streamer is managing manually
         }
 
         if (raffle.Entries.Count > 0)
@@ -463,6 +464,8 @@ public class RaffleService
 
             await _broadcaster.BroadcastRaffleCancelledAsync(raffle.Id, ct);
         }
+
+        return false; // Raffle just ended
     }
 
     /// <summary>Gets the currently active raffle with entries.</summary>

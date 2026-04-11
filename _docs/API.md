@@ -29,6 +29,8 @@ This document describes all REST endpoints and SignalR events exposed by the Wrk
 - [Import](#import)
 - [Assets](#assets)
 - [Custom Overlays](#custom-overlays)
+- [Emotes](#emotes)
+- [OBS WebSocket](#obs-websocket)
 - [SignalR — Real-Time Events](#signalr--real-time-events)
 
 ---
@@ -51,6 +53,19 @@ All responses return JSON. Standard HTTP status codes:
 | `400 Bad Request` | Validation failed |
 | `404 Not Found` | Resource not found |
 | `500 Internal Server Error` | Unexpected server error |
+
+### Error Response Format (RFC 7807)
+
+All error responses follow the [RFC 7807 Problem Details](https://www.rfc-editor.org/rfc/rfc7807) format:
+
+```json
+{
+  "type": "https://wrkzg.app/problems/validation-error",
+  "title": "Validation Error",
+  "status": 400,
+  "detail": "Command trigger must start with '!' and contain only letters and numbers."
+}
+```
 
 ---
 
@@ -921,6 +936,84 @@ Renders the custom overlay as a full HTML page (for OBS Browser Source). Add `?p
 ### `GET /api/overlays/defaults/{type}`
 
 Returns the built-in default settings for an overlay type. Used by the editor's "Reset to Defaults" button.
+
+---
+
+## Emotes
+
+### `GET /api/emotes`
+
+Returns all cached Twitch emotes (global + user emotes from subscribed channels, bits, follower).
+
+**Response `200 OK`:**
+
+```json
+[
+  {
+    "id": "196892",
+    "name": ":)",
+    "url": "https://static-cdn.jtvnw.net/emoticons/v2/196892/default/dark/2.0",
+    "source": "global"
+  },
+  {
+    "id": "emotesv2_abc123",
+    "name": "krinlinHype",
+    "url": "https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_abc123/default/dark/2.0",
+    "source": "subscriber"
+  }
+]
+```
+
+Source values: `global`, `subscriber`, `bits`, `follower`, `channel`
+
+---
+
+### `POST /api/emotes/refresh`
+
+Forces an immediate refresh of the emote cache from the Twitch Helix API.
+
+**Response `200 OK`:**
+
+```json
+{
+  "count": 423
+}
+```
+
+---
+
+## OBS WebSocket
+
+### `POST /api/integrations/obs/connect`
+
+Connects to the OBS WebSocket server. Password is loaded from OS keychain.
+
+**Request Body:**
+
+```json
+{
+  "host": "localhost",
+  "port": 4455
+}
+```
+
+**Response `200 OK`:** `{ "connected": true }`
+
+---
+
+### `GET /api/integrations/obs/status`
+
+Returns the current OBS WebSocket connection status.
+
+**Response `200 OK`:**
+
+```json
+{
+  "connected": true,
+  "scenes": ["Gaming", "BRB", "Just Chatting"],
+  "currentScene": "Gaming"
+}
+```
 
 ---
 

@@ -43,7 +43,10 @@ public class ChatMessagePipelineTests
         services.AddSingleton(chatClient);
         services.AddSingleton(Substitute.For<ILogger<RaffleService>>());
         services.AddScoped<RaffleService>();
-        services.AddScoped(_ => Substitute.For<ITwitchHelixClient>());
+        services.AddScoped(_ => Substitute.For<IBroadcasterHelixClient>());
+        services.AddScoped(_ => Substitute.For<IBotHelixClient>());
+        services.AddScoped(_ => Substitute.For<ISecureStorage>());
+        services.AddScoped(_ => Substitute.For<ITwitchOAuthService>());
         services.AddSingleton(Substitute.For<ILogger<SpamFilterService>>());
         services.AddScoped<SpamFilterService>();
         services.AddScoped(_ => Substitute.For<ICounterRepository>());

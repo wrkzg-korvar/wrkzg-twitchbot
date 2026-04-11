@@ -190,14 +190,25 @@ public class PollService
     public Task<IReadOnlyList<Poll>> GetRecentAsync(int count = 10, CancellationToken ct = default)
         => _polls.GetRecentAsync(count, ct);
 
-    /// <summary>Checks and auto-closes expired polls. Called periodically.</summary>
-    public async Task CheckExpiredPollsAsync(CancellationToken ct = default)
+    /// <summary>
+    /// Checks and auto-closes expired polls. Called periodically.
+    /// Returns true if there is an active poll (for adaptive polling interval).
+    /// </summary>
+    public async Task<bool> CheckExpiredPollsAsync(CancellationToken ct = default)
     {
         Poll? active = await _polls.GetActiveAsync(ct);
-        if (active is not null && DateTimeOffset.UtcNow >= active.EndsAt)
+        if (active is null)
+        {
+            return false;
+        }
+
+        if (DateTimeOffset.UtcNow >= active.EndsAt)
         {
             await ClosePollInternalAsync(active, PollEndReason.TimerExpired, ct);
+            return false;
         }
+
+        return true;
     }
 
     // ─── Private ─────────────────────────────────────────

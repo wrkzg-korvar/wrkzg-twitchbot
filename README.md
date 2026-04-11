@@ -70,10 +70,58 @@ Wrkzg is different:
 | **Overlay editor** | ✅ Visual | ❌ | ✅ | ❌ | ✅ |
 | **Custom overlays (HTML/CSS/JS)** | ✅ Local | ✅ Cloud | ❌ | ❌ | ❌ |
 | **Custom sounds/images** | ✅ Local | ✅ Cloud | ✅ | ❌ | ✅ Cloud |
+| **OBS WebSocket** | ✅ Native | ❌ | ✅ | ❌ | ❌ |
 | **Data import** | ✅ Deepbot/CSV | ❌ | ✅ | ✅ | ❌ |
 | **Open source** | ✅ MIT | ❌ | ✅ GPL-3 | ✅ GPL-3 | ❌ |
 | **No account required** | ✅ | ❌ | ✅ | ✅ | ❌ |
 | **Price** | **Free** | Free (limited) | **Free** | **Free** | Freemium |
+
+---
+
+## Permissions & Requirements
+
+### Twitch App Scopes
+
+Wrkzg requests specific OAuth scopes for each connected account. These are required for the bot to function correctly.
+
+**Bot Account:**
+
+| Scope | Required For |
+|---|---|
+| `chat:read` | Reading chat messages |
+| `chat:edit` | Sending chat messages via IRC |
+| `user:write:chat` | Sending messages via Helix API |
+| `moderator:manage:announcements` | Colored timer announcements |
+| `moderator:manage:banned_users` | Spam filter timeouts |
+| `user:read:emotes` | Loading all available emotes (subscribed channels, bits, follower) |
+
+**Broadcaster Account:**
+
+| Scope | Required For |
+|---|---|
+| `moderator:read:followers` | Follow event notifications |
+| `channel:read:polls` | Reading poll status |
+| `channel:manage:polls` | Creating and ending polls |
+| `bits:read` | Bit event notifications |
+| `channel:read:subscriptions` | Subscribe/gift event notifications |
+| `moderator:manage:shoutouts` | Auto-shoutout on raids |
+| `user:write:chat` | Sending messages as broadcaster |
+| `channel:read:redemptions` | Reading channel point redemptions |
+| `channel:manage:redemptions` | Managing channel point rewards |
+| `channel:manage:broadcast` | `!title` and `!game` mod commands |
+| `user:read:emotes` | Loading broadcaster's available emotes |
+
+### Moderator Requirement
+
+Some features require the **Bot Account** to be a **Moderator** in the Broadcaster's channel. Without mod status, these features will fail silently or return errors:
+
+| Feature | Why Mod is Required |
+|---|---|
+| **Spam Filter** (timeouts) | `POST /helix/moderation/bans` requires the bot to be a moderator |
+| **Timer Announcements** (colored) | `POST /helix/chat/announcements` requires moderator permissions |
+| **Auto-Shoutout** (raids) | `POST /helix/chat/shoutouts` requires moderator permissions |
+
+> **How to make the bot a moderator:** Open your Twitch chat and type `/mod wrkzg` (replace `wrkzg` with your bot's Twitch username).
 
 ---
 
@@ -185,13 +233,17 @@ Wrkzg is different:
 - **5 Templates** — Follow Goal Bar, Follower Ticker, Stream Clock, Sub Counter, Raid Banner — ready to use and customize
 
 **Automation & Integrations**
-- **Effect System** — Trigger → Conditions → Effects automation chains. Combine any trigger (commands, events, hotkeys, keywords, channel points) with any effect (chat messages, counter updates, alerts, variables, Discord messages)
+- **Effect System** — Trigger → Conditions → Effects automation chains. Combine any trigger (commands, events, hotkeys, keywords, channel points) with any effect (chat messages, counter updates, alerts, variables, Discord messages, OBS scene switches)
+- **Visual Automation Builder** — Dual-mode editor: Visual mode with dynamic fields, variable chips, and inline help — or JSON mode for power users
+- **OBS WebSocket 5.x** — Switch scenes and toggle sources via hotkeys and automations. Password stored securely in OS keychain.
 - **Discord Integration** — Send messages and rich embeds to Discord via webhooks — no bot token needed
 - **Stream Online Events** — All EventSub events (follow, sub, raid, stream online) are routed through the Effect System for custom automations
+- **Mod Commands** — `!title`/`!titel` and `!game`/`!category` for live stream management (requires Moderator role)
 
 **Dashboard & UX**
 - **Live Dashboard** — Real-time chat feed, bot status, viewer count, activity feed, command management
-- **Live Chat** — Send messages as bot or broadcaster, auto-scroll, message history, Twitch emote rendering
+- **Live Chat** — Send messages as bot or broadcaster, auto-scroll, message history, Twitch emote rendering with EmotePicker
+- **Notification Center** — Sidebar bell with notification drawer, replaces ephemeral toasts for import progress and system events
 - **User Tracking** — Message count, watch time, points, mod/sub/broadcaster status sync
 - **Setup Wizard** — Guided first-time setup with direct links to Twitch Developer Console
 - **Design System** — Light and Dark theme with consistent CSS custom properties
@@ -202,8 +254,8 @@ Wrkzg is different:
 
 | Version | Features |
 |---|---|
-| **v2.4.0** | Linux support |
-| **v2.5.0** | Automatic updater |
+| **v2.5.0** | Linux support |
+| **v2.6.0** | Automatic updater |
 
 ---
 
@@ -546,12 +598,31 @@ For questions or ideas, open a **[GitHub Discussion](https://github.com/wrkzg-ko
 
 </details>
 
+<details>
+<summary><strong>v2.4.0 — Visual Automation Builder, OBS WebSocket, Emotes ✅</strong></summary>
+
+- Visual Automation Builder with dynamic fields, variable chips, inline help (JSON mode still available)
+- OBS WebSocket 5.x integration — switch scenes, toggle sources via hotkeys and automations
+- Twitch Emotes — EmoteService caches global + user emotes (subscriptions, bits, follower), EmotePicker in dashboard chat
+- Dual Helix Client: ITwitchHelixClient split into IBroadcasterHelixClient + IBotHelixClient
+- Async background imports with SignalR progress notifications and module locking
+- Notification Center — sidebar bell with notification drawer
+- Mod Commands — `!title`/`!titel`, `!game`/`!category` for stream management
+- SmartDataTable standardized across all list pages (search, sort, pagination)
+- Timer announcements with configurable colors via Helix API
+- RFC 7807 Problem Details on all API error responses
+- Server-side paginated user list with user detail modal (points editing, ban/unban)
+- Channel Point redemptions now trigger automations
+- ISecureStorage extended with generic secret storage for integration credentials
+
+</details>
+
 ### Future
 
 | Version | Features |
 |---|---|
-| **v2.4.0** | Linux Support |
-| **v2.5.0** | Automatic Updater — GitHub Releases download + install |
+| **v2.5.0** | Linux Support |
+| **v2.6.0** | Automatic Updater — GitHub Releases download + install |
 
 ---
 

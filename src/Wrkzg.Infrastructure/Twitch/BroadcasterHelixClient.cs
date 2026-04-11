@@ -13,14 +13,14 @@ using Wrkzg.Core.Interfaces;
 namespace Wrkzg.Infrastructure.Twitch;
 
 /// <summary>
-/// Twitch Helix REST API client.
+/// Twitch Helix REST API client authenticated with the Broadcaster token.
 /// Uses a typed HttpClient with TwitchAuthHandler in the pipeline
 /// for automatic Bearer token injection and refresh.
 /// </summary>
-public class TwitchHelixClient : ITwitchHelixClient
+public class BroadcasterHelixClient : IBroadcasterHelixClient
 {
     private readonly HttpClient _http;
-    private readonly ILogger<TwitchHelixClient> _logger;
+    private readonly ILogger<BroadcasterHelixClient> _logger;
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
@@ -29,11 +29,11 @@ public class TwitchHelixClient : ITwitchHelixClient
     };
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="TwitchHelixClient"/> class.
+    /// Initializes a new instance of the <see cref="BroadcasterHelixClient"/> class.
     /// </summary>
-    /// <param name="http">The typed HTTP client with TwitchAuthHandler configured.</param>
+    /// <param name="http">The typed HTTP client with TwitchAuthHandler configured for the Broadcaster token.</param>
     /// <param name="logger">The logger for Helix API diagnostics.</param>
-    public TwitchHelixClient(HttpClient http, ILogger<TwitchHelixClient> logger)
+    public BroadcasterHelixClient(HttpClient http, ILogger<BroadcasterHelixClient> logger)
     {
         _http = http;
         _logger = logger;
@@ -127,24 +127,6 @@ public class TwitchHelixClient : ITwitchHelixClient
         }
     }
 
-    /// <summary>Times out a user in chat for the specified duration. Not yet fully implemented.</summary>
-    public async Task<bool> TimeoutUserAsync(string userId, int durationSeconds, string reason, CancellationToken ct = default)
-    {
-        try
-        {
-            // This endpoint requires broadcaster_id and moderator_id (the bot)
-            // For now, log a warning — full implementation requires token resolution
-            _logger.LogWarning("TimeoutUserAsync called for user {UserId} ({Duration}s, {Reason}) — requires moderator token setup",
-                userId, durationSeconds, reason);
-            return false;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to timeout user {UserId}", userId);
-            return false;
-        }
-    }
-
     /// <summary>Creates a native Twitch poll via the Helix API.</summary>
     public async Task<TwitchPollResponse?> CreateTwitchPollAsync(
         string broadcasterId,
@@ -216,6 +198,128 @@ public class TwitchHelixClient : ITwitchHelixClient
         }
     }
 
+    /// <summary>Gets global Twitch emotes available to all users.</summary>
+    public async Task<IReadOnlyList<TwitchEmote>> GetGlobalEmotesAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            HelixResponse<TwitchEmote>? response = await _http.GetFromJsonAsync<HelixResponse<TwitchEmote>>(
+                "chat/emotes/global", _jsonOptions, ct);
+
+            return response?.Data ?? Array.Empty<TwitchEmote>();
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "Failed to get global emotes");
+            return Array.Empty<TwitchEmote>();
+        }
+    }
+
+    /// <summary>Gets channel-specific emotes for the given broadcaster.</summary>
+    public async Task<IReadOnlyList<TwitchEmote>> GetChannelEmotesAsync(string broadcasterId, CancellationToken ct = default)
+    {
+        try
+        {
+            HelixResponse<TwitchEmote>? response = await _http.GetFromJsonAsync<HelixResponse<TwitchEmote>>(
+                $"chat/emotes?broadcaster_id={Uri.EscapeDataString(broadcasterId)}", _jsonOptions, ct);
+
+            return response?.Data ?? Array.Empty<TwitchEmote>();
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "Failed to get channel emotes for {BroadcasterId}", broadcasterId);
+            return Array.Empty<TwitchEmote>();
+        }
+    }
+
+    /// <summary>Gets all emotes available to a specific user, including subscribed channel emotes.</summary>
+    public async Task<IReadOnlyList<TwitchEmote>> GetUserEmotesAsync(string userId, CancellationToken ct = default)
+    {
+        try
+        {
+            List<TwitchEmote> allEmotes = new();
+            string? cursor = null;
+
+            do
+            {
+                string url = $"chat/emotes/user?user_id={Uri.EscapeDataString(userId)}";
+                if (cursor is not null)
+                {
+                    url += $"&after={Uri.EscapeDataString(cursor)}";
+                }
+
+                PaginatedHelixResponse<TwitchEmote>? response = await _http.GetFromJsonAsync<PaginatedHelixResponse<TwitchEmote>>(
+                    url, _jsonOptions, ct);
+
+                if (response?.Data is not null)
+                {
+                    allEmotes.AddRange(response.Data);
+                }
+
+                cursor = response?.Pagination?.Cursor;
+            }
+            while (!string.IsNullOrEmpty(cursor));
+
+            return allEmotes;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "Failed to get user emotes for {UserId}", userId);
+            return Array.Empty<TwitchEmote>();
+        }
+    }
+
+    /// <summary>Updates the channel title and/or game for the broadcaster.</summary>
+    public async Task<bool> ModifyChannelInfoAsync(string broadcasterId, string? title, string? gameId, CancellationToken ct = default)
+    {
+        try
+        {
+            Dictionary<string, string> body = new();
+            if (title is not null)
+            {
+                body["title"] = title;
+            }
+            if (gameId is not null)
+            {
+                body["game_id"] = gameId;
+            }
+
+            HttpResponseMessage response = await _http.PatchAsJsonAsync(
+                $"channels?broadcaster_id={Uri.EscapeDataString(broadcasterId)}", body, ct);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string err = await response.Content.ReadAsStringAsync(ct);
+                _logger.LogWarning("Failed to modify channel info: {Status} {Body}", response.StatusCode, err);
+                return false;
+            }
+
+            return true;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "Failed to modify channel info");
+            return false;
+        }
+    }
+
+    /// <summary>Searches for a game/category by name.</summary>
+    public async Task<TwitchGameInfo?> GetGameByNameAsync(string gameName, CancellationToken ct = default)
+    {
+        try
+        {
+            HelixResponse<TwitchGameInfo>? response = await _http.GetFromJsonAsync<HelixResponse<TwitchGameInfo>>(
+                $"games?name={Uri.EscapeDataString(gameName)}", _jsonOptions, ct);
+
+            return response?.Data?.FirstOrDefault();
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "Failed to search for game '{Name}'", gameName);
+            return null;
+        }
+    }
+
     /// <summary>Gets all custom channel point rewards configured for the broadcaster's channel.</summary>
     public async Task<IReadOnlyList<TwitchCustomReward>> GetCustomRewardsAsync(CancellationToken ct = default)
     {
@@ -260,6 +364,21 @@ public class TwitchHelixClient : ITwitchHelixClient
     {
         [JsonPropertyName("data")]
         public T[]? Data { get; init; }
+    }
+
+    private sealed class PaginatedHelixResponse<T>
+    {
+        [JsonPropertyName("data")]
+        public T[]? Data { get; init; }
+
+        [JsonPropertyName("pagination")]
+        public PaginationInfo? Pagination { get; init; }
+    }
+
+    private sealed class PaginationInfo
+    {
+        [JsonPropertyName("cursor")]
+        public string? Cursor { get; init; }
     }
 
     private sealed class HelixCustomReward

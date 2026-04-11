@@ -74,7 +74,7 @@ public class ShoutoutCommand : ISystemCommand
         }
 
         using IServiceScope scope = _scopeFactory.CreateScope();
-        ITwitchHelixClient helix = scope.ServiceProvider.GetRequiredService<ITwitchHelixClient>();
+        IBroadcasterHelixClient helix = scope.ServiceProvider.GetRequiredService<IBroadcasterHelixClient>();
 
         // Resolve target user
         HelixUserInfo? targetUser = await helix.GetUserAsync(targetLogin, ct);

@@ -3,26 +3,39 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { commandsApi } from "../../../api/commands";
 import { showToast } from "../../../hooks/useToast";
 import { inputClass, PERMISSION_LABELS } from "../../../lib/constants";
+import type { Command } from "../../../types/commands";
 
 interface CommandFormProps {
   onClose: () => void;
+  initial?: Command | null;
 }
 
-export function CommandForm({ onClose }: CommandFormProps) {
+export function CommandForm({ onClose, initial }: CommandFormProps) {
   const queryClient = useQueryClient();
-  const [trigger, setTrigger] = useState("!");
-  const [aliases, setAliases] = useState("");
-  const [response, setResponse] = useState("");
-  const [permission, setPermission] = useState(0);
-  const [globalCooldown, setGlobalCooldown] = useState(5);
-  const [userCooldown, setUserCooldown] = useState(10);
+  const isEdit = initial != null;
+  const [trigger, setTrigger] = useState(initial?.trigger ?? "!");
+  const [aliases, setAliases] = useState(initial?.aliases.join(", ") ?? "");
+  const [response, setResponse] = useState(initial?.responseTemplate ?? "");
+  const [permission, setPermission] = useState(initial?.permissionLevel ?? 0);
+  const [globalCooldown, setGlobalCooldown] = useState(initial?.globalCooldownSeconds ?? 5);
+  const [userCooldown, setUserCooldown] = useState(initial?.userCooldownSeconds ?? 10);
 
-  const createMutation = useMutation({
+  const saveMutation = useMutation({
     mutationFn: () => {
       const parsedAliases = aliases
         .split(",")
         .map((a) => a.trim().toLowerCase())
         .filter((a) => a.length > 0);
+
+      if (isEdit) {
+        return commandsApi.update(initial.id, {
+          responseTemplate: response.trim(),
+          aliases: parsedAliases,
+          permissionLevel: permission,
+          globalCooldownSeconds: globalCooldown,
+          userCooldownSeconds: userCooldown,
+        });
+      }
 
       return commandsApi.create({
         trigger: trigger.trim().toLowerCase(),
@@ -34,18 +47,18 @@ export function CommandForm({ onClose }: CommandFormProps) {
       });
     },
     onSuccess: () => {
-      showToast("success", `Command "${trigger}" created`);
+      showToast("success", `Command "${trigger}" ${isEdit ? "updated" : "created"}`);
       queryClient.invalidateQueries({ queryKey: ["commands"] });
       onClose();
     },
     onError: (err: Error) => showToast("error", err.message),
   });
 
-  const canCreate = trigger.length >= 2 && response.trim().length > 0;
+  const canSave = trigger.length >= 2 && response.trim().length > 0;
 
   return (
     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-4">
-      <h3 className="text-sm font-semibold text-[var(--color-text)]">New Command</h3>
+      <h3 className="text-sm font-semibold text-[var(--color-text)]">{isEdit ? `Edit "${initial.trigger}"` : "New Command"}</h3>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
@@ -55,7 +68,8 @@ export function CommandForm({ onClose }: CommandFormProps) {
             value={trigger}
             onChange={(e) => setTrigger(e.target.value)}
             placeholder="!command"
-            className={inputClass}
+            disabled={isEdit}
+            className={inputClass + (isEdit ? " opacity-50 cursor-not-allowed" : "")}
           />
         </div>
         <div>
@@ -67,6 +81,17 @@ export function CommandForm({ onClose }: CommandFormProps) {
             placeholder="Hello {user}! Welcome to the stream."
             className={inputClass}
           />
+          <div className="flex justify-end mt-1">
+            <span className={`text-xs ${
+              response.length > 500
+                ? "text-red-500 font-semibold"
+                : response.length > 400
+                  ? "text-yellow-500"
+                  : "text-[var(--color-text-muted)]"
+            }`}>
+              {response.length}/500
+            </span>
+          </div>
         </div>
       </div>
 
@@ -125,11 +150,11 @@ export function CommandForm({ onClose }: CommandFormProps) {
 
       <div className="flex gap-2">
         <button
-          onClick={() => createMutation.mutate()}
-          disabled={!canCreate || createMutation.isPending}
+          onClick={() => saveMutation.mutate()}
+          disabled={!canSave || saveMutation.isPending}
           className="rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-semibold text-[var(--color-bg)] hover:bg-[var(--color-brand-hover)] disabled:opacity-40 transition-colors"
         >
-          {createMutation.isPending ? "Creating..." : "Create Command"}
+          {saveMutation.isPending ? (isEdit ? "Saving..." : "Creating...") : (isEdit ? "Save Changes" : "Create Command")}
         </button>
         <button
           onClick={onClose}

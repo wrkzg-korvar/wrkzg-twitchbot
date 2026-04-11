@@ -18,13 +18,13 @@ public class PollEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         _client = factory.CreateAuthenticatedClient();
     }
 
-    /// <summary>Verifies that requesting the active poll when none exists returns HTTP 404 Not Found.</summary>
+    /// <summary>Verifies that requesting the active poll when none exists returns HTTP 200 OK with null body.</summary>
     [Fact]
-    public async Task GetActive_NoPoll_ReturnsNotFound()
+    public async Task GetActive_NoPoll_ReturnsOkWithNull()
     {
         HttpResponseMessage response = await _client.GetAsync("/api/polls/active");
 
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     /// <summary>Verifies that creating a poll with valid data returns HTTP 201 Created.</summary>

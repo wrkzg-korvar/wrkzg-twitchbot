@@ -1,13 +1,14 @@
 import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Keyboard, Trash2, Pencil, Play, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, Pencil, Play, AlertTriangle } from "lucide-react";
 import { hotkeysApi } from "../api/hotkeys";
 import { countersApi } from "../api/counters";
 import { effectsApi } from "../api/effects";
 import { PageHeader } from "../components/ui/PageHeader";
+import { SmartDataTable } from "../components/ui/DataTable";
+import type { SmartColumn } from "../components/ui/DataTable";
 import { Toggle } from "../components/ui/Toggle";
 import { Modal } from "../components/ui/Modal";
-import { EmptyState } from "../components/ui/EmptyState";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { showToast } from "../hooks/useToast";
 import type { HotkeyBinding } from "../types/hotkeys";
@@ -57,21 +58,12 @@ export function HotkeysPage() {
     mutationFn: (id: number) => hotkeysApi.trigger(id),
     onSuccess: (result) => {
       showToast("success", `Triggered: ${result.action}`);
-      // Invalidate counters if the action was counter-related
       if (result.action?.startsWith("Counter")) {
         queryClient.invalidateQueries({ queryKey: ["counters"] });
       }
     },
     onError: () => showToast("error", "Failed to trigger hotkey."),
   });
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--color-border)] border-t-[var(--color-brand)]" />
-      </div>
-    );
-  }
 
   if (isError) {
     return (
@@ -81,6 +73,87 @@ export function HotkeysPage() {
       </div>
     );
   }
+
+  const columns: SmartColumn<HotkeyBinding>[] = [
+    {
+      key: "keyCombination",
+      header: "Key",
+      sortable: true,
+      searchable: true,
+      render: (v) => (
+        <kbd className="rounded-lg bg-[var(--color-elevated)] px-3 py-1.5 font-mono text-sm font-semibold text-[var(--color-text)] border border-[var(--color-border)] whitespace-nowrap">
+          {v as string}
+        </kbd>
+      ),
+    },
+    {
+      key: "description",
+      header: "Description",
+      searchable: true,
+      render: (v, row) => (
+        <div>
+          <div className="text-sm text-[var(--color-text)]">{(v as string) || row.actionType}</div>
+          <div className="text-xs text-[var(--color-text-muted)]">
+            {ACTION_TYPES.find((t) => t.value === row.actionType)?.label ?? row.actionType}
+            {row.actionPayload && row.actionType === "ChatMessage" && (
+              <span className="ml-1">— {row.actionPayload.length > 40 ? row.actionPayload.slice(0, 40) + "..." : row.actionPayload}</span>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "actionType",
+      header: "Type",
+      sortable: true,
+      render: (v) => (
+        <span className="rounded bg-[var(--color-elevated)] px-2 py-0.5 text-xs text-[var(--color-text-muted)] border border-[var(--color-border)]">
+          {ACTION_TYPES.find((t) => t.value === (v as string))?.label ?? (v as string)}
+        </span>
+      ),
+    },
+    {
+      key: "isEnabled",
+      header: "Active",
+      sortable: true,
+      render: (_, row) => (
+        <Toggle
+          checked={row.isEnabled}
+          onChange={(checked) => { toggleMutation.mutate({ id: row.id, isEnabled: checked }); }}
+        />
+      ),
+    },
+    {
+      key: "actions",
+      header: "",
+      className: "w-28 text-right",
+      render: (_, row) => (
+        <div className="flex items-center justify-end gap-1">
+          <button
+            onClick={(e) => { e.stopPropagation(); triggerMutation.mutate(row.id); }}
+            className="rounded p-1.5 text-[var(--color-brand-text)] hover:bg-[var(--color-elevated)]"
+            title="Test trigger"
+          >
+            <Play className="h-4 w-4" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setEditingBinding(row); setShowForm(true); }}
+            className="rounded p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-elevated)]"
+            title="Edit"
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setDeleteId(row.id); }}
+            className="rounded p-1.5 text-[var(--color-error)] hover:bg-[var(--color-elevated)]"
+            title="Delete"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6 p-6">
@@ -109,65 +182,15 @@ export function HotkeysPage() {
         }
       />
 
-      {bindings && bindings.length === 0 && (
-        <EmptyState
-          icon={Keyboard}
-          title="No hotkeys configured"
-          description="Create keyboard shortcuts that trigger bot actions. Compatible with Stream Deck."
-        />
-      )}
-
-      <div className="space-y-3">
-        {(bindings ?? []).map((binding) => (
-          <div key={binding.id} className="flex items-center gap-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-            <kbd className="rounded-lg bg-[var(--color-elevated)] px-3 py-1.5 font-mono text-sm font-semibold text-[var(--color-text)] border border-[var(--color-border)] whitespace-nowrap">
-              {binding.keyCombination}
-            </kbd>
-
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 text-sm font-medium text-[var(--color-text)]">
-                {binding.description ?? binding.actionType}
-                <span className="rounded bg-[var(--color-elevated)] px-1.5 py-0.5 text-[10px] font-mono text-[var(--color-text-muted)]" title="API Trigger: POST /api/hotkeys/{id}/trigger">
-                  ID: {binding.id}
-                </span>
-              </div>
-              <div className="text-xs text-[var(--color-text-muted)]">
-                {ACTION_TYPES.find((t) => t.value === binding.actionType)?.label ?? binding.actionType}
-                {binding.actionPayload && binding.actionType === "ChatMessage" && (
-                  <span className="ml-1">— {binding.actionPayload.length > 40 ? binding.actionPayload.slice(0, 40) + "..." : binding.actionPayload}</span>
-                )}
-              </div>
-            </div>
-
-            <Toggle
-              checked={binding.isEnabled}
-              onChange={(checked) => toggleMutation.mutate({ id: binding.id, isEnabled: checked })}
-            />
-
-            <button
-              onClick={() => triggerMutation.mutate(binding.id)}
-              className="rounded p-1.5 text-[var(--color-brand-text)] hover:bg-[var(--color-elevated)]"
-              title="Test trigger"
-            >
-              <Play className="h-4 w-4" />
-            </button>
-
-            <button
-              onClick={() => { setEditingBinding(binding); setShowForm(true); }}
-              className="rounded p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-elevated)]"
-            >
-              <Pencil className="h-4 w-4" />
-            </button>
-
-            <button
-              onClick={() => setDeleteId(binding.id)}
-              className="rounded p-1.5 text-[var(--color-error)] hover:bg-[var(--color-elevated)]"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </div>
-        ))}
-      </div>
+      <SmartDataTable
+        data={bindings ?? []}
+        columns={columns}
+        pageSize={25}
+        searchPlaceholder="Search hotkeys..."
+        emptyMessage="No hotkeys configured. Create keyboard shortcuts that trigger bot actions."
+        isLoading={isLoading}
+        getRowKey={(row) => row.id}
+      />
 
       {showForm && (
         <HotkeyFormModal
@@ -309,7 +332,6 @@ function useKeyRecorder(onRecord: (combo: string) => void) {
     e.preventDefault();
     e.stopPropagation();
 
-    // Ignore standalone modifier keys
     if (["Control", "Shift", "Alt", "Meta"].includes(e.key)) {
       return;
     }
@@ -319,7 +341,6 @@ function useKeyRecorder(onRecord: (combo: string) => void) {
     if (e.shiftKey) { parts.push("Shift"); }
     if (e.altKey) { parts.push("Alt"); }
 
-    // Normalize key name
     let key = e.key;
     if (key.length === 1) {
       key = key.toUpperCase();
@@ -346,7 +367,6 @@ function useKeyRecorder(onRecord: (combo: string) => void) {
 
 // ─── Form Modal ─────────────────────────────────────────────
 
-// Actions that require no payload configuration
 const NO_PAYLOAD_ACTIONS = ["PollEnd", "SongSkip"];
 
 function HotkeyFormModal({
@@ -363,12 +383,10 @@ function HotkeyFormModal({
   const [actionPayload, setActionPayload] = useState(editingBinding?.actionPayload ?? "");
   const [description, setDescription] = useState(editingBinding?.description ?? "");
 
-  // Structured state for PollStart
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState("");
   const [pollDuration, setPollDuration] = useState(60);
 
-  // Structured state for RaffleStart
   const [raffleTitle, setRaffleTitle] = useState("");
   const [raffleKeyword, setRaffleKeyword] = useState("!join");
   const [raffleDuration, setRaffleDuration] = useState(120);
@@ -377,7 +395,6 @@ function HotkeyFormModal({
   const isCounterAction = actionType.startsWith("Counter");
   const isNoPayloadAction = NO_PAYLOAD_ACTIONS.includes(actionType);
 
-  // Initialize structured state from existing payload when editing
   useEffect(() => {
     if (!editingBinding) { return; }
     if (editingBinding.actionType === "PollStart" && editingBinding.actionPayload) {
@@ -415,7 +432,6 @@ function HotkeyFormModal({
     setKeyCombination(combo);
   });
 
-  // Build the final payload based on action type
   const buildPayload = (): string => {
     if (isNoPayloadAction) { return ""; }
     if (actionType === "PollStart") {
@@ -433,7 +449,6 @@ function HotkeyFormModal({
     return actionPayload;
   };
 
-  // Validate the save button can be enabled
   const canSave = (): boolean => {
     if (!keyCombination.trim()) { return false; }
     if (isNoPayloadAction) { return true; }
@@ -464,14 +479,8 @@ function HotkeyFormModal({
   const handleActionTypeChange = (newType: string) => {
     setActionType(newType);
     setActionPayload("");
-    // Reset structured state
-    setPollQuestion("");
-    setPollOptions("");
-    setPollDuration(60);
-    setRaffleTitle("");
-    setRaffleKeyword("!join");
-    setRaffleDuration(120);
-    setRaffleMaxEntries(0);
+    setPollQuestion(""); setPollOptions(""); setPollDuration(60);
+    setRaffleTitle(""); setRaffleKeyword("!join"); setRaffleDuration(120); setRaffleMaxEntries(0);
   };
 
   const fieldClass = "w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]";
@@ -479,78 +488,39 @@ function HotkeyFormModal({
   return (
     <Modal open={true} title={editingBinding ? "Edit Hotkey" : "Add Hotkey"} onClose={onClose} size="md">
       <div className="space-y-4">
-        {/* Key Recorder */}
         <div>
           <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Key Combination</label>
           <div className="flex gap-2">
-            <div
-              className={`flex-1 rounded-lg border px-3 py-2 text-sm font-mono text-center transition-colors ${
-                isRecording
-                  ? "border-[var(--color-brand)] bg-[var(--color-brand-subtle)] text-[var(--color-brand-text)] animate-pulse"
-                  : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]"
-              }`}
-            >
+            <div className={`flex-1 rounded-lg border px-3 py-2 text-sm font-mono text-center transition-colors ${isRecording ? "border-[var(--color-brand)] bg-[var(--color-brand-subtle)] text-[var(--color-brand-text)] animate-pulse" : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]"}`}>
               {isRecording ? "Press your key combination..." : keyCombination || "Not set"}
             </div>
-            <button
-              onClick={startRecording}
-              type="button"
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                isRecording
-                  ? "bg-[var(--color-brand)] text-[var(--color-bg)]"
-                  : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-elevated)]"
-              }`}
-            >
+            <button onClick={startRecording} type="button" className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${isRecording ? "bg-[var(--color-brand)] text-[var(--color-bg)]" : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-elevated)]"}`}>
               {isRecording ? "Listening..." : "Record"}
             </button>
           </div>
-          <p className="text-xs text-[var(--color-text-muted)] mt-1">
-            Click "Record" then press your desired key combination
-          </p>
+          <p className="text-xs text-[var(--color-text-muted)] mt-1">Click "Record" then press your desired key combination</p>
         </div>
 
-        {/* Action Type */}
         <div>
           <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Action</label>
-          <select
-            value={actionType}
-            onChange={(e) => handleActionTypeChange(e.target.value)}
-            className={fieldClass}
-          >
-            {ACTION_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>{t.label}</option>
-            ))}
+          <select value={actionType} onChange={(e) => handleActionTypeChange(e.target.value)} className={fieldClass}>
+            {ACTION_TYPES.map((t) => (<option key={t.value} value={t.value}>{t.label}</option>))}
           </select>
         </div>
 
-        {/* Payload editors by action type */}
         {actionType === "ChatMessage" && (
           <div>
             <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Message</label>
-            <input
-              type="text"
-              value={actionPayload}
-              onChange={(e) => setActionPayload(e.target.value)}
-              placeholder="Message to send in chat"
-              className={fieldClass}
-            />
+            <input type="text" value={actionPayload} onChange={(e) => setActionPayload(e.target.value)} placeholder="Message to send in chat" className={fieldClass} />
           </div>
         )}
 
         {isCounterAction && (
           <div>
             <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Counter</label>
-            <select
-              value={actionPayload}
-              onChange={(e) => setActionPayload(e.target.value)}
-              className={fieldClass}
-            >
+            <select value={actionPayload} onChange={(e) => setActionPayload(e.target.value)} className={fieldClass}>
               <option value="">Select a counter...</option>
-              {(counters ?? []).map((c) => (
-                <option key={c.id} value={c.id.toString()}>
-                  {c.name} (current: {c.value})
-                </option>
-              ))}
+              {(counters ?? []).map((c) => (<option key={c.id} value={c.id.toString()}>{c.name} (current: {c.value})</option>))}
             </select>
           </div>
         )}
@@ -558,17 +528,9 @@ function HotkeyFormModal({
         {actionType === "RunEffect" && (
           <div>
             <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Automation</label>
-            <select
-              value={actionPayload}
-              onChange={(e) => setActionPayload(e.target.value)}
-              className={fieldClass}
-            >
+            <select value={actionPayload} onChange={(e) => setActionPayload(e.target.value)} className={fieldClass}>
               <option value="">Select an automation...</option>
-              {(effects ?? []).map((ef) => (
-                <option key={ef.id} value={ef.id.toString()}>
-                  {ef.name}{ef.description ? ` -- ${ef.description}` : ""}
-                </option>
-              ))}
+              {(effects ?? []).map((ef) => (<option key={ef.id} value={ef.id.toString()}>{ef.name}{ef.description ? ` -- ${ef.description}` : ""}</option>))}
             </select>
           </div>
         )}
@@ -577,46 +539,23 @@ function HotkeyFormModal({
           <div className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Question</label>
-              <input
-                type="text"
-                value={pollQuestion}
-                onChange={(e) => setPollQuestion(e.target.value)}
-                placeholder="What should we play next?"
-                className={fieldClass}
-              />
+              <input type="text" value={pollQuestion} onChange={(e) => setPollQuestion(e.target.value)} placeholder="What should we play next?" className={fieldClass} />
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Options (one per line)</label>
-              <textarea
-                value={pollOptions}
-                onChange={(e) => setPollOptions(e.target.value)}
-                placeholder={"Option A\nOption B\nOption C"}
-                rows={4}
-                className={fieldClass}
-              />
-              <p className="text-xs text-[var(--color-text-muted)] mt-1">
-                At least 2 options required
-              </p>
+              <textarea value={pollOptions} onChange={(e) => setPollOptions(e.target.value)} placeholder={"Option A\nOption B\nOption C"} rows={4} className={fieldClass} />
+              <p className="text-xs text-[var(--color-text-muted)] mt-1">At least 2 options required</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Duration (seconds)</label>
-              <input
-                type="number"
-                min={15}
-                max={1800}
-                value={pollDuration}
-                onChange={(e) => setPollDuration(Number(e.target.value))}
-                className="w-32 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
-              />
+              <input type="number" min={15} max={1800} value={pollDuration} onChange={(e) => setPollDuration(Number(e.target.value))} className="w-32 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]" />
             </div>
           </div>
         )}
 
         {actionType === "PollEnd" && (
           <div className="rounded-lg bg-[var(--color-elevated)] border border-[var(--color-border)] p-3">
-            <p className="text-sm text-[var(--color-text-secondary)]">
-              Ends the currently active poll. No configuration needed.
-            </p>
+            <p className="text-sm text-[var(--color-text-secondary)]">Ends the currently active poll. No configuration needed.</p>
           </div>
         )}
 
@@ -624,44 +563,20 @@ function HotkeyFormModal({
           <div className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Title</label>
-              <input
-                type="text"
-                value={raffleTitle}
-                onChange={(e) => setRaffleTitle(e.target.value)}
-                placeholder="Win a gift sub!"
-                className={fieldClass}
-              />
+              <input type="text" value={raffleTitle} onChange={(e) => setRaffleTitle(e.target.value)} placeholder="Win a gift sub!" className={fieldClass} />
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Keyword</label>
-                <input
-                  type="text"
-                  value={raffleKeyword}
-                  onChange={(e) => setRaffleKeyword(e.target.value)}
-                  placeholder="!join"
-                  className={fieldClass}
-                />
+                <input type="text" value={raffleKeyword} onChange={(e) => setRaffleKeyword(e.target.value)} placeholder="!join" className={fieldClass} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Duration (s)</label>
-                <input
-                  type="number"
-                  min={10}
-                  value={raffleDuration}
-                  onChange={(e) => setRaffleDuration(Number(e.target.value))}
-                  className={fieldClass}
-                />
+                <input type="number" min={10} value={raffleDuration} onChange={(e) => setRaffleDuration(Number(e.target.value))} className={fieldClass} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Max Entries</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={raffleMaxEntries}
-                  onChange={(e) => setRaffleMaxEntries(Number(e.target.value))}
-                  className={fieldClass}
-                />
+                <input type="number" min={0} value={raffleMaxEntries} onChange={(e) => setRaffleMaxEntries(Number(e.target.value))} className={fieldClass} />
                 <p className="text-xs text-[var(--color-text-muted)] mt-1">0 = unlimited</p>
               </div>
             </div>
@@ -670,44 +585,43 @@ function HotkeyFormModal({
 
         {actionType === "SongSkip" && (
           <div className="rounded-lg bg-[var(--color-elevated)] border border-[var(--color-border)] p-3">
-            <p className="text-sm text-[var(--color-text-secondary)]">
-              Skips the current song. No configuration needed.
-            </p>
+            <p className="text-sm text-[var(--color-text-secondary)]">Skips the current song. No configuration needed.</p>
           </div>
         )}
 
         {actionType === "PlayAlert" && (
           <div>
             <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Alert Message</label>
-            <input
-              type="text"
-              value={actionPayload}
-              onChange={(e) => setActionPayload(e.target.value)}
-              placeholder="Alert text to display on the overlay"
-              className={fieldClass}
-            />
+            <input type="text" value={actionPayload} onChange={(e) => setActionPayload(e.target.value)} placeholder="Alert text to display on the overlay" className={fieldClass} />
           </div>
         )}
 
-        {/* Description */}
+        {actionType === "ObsSceneSwitch" && (
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Scene Name</label>
+            <input type="text" value={actionPayload} onChange={(e) => setActionPayload(e.target.value)} placeholder="Gaming" className={fieldClass} />
+            <p className="text-xs text-[var(--color-text-muted)] mt-1">The exact name of the OBS scene to switch to</p>
+          </div>
+        )}
+
+        {actionType === "ObsSourceToggle" && (
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Scene | Source</label>
+            <input type="text" value={actionPayload} onChange={(e) => setActionPayload(e.target.value)} placeholder="Gaming|Webcam" className={fieldClass} />
+            <p className="text-xs text-[var(--color-text-muted)] mt-1">
+              Format: SceneName|SourceName (toggles visibility). Optional: SceneName|SourceName|true or SceneName|SourceName|false
+            </p>
+          </div>
+        )}
+
         <div>
           <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Description (optional)</label>
-          <input
-            type="text"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="e.g. Increment death counter"
-            className={fieldClass}
-          />
+          <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="e.g. Increment death counter" className={fieldClass} />
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
           <button onClick={onClose} className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm text-[var(--color-text-secondary)]">Cancel</button>
-          <button
-            onClick={() => mutation.mutate()}
-            disabled={!canSave() || mutation.isPending}
-            className="rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-[var(--color-bg)] disabled:opacity-50"
-          >
+          <button onClick={() => mutation.mutate()} disabled={!canSave() || mutation.isPending} className="rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-[var(--color-bg)] disabled:opacity-50">
             {editingBinding ? "Save" : "Create"}
           </button>
         </div>

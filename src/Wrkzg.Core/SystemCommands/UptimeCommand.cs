@@ -48,7 +48,7 @@ public class UptimeCommand : ISystemCommand
         }
 
         using IServiceScope scope = _scopeFactory.CreateScope();
-        ITwitchHelixClient helix = scope.ServiceProvider.GetRequiredService<ITwitchHelixClient>();
+        IBroadcasterHelixClient helix = scope.ServiceProvider.GetRequiredService<IBroadcasterHelixClient>();
 
         StreamInfo? stream = await helix.GetStreamAsync(channel, ct);
         if (stream is null)

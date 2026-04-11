@@ -1,4 +1,5 @@
 import React from "react";
+import type { EmoteDto } from "../api/emotes";
 
 /**
  * Renders message content with Twitch emotes replaced by images.
@@ -69,6 +70,52 @@ export function renderWithEmotes(
   // Remaining text after last emote
   if (lastIndex < content.length) {
     parts.push(<span key="tail">{content.slice(lastIndex)}</span>);
+  }
+
+  return <>{parts}</>;
+}
+
+/**
+ * Renders message content by replacing known emote names (from a pre-built map)
+ * with emote images. Used as a fallback when Twitch IRC emote positions are not available.
+ */
+export function renderWithEmoteMap(
+  content: string,
+  emoteMap: Map<string, EmoteDto>,
+  emoteSize: number = 24,
+): React.ReactNode {
+  if (emoteMap.size === 0) {
+    return content;
+  }
+
+  const tokens = content.split(/(\s+)/);
+  let hasEmote = false;
+
+  const parts: React.ReactNode[] = tokens.map((token, i) => {
+    const emote = emoteMap.get(token);
+    if (emote) {
+      hasEmote = true;
+      return (
+        <img
+          key={i}
+          src={emote.url}
+          alt={emote.name}
+          title={emote.name}
+          style={{
+            display: "inline-block",
+            verticalAlign: "middle",
+            height: `${emoteSize}px`,
+            width: "auto",
+            margin: "0 1px",
+          }}
+        />
+      );
+    }
+    return <span key={i}>{token}</span>;
+  });
+
+  if (!hasEmote) {
+    return content;
   }
 
   return <>{parts}</>;

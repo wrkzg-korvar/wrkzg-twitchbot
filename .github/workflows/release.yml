@@ -247,6 +247,8 @@ jobs:
     needs: [build-windows, build-macos-arm64, build-macos-x64]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           merge-multiple: true
@@ -254,52 +256,79 @@ jobs:
       - name: Generate Checksums
         run: sha256sum *.zip > checksums-sha256.txt
 
+      - name: Extract Changelog
+        id: changelog
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          bash .github/scripts/extract-changelog.sh "$VERSION" > release-notes.md 2>/dev/null || echo "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details." > release-notes.md
+          if [[ ! -s release-notes.md ]]; then
+            echo "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details." > release-notes.md
+          fi
+
+      - name: Build Release Body
+        run: |
+          cat > release-body.md << 'HEADER'
+          ## Wrkzg ${{ github.ref_name }}
+
+          Wrkzg runs directly on your computer — no cloud services, no subscriptions, no data leaving your machine.
+
+          ### What's New
+          HEADER
+
+          cat release-notes.md >> release-body.md
+
+          cat >> release-body.md << 'FOOTER'
+
+          ---
+
+          ### Downloads
+
+          | Platform | File |
+          |---|---|
+          | Windows x64 | `Wrkzg-${{ github.ref_name }}-win-x64.zip` |
+          | macOS Apple Silicon | `Wrkzg-${{ github.ref_name }}-osx-arm64.zip` |
+          | macOS Intel | `Wrkzg-${{ github.ref_name }}-osx-x64.zip` |
+
+          ### Installation
+
+          **Windows:**
+          1. Download and extract the ZIP
+          2. Run `Wrkzg.exe`
+
+          **macOS (First Launch — Gatekeeper):**
+
+          Wrkzg is not signed with an Apple Developer Certificate. macOS will block the first launch.
+
+          *Option A — System Settings (recommended for Sequoia 15+):*
+          1. Double-click `Wrkzg.app` → click **"Done"** on the warning
+          2. Open **System Settings → Privacy & Security**
+          3. Scroll to the bottom — click **"Open Anyway"** next to the Wrkzg message
+          4. Enter your password — the app launches and is remembered
+
+          *Option B — Terminal:*
+          ```
+          xattr -cr ~/Downloads/Wrkzg.app
+          open ~/Downloads/Wrkzg.app
+          ```
+
+          The Setup Wizard will guide you through connecting your Twitch account.
+
+          ### Verify Downloads
+
+          Check `checksums-sha256.txt` to verify file integrity.
+
+          ---
+
+          Full changelog: [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
+          FOOTER
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
-          generate_release_notes: true
-          body: |
-            ## Wrkzg ${{ github.ref_name }}
-
-            Self-hosted Twitch community bot with built-in dashboard.
-
-            ### Downloads
-
-            | Platform | File |
-            |---|---|
-            | Windows x64 | `Wrkzg-${{ github.ref_name }}-win-x64.zip` |
-            | macOS Apple Silicon | `Wrkzg-${{ github.ref_name }}-osx-arm64.zip` |
-            | macOS Intel | `Wrkzg-${{ github.ref_name }}-osx-x64.zip` |
-
-            ### Installation
-
-            **Windows:**
-            1. Download and extract the ZIP
-            2. Run `Wrkzg.exe`
-
-            **macOS (First Launch — Gatekeeper):**
-
-            Wrkzg is not signed with an Apple Developer Certificate. macOS will block the first launch.
-
-            *Option A — System Settings (recommended for Sequoia 15+):*
-            1. Double-click `Wrkzg.app` → click **"Done"** on the warning
-            2. Open **System Settings → Privacy & Security**
-            3. Scroll to the bottom — click **"Open Anyway"** next to the Wrkzg message
-            4. Enter your password — the app launches and is remembered
-
-            *Option B — Terminal:*
-            ```
-            xattr -cr ~/Downloads/Wrkzg.app
-            open ~/Downloads/Wrkzg.app
-            ```
-
-            The Setup Wizard will guide you through connecting your Twitch account.
-
-            ### Verify Downloads
-
-            Check `checksums-sha256.txt` to verify file integrity.
+          generate_release_notes: false
+          body_path: release-body.md
           files: |
             *.zip
             checksums-sha256.txt

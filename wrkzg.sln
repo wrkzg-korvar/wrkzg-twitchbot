@@ -39,6 +39,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISSUE_TEMPLATE", "ISSUE_TEMPLATE", "{183B5610-8EEA-4B69-8880-6D6541B5A56F}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{15355128-CA12-49D8-956F-A721F5CD489E}"
+	ProjectSection(SolutionItems) = preProject
+		.github\scripts\extract-changelog.sh = .github\scripts\extract-changelog.sh
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -79,5 +84,6 @@ Global
 		{043BA97F-1D62-4300-B236-042B03020068} = {2DD86490-6140-45E3-9287-F4A1FD249398}
 		{DF5D933A-192C-45EA-B436-8013DE718517} = {22F94070-00AD-481C-9455-E5E0E758C61D}
 		{183B5610-8EEA-4B69-8880-6D6541B5A56F} = {22F94070-00AD-481C-9455-E5E0E758C61D}
+		{15355128-CA12-49D8-956F-A721F5CD489E} = {22F94070-00AD-481C-9455-E5E0E758C61D}
 	EndGlobalSection
 EndGlobal

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, Pencil, Play, ChevronRight, Zap, Shield, Sparkles, Info } from "lucide-react";
+import { Plus, Trash2, Pencil, Play, ChevronRight, Zap, Shield, Sparkles } from "lucide-react";
 import { effectsApi } from "../api/effects";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Toggle } from "../components/ui/Toggle";
@@ -8,39 +8,8 @@ import { Badge } from "../components/ui/Badge";
 import { Modal } from "../components/ui/Modal";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { showToast } from "../hooks/useToast";
+import { VisualAutomationBuilder } from "../components/features/effects/VisualAutomationBuilder";
 import type { EffectList, EffectTypes, ConditionConfig, EffectConfig } from "../types/effects";
-
-// Human-readable descriptions for each type
-const TRIGGER_DESCRIPTIONS: Record<string, string> = {
-  command: "Activates when a viewer types a specific chat command (e.g. !welcome)",
-  event: "Activates on Twitch events like follows, subscriptions, raids",
-  keyword: "Activates when a specific word or phrase appears in any chat message",
-  hotkey: "Activates when a configured hotkey is pressed or triggered via API",
-  channelpoint: "Activates when a viewer redeems a specific Channel Point reward",
-};
-
-const CONDITION_DESCRIPTIONS: Record<string, string> = {
-  role_check: "Only run if the user has a community role with at least this priority level",
-  points_check: "Only run if the user has at least this many points",
-  random_chance: "Only run with a random probability (e.g. 50% = runs half the time)",
-  stream_status: "Only run when the stream is live (or offline)",
-};
-
-const EFFECT_DESCRIPTIONS: Record<string, string> = {
-  chat_message: "Send a message in chat. Use {user} for the viewer's name.",
-  wait: "Pause before the next effect (max 60 seconds)",
-  counter: "Increment, decrement, or reset a counter",
-  alert: "Show an alert notification in the OBS overlay",
-  variable: "Set a variable that can be used in later effects with {variable_name}",
-};
-
-const TRIGGER_EXAMPLES: Record<string, string> = {
-  command: '{"trigger": "!welcome"}',
-  event: '{"event_type": "event.follow"}',
-  keyword: '{"keyword": "hello"}',
-  hotkey: '{"hotkey_id": "1"}',
-  channelpoint: '{"reward_id": ""}',
-};
 
 const EXAMPLE_AUTOMATIONS = [
   {
@@ -349,8 +318,6 @@ function EffectFormModal({ editingId, types, onClose, onSaved }: {
     onError: () => showToast("error", "Failed to save."),
   });
 
-  const selectedTrigger = types.triggers.find((t) => t.id === triggerTypeId);
-
   return (
     <Modal open={true} title={editingId ? "Edit Automation" : "New Automation"} onClose={onClose} size="lg">
       <div className="space-y-5 max-h-[70vh] overflow-y-auto pr-1">
@@ -379,53 +346,17 @@ function EffectFormModal({ editingId, types, onClose, onSaved }: {
             className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]" />
         </div>
 
-        {/* TRIGGER */}
-        <Section color="blue" icon={Zap} title="Trigger" subtitle="When should this automation activate?">
-          <select value={triggerTypeId} onChange={(e) => { setTriggerTypeId(e.target.value); setTriggerConfig(TRIGGER_EXAMPLES[e.target.value] ?? "{}"); }}
-            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] mb-2">
-            {types.triggers.map((t) => (
-              <option key={t.id} value={t.id}>{t.displayName}</option>
-            ))}
-          </select>
-          {TRIGGER_DESCRIPTIONS[triggerTypeId] && (
-            <p className="text-xs text-[var(--color-text-muted)] mb-2 flex items-start gap-1.5">
-              <Info className="h-3 w-3 mt-0.5 flex-shrink-0 text-blue-400" />
-              {TRIGGER_DESCRIPTIONS[triggerTypeId]}
-            </p>
-          )}
-          {selectedTrigger && selectedTrigger.parameterKeys.length > 0 && (
-            <textarea value={triggerConfig} onChange={(e) => setTriggerConfig(e.target.value)} rows={2}
-              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-xs text-[var(--color-text)] font-mono" />
-          )}
-        </Section>
-
-        {/* CONDITIONS */}
-        <Section color="amber" icon={Shield} title="Conditions" subtitle="Optional: Only run if ALL of these are true">
-          {types.conditions.map((c) => (
-            <div key={c.id} className="flex items-start gap-2 text-xs text-[var(--color-text-muted)] mb-1">
-              <code className="text-amber-700 dark:text-amber-400 font-mono">{c.id}</code>
-              <span>— {CONDITION_DESCRIPTIONS[c.id] ?? c.displayName}</span>
-            </div>
-          ))}
-          <textarea value={conditionsConfig} onChange={(e) => setConditionsConfig(e.target.value)} rows={3}
-            placeholder='Leave as [] for no conditions, or add e.g.:
-[{"type":"random_chance","params":{"percent":"50"}}]'
-            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-xs text-[var(--color-text)] font-mono mt-2" />
-        </Section>
-
-        {/* EFFECTS */}
-        <Section color="green" icon={Sparkles} title="Effects" subtitle="Actions to run in order when triggered">
-          {types.effects.map((e) => (
-            <div key={e.id} className="flex items-start gap-2 text-xs text-[var(--color-text-muted)] mb-1">
-              <code className="text-green-700 dark:text-green-400 font-mono">{e.id}</code>
-              <span>— {EFFECT_DESCRIPTIONS[e.id] ?? e.displayName}</span>
-            </div>
-          ))}
-          <textarea value={effectsConfig} onChange={(e) => setEffectsConfig(e.target.value)} rows={4}
-            placeholder='Add one or more effects, e.g.:
-[{"type":"chat_message","params":{"message":"Hello {user}!"}}]'
-            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-xs text-[var(--color-text)] font-mono mt-2" />
-        </Section>
+        {/* Automation Builder: Trigger + Conditions + Effects */}
+        <VisualAutomationBuilder
+          triggerType={triggerTypeId}
+          triggerConfig={triggerConfig}
+          conditions={conditionsConfig}
+          effects={effectsConfig}
+          onTriggerTypeChange={(type) => { setTriggerTypeId(type); }}
+          onTriggerConfigChange={setTriggerConfig}
+          onConditionsChange={setConditionsConfig}
+          onEffectsChange={setEffectsConfig}
+        />
       </div>
 
       <div className="flex justify-end gap-2 pt-4 border-t border-[var(--color-border)] mt-4">
@@ -439,30 +370,3 @@ function EffectFormModal({ editingId, types, onClose, onSaved }: {
   );
 }
 
-// ─── Shared Section Component ───────────────────────────────
-
-function Section({ color, icon: Icon, title, subtitle, children }: {
-  color: string; icon: typeof Zap; title: string; subtitle: string; children: React.ReactNode;
-}) {
-  const colors: Record<string, string> = {
-    blue: "border-blue-500/20 bg-blue-500/5",
-    amber: "border-amber-500/20 bg-amber-500/5",
-    green: "border-green-500/20 bg-green-500/5",
-  };
-  const textColors: Record<string, string> = {
-    blue: "text-blue-700 dark:text-blue-400",
-    amber: "text-amber-700 dark:text-amber-400",
-    green: "text-green-700 dark:text-green-400",
-  };
-
-  return (
-    <div className={`rounded-lg border ${colors[color]} p-4`}>
-      <div className="flex items-center gap-2 mb-1">
-        <Icon className={`h-4 w-4 ${textColors[color]}`} />
-        <h4 className={`text-sm font-semibold ${textColors[color]}`}>{title}</h4>
-      </div>
-      <p className="text-xs text-[var(--color-text-muted)] mb-3">{subtitle}</p>
-      {children}
-    </div>
-  );
-}

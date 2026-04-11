@@ -49,7 +49,7 @@ public static class WindowEndpoints
         {
             if (string.IsNullOrEmpty(request.Direction))
             {
-                return Results.BadRequest();
+                return TypedResults.Problem(title: "Bad Request", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             controller.StartResize(request.Direction);

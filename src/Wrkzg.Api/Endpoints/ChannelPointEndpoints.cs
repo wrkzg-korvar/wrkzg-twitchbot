@@ -29,13 +29,13 @@ public static class ChannelPointEndpoints
         {
             if (string.IsNullOrWhiteSpace(request.TwitchRewardId))
             {
-                return Results.BadRequest(new { error = "Twitch Reward ID is required." });
+                return TypedResults.Problem(detail: "Twitch Reward ID is required.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             ChannelPointReward? existing = await repo.GetByTwitchRewardIdAsync(request.TwitchRewardId, ct);
             if (existing is not null)
             {
-                return Results.BadRequest(new { error = "A handler for this reward already exists." });
+                return TypedResults.Problem(detail: "A handler for this reward already exists.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             ChannelPointReward reward = new()
@@ -61,7 +61,7 @@ public static class ChannelPointEndpoints
 
             if (reward is null)
             {
-                return Results.NotFound();
+                return TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             if (request.Title is not null)
@@ -95,7 +95,7 @@ public static class ChannelPointEndpoints
             return Results.NoContent();
         });
 
-        group.MapGet("/rewards", async (ITwitchHelixClient helix, CancellationToken ct) =>
+        group.MapGet("/rewards", async (IBroadcasterHelixClient helix, CancellationToken ct) =>
         {
             IReadOnlyList<TwitchCustomReward> rewards = await helix.GetCustomRewardsAsync(ct);
             return Results.Ok(rewards);

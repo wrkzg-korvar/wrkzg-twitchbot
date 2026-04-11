@@ -47,6 +47,9 @@ desktop.ini
 logs/
 *.log
 
+# --- Test-Daten ---
+testdata/
+
 # --- Test-Ergebnisse ---
 TestResults/
 coverage/

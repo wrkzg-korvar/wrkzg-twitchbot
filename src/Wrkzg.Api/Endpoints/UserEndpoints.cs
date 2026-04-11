@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Threading;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -18,31 +17,40 @@ public static class UserEndpoints
     {
         RouteGroupBuilder group = app.MapGroup("/api/users").WithTags("Users");
 
-        // GET /api/users?sortBy=points&order=desc&limit=50
+        // GET /api/users?search=korvar&sortBy=points&order=desc&page=1&pageSize=50
         group.MapGet("/", async (
+            string? search,
             string? sortBy,
             string? order,
+            int? page,
+            int? pageSize,
             int? limit,
             CancellationToken ct,
             IUserRepository repo) =>
         {
-            int take = limit is > 0 and <= 500 ? limit.Value : 50;
-            string sort = sortBy?.ToLowerInvariant() ?? "points";
+            int p = page is > 0 ? page.Value : 1;
+            int ps = pageSize is > 0 and <= 200 ? pageSize.Value
+                   : limit is > 0 and <= 200 ? limit.Value
+                   : 50;
+            string sort = sortBy ?? "points";
+            string dir = order ?? "desc";
 
-            IReadOnlyList<User> users = sort switch
-            {
-                "watchtime" => await repo.GetTopByWatchTimeAsync(take, ct),
-                _ => await repo.GetTopByPointsAsync(take, ct),
-            };
+            PaginatedResult<User> result = await repo.GetPaginatedAsync(search, sort, dir, p, ps, ct);
+            return Results.Ok(result);
+        });
 
-            return Results.Ok(users);
+        // GET /api/users/count -- total tracked users
+        group.MapGet("/count", async (IUserRepository repo, CancellationToken ct) =>
+        {
+            int count = await repo.CountAsync(ct);
+            return Results.Ok(new { count });
         });
 
         // GET /api/users/{id}
         group.MapGet("/{id:int}", async (int id, IUserRepository repo, CancellationToken ct) =>
         {
             User? user = await repo.GetByIdAsync(id, ct);
-            return user is null ? Results.NotFound() : Results.Ok(user);
+            return user is null ? TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found") : Results.Ok(user);
         });
 
         // PUT /api/users/{id} — update points or ban status
@@ -51,7 +59,7 @@ public static class UserEndpoints
             User? user = await repo.GetByIdAsync(id, ct);
             if (user is null)
             {
-                return Results.NotFound();
+                return TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             if (request.Points.HasValue)

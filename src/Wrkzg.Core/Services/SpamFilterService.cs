@@ -16,14 +16,19 @@ namespace Wrkzg.Core.Services;
 /// Checks incoming chat messages for spam violations.
 /// Integrated into ChatMessagePipeline BEFORE command processing.
 /// </summary>
-public class SpamFilterService
+public class SpamFilterService : IDisposable
 {
     private readonly ISettingsRepository _settings;
     private readonly ITwitchChatClient _chat;
-    private readonly ITwitchHelixClient _helix;
+    private readonly IBotHelixClient _botHelix;
+    private readonly ISecureStorage _storage;
+    private readonly ITwitchOAuthService _oauth;
     private readonly ILogger<SpamFilterService> _logger;
 
     private readonly ConcurrentDictionary<string, (string LastMessage, int Count)> _recentMessages = new();
+
+    private string? _cachedBroadcasterId;
+    private readonly SemaphoreSlim _broadcasterIdLock = new(1, 1);
 
     private static readonly Regex UrlPattern = new(
         @"(https?://|www\.)\S+|[a-zA-Z0-9][-a-zA-Z0-9]*\.(com|net|org|tv|gg|me|io|co|de|uk|fr|ru)\b",
@@ -34,17 +39,23 @@ public class SpamFilterService
     /// </summary>
     /// <param name="settings">Repository for loading spam filter configuration.</param>
     /// <param name="chat">The Twitch IRC chat client for sending warning messages.</param>
-    /// <param name="helix">The Twitch Helix API client for issuing timeouts.</param>
+    /// <param name="botHelix">The Bot Helix API client for issuing timeouts.</param>
+    /// <param name="storage">Secure storage for loading Broadcaster tokens to resolve broadcaster ID.</param>
+    /// <param name="oauth">OAuth service for token validation.</param>
     /// <param name="logger">Logger instance for diagnostics.</param>
     public SpamFilterService(
         ISettingsRepository settings,
         ITwitchChatClient chat,
-        ITwitchHelixClient helix,
+        IBotHelixClient botHelix,
+        ISecureStorage storage,
+        ITwitchOAuthService oauth,
         ILogger<SpamFilterService> logger)
     {
         _settings = settings;
         _chat = chat;
-        _helix = helix;
+        _botHelix = botHelix;
+        _storage = storage;
+        _oauth = oauth;
         _logger = logger;
     }
 
@@ -236,13 +247,75 @@ public class SpamFilterService
         {
             try
             {
-                await _helix.TimeoutUserAsync(message.UserId, violation.TimeoutSeconds, $"Spam filter: {violation.FilterName}", ct);
+                string? broadcasterId = await ResolveBroadcasterIdAsync(ct);
+                if (broadcasterId is not null)
+                {
+                    await _botHelix.TimeoutUserAsync(broadcasterId, message.UserId, violation.TimeoutSeconds, $"Spam filter: {violation.FilterName}", ct);
+                }
+                else
+                {
+                    _logger.LogWarning("Cannot timeout user {User} — broadcaster ID not resolved", message.Username);
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Failed to timeout user {User} via Helix", message.Username);
             }
         }
+    }
+
+    /// <summary>
+    /// Resolves the broadcaster's Twitch user ID from the Broadcaster OAuth token.
+    /// Thread-safe with caching.
+    /// </summary>
+    private async Task<string?> ResolveBroadcasterIdAsync(CancellationToken ct)
+    {
+        if (_cachedBroadcasterId is not null)
+        {
+            return _cachedBroadcasterId;
+        }
+
+        await _broadcasterIdLock.WaitAsync(ct);
+        try
+        {
+            if (_cachedBroadcasterId is not null)
+            {
+                return _cachedBroadcasterId;
+            }
+
+            TwitchTokens? broadcasterToken = await _storage.LoadTokensAsync(TokenType.Broadcaster, ct);
+            if (broadcasterToken is null)
+            {
+                return null;
+            }
+
+            TwitchTokenValidation? validation = await _oauth.ValidateTokenAsync(broadcasterToken.AccessToken, ct);
+            if (validation is null)
+            {
+                TwitchTokens refreshed = await _oauth.RefreshTokenAsync(broadcasterToken.RefreshToken, ct);
+                await _storage.SaveTokensAsync(TokenType.Broadcaster, refreshed, ct);
+                validation = await _oauth.ValidateTokenAsync(refreshed.AccessToken, ct);
+            }
+
+            _cachedBroadcasterId = validation?.UserId;
+            return _cachedBroadcasterId;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to resolve broadcaster ID for timeout");
+            return null;
+        }
+        finally
+        {
+            _broadcasterIdLock.Release();
+        }
+    }
+
+    /// <summary>Releases the broadcaster ID resolution semaphore.</summary>
+    public void Dispose()
+    {
+        _broadcasterIdLock.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     // ─── Config Loading ──────────────────────────

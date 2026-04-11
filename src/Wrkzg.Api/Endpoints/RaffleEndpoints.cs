@@ -26,11 +26,7 @@ public static class RaffleEndpoints
         group.MapGet("/active", async (RaffleService service, CancellationToken ct) =>
         {
             Raffle? raffle = await service.GetActiveAsync(ct);
-            if (raffle is null)
-            {
-                return Results.NotFound();
-            }
-            return Results.Ok(MapToDto(raffle));
+            return raffle is not null ? Results.Ok(MapToDto(raffle)) : Results.Ok<object?>(null);
         });
 
         // GET /api/raffles/history
@@ -44,7 +40,7 @@ public static class RaffleEndpoints
         group.MapGet("/{id:int}", async (int id, RaffleService service, CancellationToken ct) =>
         {
             Raffle? raffle = await service.GetByIdAsync(id, ct);
-            return raffle is not null ? Results.Ok(MapToDto(raffle)) : Results.NotFound();
+            return raffle is not null ? Results.Ok(MapToDto(raffle)) : TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
         });
 
         // POST /api/raffles
@@ -60,7 +56,7 @@ public static class RaffleEndpoints
 
             return result.Success
                 ? Results.Created($"/api/raffles/{result.Raffle!.Id}", MapToDto(result.Raffle))
-                : Results.BadRequest(new { error = result.Error });
+                : TypedResults.Problem(detail: result.Error, title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
         });
 
         // POST /api/raffles/draw
@@ -69,21 +65,21 @@ public static class RaffleEndpoints
             DrawResult result = await service.DrawAsync(ct);
             return result.Success
                 ? Results.Ok(new { winner = result.WinnerName, totalEntries = result.TotalEntries })
-                : Results.BadRequest(new { error = result.Error });
+                : TypedResults.Problem(detail: result.Error, title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
         });
 
         // POST /api/raffles/cancel
         group.MapPost("/cancel", async (RaffleService service, CancellationToken ct) =>
         {
             RaffleResult result = await service.CancelAsync(ct);
-            return result.Success ? Results.Ok() : Results.BadRequest(new { error = result.Error });
+            return result.Success ? Results.Ok() : TypedResults.Problem(detail: result.Error, title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
         });
 
         // POST /api/raffles/end — close the raffle (after accepting winners)
         group.MapPost("/end", async (RaffleService service, CancellationToken ct) =>
         {
             RaffleResult result = await service.EndRaffleAsync(ct);
-            return result.Success ? Results.Ok() : Results.BadRequest(new { error = result.Error });
+            return result.Success ? Results.Ok() : TypedResults.Problem(detail: result.Error, title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
         });
 
         // POST /api/raffles/accept — confirm the pending winner
@@ -92,7 +88,7 @@ public static class RaffleEndpoints
             DrawResult result = await service.AcceptWinnerAsync(ct);
             return result.Success
                 ? Results.Ok(new { winner = result.WinnerName, totalEntries = result.TotalEntries })
-                : Results.BadRequest(new { error = result.Error });
+                : TypedResults.Problem(detail: result.Error, title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
         });
 
         // POST /api/raffles/redraw — reject pending winner, draw new one
@@ -101,7 +97,7 @@ public static class RaffleEndpoints
             DrawResult result = await service.RedrawAsync(request?.Reason, ct);
             return result.Success
                 ? Results.Ok(new { winner = result.WinnerName, totalEntries = result.TotalEntries })
-                : Results.BadRequest(new { error = result.Error });
+                : TypedResults.Problem(detail: result.Error, title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
         });
 
         // GET /api/raffles/{id}/draws — draw history for a raffle
@@ -143,7 +139,7 @@ public static class RaffleEndpoints
         {
             if (!RaffleTemplates.Defaults.ContainsKey(key))
             {
-                return Results.NotFound(new { error = "Unknown template key" });
+                return TypedResults.Problem(detail: "Unknown template key", title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
             await settings.DeleteAsync(key, ct);
             return Results.Ok();

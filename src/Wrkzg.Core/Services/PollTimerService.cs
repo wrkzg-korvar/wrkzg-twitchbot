@@ -35,18 +35,22 @@ public class PollTimerService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
+            bool hasActive = false;
+
             try
             {
                 using IServiceScope scope = _scopeFactory.CreateScope();
                 PollService pollService = scope.ServiceProvider.GetRequiredService<PollService>();
-                await pollService.CheckExpiredPollsAsync(stoppingToken);
+                hasActive = await pollService.CheckExpiredPollsAsync(stoppingToken);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 _logger.LogError(ex, "Error checking expired polls");
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
+            // Adaptive polling: 2s when active, 15s when idle
+            TimeSpan delay = hasActive ? TimeSpan.FromSeconds(2) : TimeSpan.FromSeconds(15);
+            await Task.Delay(delay, stoppingToken);
         }
     }
 }

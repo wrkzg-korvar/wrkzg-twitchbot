@@ -1,45 +1,32 @@
-import { useEffect, useRef, useState, useCallback } from "react";
-import * as signalR from "@microsoft/signalr";
-import { getApiToken } from "../lib/apiToken";
+import { useEffect, useState, useCallback } from "react";
+import { signalRManager } from "../lib/signalRManager";
 
 export function useSignalR(hubUrl: string) {
-  const connectionRef = useRef<signalR.HubConnection | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState(signalRManager.isConnected);
 
   useEffect(() => {
-    // Include API token as access_token query param for WebSocket authentication
-    const token = getApiToken();
-    const authenticatedUrl = token ? `${hubUrl}?access_token=${encodeURIComponent(token)}` : hubUrl;
+    // Ensure the connection is established
+    signalRManager.ensureConnection(hubUrl);
 
-    const connection = new signalR.HubConnectionBuilder()
-      .withUrl(authenticatedUrl)
-      .withAutomaticReconnect()
-      .build();
+    // Subscribe to status changes
+    const unsubscribe = signalRManager.subscribe((connected) => {
+      setIsConnected(connected);
+    });
 
-    connectionRef.current = connection;
-
-    connection.onreconnected(() => setIsConnected(true));
-    connection.onclose(() => setIsConnected(false));
-
-    connection
-      .start()
-      .then(() => setIsConnected(true))
-      .catch((err) => console.error("SignalR connection failed:", err));
-
-    return () => {
-      connection.stop();
-    };
+    return unsubscribe;
+    // hubUrl does not change at runtime — safe to ignore
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hubUrl]);
 
   const on = useCallback(
     <T>(methodName: string, handler: (data: T) => void) => {
-      connectionRef.current?.on(methodName, handler);
+      signalRManager.on(methodName, handler);
     },
     [],
   );
 
   const off = useCallback((methodName: string) => {
-    connectionRef.current?.off(methodName);
+    signalRManager.off(methodName);
   }, []);
 
   return { isConnected, on, off };

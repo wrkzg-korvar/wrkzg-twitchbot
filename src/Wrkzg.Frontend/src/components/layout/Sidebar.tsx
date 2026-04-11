@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -20,10 +21,13 @@ import {
   Workflow,
   Plug,
   Upload,
+  BellRing,
 } from "lucide-react";
 import { SidebarGroup } from "./SidebarGroup";
 import { ThemeToggle } from "./ThemeToggle";
 import { BotStatusIndicator } from "./BotStatusIndicator";
+import { NotificationPanel } from "./NotificationPanel";
+import { useUnreadCount } from "../../hooks/useNotifications";
 
 interface NavItem {
   to: string;
@@ -102,40 +106,65 @@ function navLinkClass({ isActive }: { isActive: boolean }) {
 }
 
 export function Sidebar() {
+  const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
+  const unreadCount = useUnreadCount();
+
   return (
-    <aside className="flex w-56 flex-col border-r border-[var(--color-border)] bg-[var(--color-bg)]">
-      <nav className="flex-1 overflow-y-auto p-3">
-        {NAV_GROUPS.map((group, idx) => (
-          <SidebarGroup key={group.label ?? idx} label={group.label}>
-            {group.items.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === "/"}
-                className={navLinkClass}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </NavLink>
-            ))}
+    <>
+      <aside className="flex w-56 flex-col border-r border-[var(--color-border)] bg-[var(--color-bg)]">
+        <nav className="flex-1 overflow-y-auto p-3">
+          {NAV_GROUPS.map((group, idx) => (
+            <SidebarGroup key={group.label ?? idx} label={group.label}>
+              {group.items.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === "/"}
+                  className={navLinkClass}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </NavLink>
+              ))}
+            </SidebarGroup>
+          ))}
+
+          <SidebarGroup>
+            <NavLink to="/settings" end className={navLinkClass}>
+              <Settings className="h-4 w-4" />
+              Settings
+            </NavLink>
           </SidebarGroup>
-        ))}
+        </nav>
 
-        <SidebarGroup>
-          <NavLink to="/settings" end className={navLinkClass}>
-            <Settings className="h-4 w-4" />
-            Settings
-          </NavLink>
-        </SidebarGroup>
-      </nav>
+        <div className="border-t border-[var(--color-border)] p-3">
+          <button
+            onClick={() => setNotificationPanelOpen(true)}
+            className="relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-elevated)] hover:text-[var(--color-text)]"
+          >
+            <BellRing className="h-4 w-4" />
+            Notifications
+            {unreadCount > 0 && (
+              <span className="absolute right-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </button>
+        </div>
 
-      <div className="border-t border-[var(--color-border)] p-3">
-        <ThemeToggle />
-      </div>
+        <div className="border-t border-[var(--color-border)] p-3">
+          <ThemeToggle />
+        </div>
 
-      <div className="border-t border-[var(--color-border)] p-3">
-        <BotStatusIndicator />
-      </div>
-    </aside>
+        <div className="border-t border-[var(--color-border)] p-3">
+          <BotStatusIndicator />
+        </div>
+      </aside>
+
+      <NotificationPanel
+        open={notificationPanelOpen}
+        onClose={() => setNotificationPanelOpen(false)}
+      />
+    </>
   );
 }

@@ -16,7 +16,7 @@ public class SpamFilterServiceTests
 {
     private readonly ISettingsRepository _settings;
     private readonly ITwitchChatClient _chatClient;
-    private readonly ITwitchHelixClient _helix;
+    private readonly IBotHelixClient _botHelix;
     private readonly SpamFilterService _sut;
 
     /// <summary>Initializes test dependencies with NSubstitute mocks.</summary>
@@ -24,13 +24,15 @@ public class SpamFilterServiceTests
     {
         _settings = Substitute.For<ISettingsRepository>();
         _chatClient = Substitute.For<ITwitchChatClient>();
-        _helix = Substitute.For<ITwitchHelixClient>();
+        _botHelix = Substitute.For<IBotHelixClient>();
+        ISecureStorage storage = Substitute.For<ISecureStorage>();
+        ITwitchOAuthService oauth = Substitute.For<ITwitchOAuthService>();
         ILogger<SpamFilterService> logger = Substitute.For<ILogger<SpamFilterService>>();
 
         // Default: all filters enabled via default config (no settings overrides)
         _settings.GetAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((string?)null);
 
-        _sut = new SpamFilterService(_settings, _chatClient, _helix, logger);
+        _sut = new SpamFilterService(_settings, _chatClient, _botHelix, storage, oauth, logger);
     }
 
     private static ChatMessage Msg(string content, bool isMod = false, bool isSub = false, bool isBroadcaster = false)

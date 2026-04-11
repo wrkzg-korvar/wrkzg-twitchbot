@@ -29,6 +29,12 @@ public class ImportUserRecord
     /// <summary>Gets or sets the date the user was last seen in chat. Only available in Deepbot JSON imports.</summary>
     public DateTimeOffset? LastSeen { get; set; }
 
+    /// <summary>Gets or sets the Twitch user ID. Available in DeepBot binary imports.</summary>
+    public string? TwitchId { get; set; }
+
+    /// <summary>Gets or sets the display name with correct capitalization.</summary>
+    public string? DisplayName { get; set; }
+
     /// <summary>Gets or sets the source file line number for error reporting.</summary>
     public int LineNumber { get; set; }
 }

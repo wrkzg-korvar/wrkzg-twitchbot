@@ -49,7 +49,7 @@ public static class RoleEndpoints
         {
             if (string.IsNullOrWhiteSpace(request.Name))
             {
-                return Results.BadRequest(new { error = "Role name is required." });
+                return TypedResults.Problem(detail: "Role name is required.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             Role role = new()
@@ -70,7 +70,7 @@ public static class RoleEndpoints
             Role? role = await repo.GetByIdAsync(id, ct);
             if (role is null)
             {
-                return Results.NotFound();
+                return TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             if (request.Name is not null)

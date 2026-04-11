@@ -5,10 +5,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
 using TwitchLib.EventSub.Websockets.Extensions;
 using Wrkzg.Core.Interfaces;
+using Wrkzg.Core.Models;
 using Wrkzg.Infrastructure.Data;
 using Wrkzg.Infrastructure.Import;
 using Wrkzg.Infrastructure.Repositories;
 using Wrkzg.Infrastructure.Security;
+using Wrkzg.Infrastructure.Integrations;
+using Wrkzg.Infrastructure.Services;
 using Wrkzg.Infrastructure.Twitch;
 
 namespace Wrkzg.Infrastructure;
@@ -54,6 +57,9 @@ public static class DependencyInjection
         services.AddScoped<IDataImportService, DataImportService>();
         services.AddScoped<ICustomOverlayRepository, CustomOverlayRepository>();
 
+        // Background import job service (Singleton — manages in-memory job state)
+        services.AddSingleton<IImportJobService, ImportJobService>();
+
         // Secure Storage + Hotkey Listener (platform-specific)
         if (OperatingSystem.IsWindows())
         {
@@ -86,16 +92,32 @@ public static class DependencyInjection
         })
         .AddStandardResilienceHandler();
 
-        // Twitch Auth Handler (DelegatingHandler for Helix API requests)
-        services.AddTransient<TwitchAuthHandler>();
-
-        // Twitch Helix API Client (with TwitchAuthHandler for auto Bearer token + Client-Id)
-        services.AddHttpClient<ITwitchHelixClient, TwitchHelixClient>(client =>
+        // Broadcaster Helix API Client (Broadcaster token — stream info, polls, channel points)
+        services.AddHttpClient<IBroadcasterHelixClient, BroadcasterHelixClient>(client =>
         {
             client.BaseAddress = new Uri("https://api.twitch.tv/helix/");
             client.Timeout = TimeSpan.FromSeconds(10);
         })
-        .AddHttpMessageHandler<TwitchAuthHandler>()
+        .AddHttpMessageHandler(sp => new TwitchAuthHandler(
+            TokenType.Broadcaster,
+            sp.GetRequiredService<ISecureStorage>(),
+            sp.GetRequiredService<ITwitchOAuthService>(),
+            sp.GetRequiredService<IAuthStateNotifier>(),
+            sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<TwitchAuthHandler>>()))
+        .AddStandardResilienceHandler();
+
+        // Bot Helix API Client (Bot token — announcements, timeouts)
+        services.AddHttpClient<IBotHelixClient, BotHelixClient>(client =>
+        {
+            client.BaseAddress = new Uri("https://api.twitch.tv/helix/");
+            client.Timeout = TimeSpan.FromSeconds(10);
+        })
+        .AddHttpMessageHandler(sp => new TwitchAuthHandler(
+            TokenType.Bot,
+            sp.GetRequiredService<ISecureStorage>(),
+            sp.GetRequiredService<ITwitchOAuthService>(),
+            sp.GetRequiredService<IAuthStateNotifier>(),
+            sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<TwitchAuthHandler>>()))
         .AddStandardResilienceHandler();
 
         // Twitch Chat Client (Singleton — one IRC connection per app)
@@ -110,8 +132,17 @@ public static class DependencyInjection
         services.AddTwitchLibEventSubWebsockets();
         services.AddHostedService<EventSubConnectionService>();
 
+        // Emote Service (IHostedService — caches global + channel emotes, refreshes every 30m)
+        services.AddSingleton<EmoteService>();
+        services.AddSingleton<IEmoteService>(sp => sp.GetRequiredService<EmoteService>());
+        services.AddHostedService(sp => sp.GetRequiredService<EmoteService>());
+
         // Stream Analytics (IHostedService — polls viewer count + category every 60s)
         services.AddHostedService<Wrkzg.Infrastructure.Services.StreamAnalyticsService>();
+
+        // OBS WebSocket Integration (Singleton — one connection per app)
+        services.AddSingleton<ObsWebSocketService>();
+        services.AddSingleton<IObsWebSocketService>(sp => sp.GetRequiredService<ObsWebSocketService>());
 
         return services;
     }

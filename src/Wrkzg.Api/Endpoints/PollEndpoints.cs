@@ -25,7 +25,7 @@ public static class PollEndpoints
         group.MapGet("/active", async (PollService pollService, CancellationToken ct) =>
         {
             PollResultsDto? results = await pollService.GetResultsAsync(ct: ct);
-            return results is not null ? Results.Ok(results) : Results.NotFound();
+            return Results.Ok(results);
         });
 
         // GET /api/polls/history
@@ -58,7 +58,7 @@ public static class PollEndpoints
         group.MapGet("/{id:int}", async (int id, PollService pollService, CancellationToken ct) =>
         {
             PollResultsDto? results = await pollService.GetResultsAsync(id, ct);
-            return results is not null ? Results.Ok(results) : Results.NotFound();
+            return results is not null ? Results.Ok(results) : TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
         });
 
         // POST /api/polls
@@ -73,21 +73,21 @@ public static class PollEndpoints
 
             return result.Success
                 ? Results.Created($"/api/polls/{result.Poll!.Id}", result.Poll)
-                : Results.BadRequest(new { error = result.Error });
+                : TypedResults.Problem(detail: result.Error, title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
         });
 
         // POST /api/polls/end
         group.MapPost("/end", async (PollService pollService, CancellationToken ct) =>
         {
             PollResult result = await pollService.EndPollAsync(PollEndReason.ManuallyClosed, ct);
-            return result.Success ? Results.Ok() : Results.BadRequest(new { error = result.Error });
+            return result.Success ? Results.Ok() : TypedResults.Problem(detail: result.Error, title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
         });
 
         // POST /api/polls/cancel
         group.MapPost("/cancel", async (PollService pollService, CancellationToken ct) =>
         {
             PollResult result = await pollService.EndPollAsync(PollEndReason.Cancelled, ct);
-            return result.Success ? Results.Ok() : Results.BadRequest(new { error = result.Error });
+            return result.Success ? Results.Ok() : TypedResults.Problem(detail: result.Error, title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
         });
 
         // GET /api/polls/templates — all template definitions with current overrides
@@ -112,7 +112,7 @@ public static class PollEndpoints
             bool isKnown = PollTemplates.All.Any(t => t.Key == key);
             if (!isKnown)
             {
-                return Results.NotFound(new { error = $"Unknown template key: {key}" });
+                return TypedResults.Problem(detail: $"Unknown template key: {key}", title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             await settings.DeleteAsync(key, ct);
@@ -123,7 +123,7 @@ public static class PollEndpoints
         group.MapPost("/twitch", async (
             CreateTwitchPollRequest request,
             PollService pollService,
-            ITwitchHelixClient helix,
+            IBroadcasterHelixClient helix,
             ISecureStorage storage,
             CancellationToken ct) =>
         {

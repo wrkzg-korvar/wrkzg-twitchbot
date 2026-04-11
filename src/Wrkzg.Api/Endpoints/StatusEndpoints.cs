@@ -25,7 +25,7 @@ public static class StatusEndpoints
 
         group.MapGet("/", async (
             ITwitchChatClient chatClient,
-            ITwitchHelixClient helix,
+            IBroadcasterHelixClient helix,
             ISecureStorage storage,
             CancellationToken ct) =>
         {

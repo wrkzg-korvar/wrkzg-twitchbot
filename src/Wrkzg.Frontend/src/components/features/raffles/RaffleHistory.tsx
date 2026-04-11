@@ -1,10 +1,11 @@
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trophy, ChevronDown, ChevronRight, RotateCcw } from "lucide-react";
 import { rafflesApi } from "../../../api/raffles";
-import { DataTable } from "../../../components/ui/DataTable";
+import { SmartDataTable } from "../../../components/ui/DataTable";
 import { showToast } from "../../../hooks/useToast";
 import { DrawHistoryList } from "./RaffleActive";
+import type { SmartColumn } from "../../../components/ui/DataTable";
 import type { RaffleDto, RaffleHistoryItem, RaffleTemplate } from "../../../types/raffles";
 
 interface RaffleHistoryProps {
@@ -17,18 +18,18 @@ export function RaffleHistory({ items }: RaffleHistoryProps) {
   const [expandedRaffle, setExpandedRaffle] = useState<RaffleDto | null>(null);
   const [loadingExpanded, setLoadingExpanded] = useState(false);
 
-  const handleRowClick = async (id: number) => {
-    if (expandedId === id) {
+  const handleRowClick = async (item: RaffleHistoryItem) => {
+    if (expandedId === item.id) {
       setExpandedId(null);
       setExpandedRaffle(null);
       return;
     }
 
-    setExpandedId(id);
+    setExpandedId(item.id);
     setExpandedRaffle(null);
     setLoadingExpanded(true);
     try {
-      const raffle = await rafflesApi.getById(id);
+      const raffle = await rafflesApi.getById(item.id);
       setExpandedRaffle(raffle);
     } catch {
       setExpandedRaffle(null);
@@ -36,6 +37,68 @@ export function RaffleHistory({ items }: RaffleHistoryProps) {
       setLoadingExpanded(false);
     }
   };
+
+  const columns: SmartColumn<RaffleHistoryItem>[] = [
+    {
+      key: "id",
+      header: "",
+      className: "w-6",
+      render: (_, row) =>
+        expandedId === row.id ? (
+          <ChevronDown className="h-3.5 w-3.5 text-[var(--color-text-muted)]" />
+        ) : (
+          <ChevronRight className="h-3.5 w-3.5 text-[var(--color-text-muted)]" />
+        ),
+    },
+    {
+      key: "title",
+      header: "Title",
+      searchable: true,
+      sortable: true,
+      className: "text-[var(--color-text)]",
+    },
+    {
+      key: "winnerName",
+      header: "Winner",
+      searchable: true,
+      render: (v) =>
+        v ? (
+          <span className="flex items-center gap-1 text-[var(--color-text)]">
+            <Trophy className="h-3 w-3 text-yellow-500" />
+            {v as string}
+          </span>
+        ) : (
+          <span className="text-[var(--color-text-muted)]">No winner</span>
+        ),
+    },
+    {
+      key: "entryCount",
+      header: "Entries",
+      sortable: true,
+      className: "text-right text-[var(--color-text)]",
+    },
+    {
+      key: "keyword",
+      header: "Keyword",
+      render: (v) => (
+        <span className="inline-block rounded px-1.5 py-0.5 text-xs bg-[var(--color-elevated)] text-[var(--color-text-secondary)]">
+          {(v as string) || "!join"}
+        </span>
+      ),
+    },
+    {
+      key: "endReason",
+      header: "Status",
+      className: "text-xs text-[var(--color-text-muted)]",
+    },
+    {
+      key: "createdAt",
+      header: "Created",
+      sortable: true,
+      className: "text-xs text-[var(--color-text-muted)]",
+      render: (v) => new Date(v as string).toLocaleString(),
+    },
+  ];
 
   if (closedItems.length === 0) {
     return (
@@ -51,74 +114,30 @@ export function RaffleHistory({ items }: RaffleHistoryProps) {
       <div className="rounded-t-lg border border-b-0 border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3">
         <h2 className="text-sm font-semibold text-[var(--color-text)]">Raffle History</h2>
       </div>
-      <DataTable minWidth={800} className="rounded-b-lg">
-          <thead>
-            <tr className="border-b border-[var(--color-border)] text-left text-xs text-[var(--color-text-muted)]">
-              <th className="px-4 py-2 font-medium w-6"></th>
-              <th className="px-4 py-2 font-medium">Title</th>
-              <th className="px-4 py-2 font-medium">Winner</th>
-              <th className="px-4 py-2 font-medium text-right">Entries</th>
-              <th className="px-4 py-2 font-medium">Keyword</th>
-              <th className="px-4 py-2 font-medium">Status</th>
-              <th className="px-4 py-2 font-medium">Created</th>
-            </tr>
-          </thead>
-          <tbody>
-            {closedItems.map((raffle) => {
-              const isExpanded = expandedId === raffle.id;
-              return (
-                <Fragment key={raffle.id}>
-                  <tr
-                    onClick={() => handleRowClick(raffle.id)}
-                    className={`border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--color-elevated)] transition-colors cursor-pointer ${isExpanded ? "bg-[var(--color-elevated)]" : ""}`}
-                  >
-                    <td className="px-4 py-2.5 text-[var(--color-text-muted)]">
-                      {isExpanded ? (
-                        <ChevronDown className="h-3.5 w-3.5" />
-                      ) : (
-                        <ChevronRight className="h-3.5 w-3.5" />
-                      )}
-                    </td>
-                    <td className="px-4 py-2.5 text-[var(--color-text)]">{raffle.title}</td>
-                    <td className="px-4 py-2.5">
-                      {raffle.winnerName ? (
-                        <span className="flex items-center gap-1 text-[var(--color-text)]">
-                          <Trophy className="h-3 w-3 text-yellow-500" />
-                          {raffle.winnerName}
-                        </span>
-                      ) : (
-                        <span className="text-[var(--color-text-muted)]">No winner</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-2.5 text-right text-[var(--color-text)]">{raffle.entryCount}</td>
-                    <td className="px-4 py-2.5">
-                      <span className="inline-block rounded px-1.5 py-0.5 text-xs bg-[var(--color-elevated)] text-[var(--color-text-secondary)]">
-                        {raffle.keyword || "!join"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2.5 text-xs text-[var(--color-text-muted)]">{raffle.endReason}</td>
-                    <td className="px-4 py-2.5 text-xs text-[var(--color-text-muted)]">
-                      {new Date(raffle.createdAt).toLocaleString()}
-                    </td>
-                  </tr>
-                  {isExpanded && (
-                    <tr className="border-b border-[var(--color-border)] last:border-0">
-                      <td colSpan={7} className="px-4 py-3 bg-[var(--color-elevated)]">
-                        {loadingExpanded ? (
-                          <p className="text-xs text-[var(--color-text-muted)]">Loading draw history...</p>
-                        ) : expandedRaffle && expandedRaffle.draws && expandedRaffle.draws.length > 0 ? (
-                          <DrawHistoryList draws={expandedRaffle.draws} />
-                        ) : (
-                          <p className="text-xs text-[var(--color-text-muted)]">No draw history available.</p>
-                        )}
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
-              );
-            })}
-          </tbody>
-      </DataTable>
+      <SmartDataTable<RaffleHistoryItem>
+        data={closedItems}
+        columns={columns}
+        pageSize={25}
+        searchPlaceholder="Search raffles..."
+        emptyMessage="No raffles yet."
+        getRowKey={(row) => row.id}
+        onRowClick={handleRowClick}
+        rowClassName={(row) =>
+          expandedId === row.id ? "bg-[var(--color-elevated)]" : ""
+        }
+      />
+
+      {expandedId !== null && (
+        <div className="border border-t-0 border-[var(--color-border)] rounded-b-lg bg-[var(--color-elevated)] px-4 py-3">
+          {loadingExpanded ? (
+            <p className="text-xs text-[var(--color-text-muted)]">Loading draw history...</p>
+          ) : expandedRaffle && expandedRaffle.draws && expandedRaffle.draws.length > 0 ? (
+            <DrawHistoryList draws={expandedRaffle.draws} />
+          ) : (
+            <p className="text-xs text-[var(--color-text-muted)]">No draw history available.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

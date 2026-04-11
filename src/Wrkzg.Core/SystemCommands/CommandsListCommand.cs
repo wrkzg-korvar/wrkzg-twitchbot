@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Wrkzg.Core.Helpers;
 using Wrkzg.Core.Interfaces;
 using Wrkzg.Core.Models;
 
@@ -50,8 +51,9 @@ public class CommandsListCommand : ISystemCommand
 
         // Use DefaultResponseTemplate with {commandlist} replaced
         string template = DefaultResponseTemplate!;
-        return template
+        string response = template
             .Replace("{commandlist}", commandList, StringComparison.OrdinalIgnoreCase)
             .Replace("{user}", message.DisplayName, StringComparison.OrdinalIgnoreCase);
+        return TwitchMessageHelper.Truncate(response);
     }
 }

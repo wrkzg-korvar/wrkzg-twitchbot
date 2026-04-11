@@ -53,4 +53,16 @@ public class UnsupportedPlatformSecureStorage : ISecureStorage
     /// <summary>Throws <see cref="PlatformNotSupportedException"/>. Secure storage is not available on this platform.</summary>
     public Task<bool> HasCredentialsAsync(CancellationToken ct = default)
         => throw NotSupported();
+
+    /// <summary>Throws <see cref="PlatformNotSupportedException"/>. Secure storage is not available on this platform.</summary>
+    public Task SaveSecretAsync(string key, string value, CancellationToken ct = default)
+        => throw NotSupported();
+
+    /// <summary>Throws <see cref="PlatformNotSupportedException"/>. Secure storage is not available on this platform.</summary>
+    public Task<string?> LoadSecretAsync(string key, CancellationToken ct = default)
+        => throw NotSupported();
+
+    /// <summary>Throws <see cref="PlatformNotSupportedException"/>. Secure storage is not available on this platform.</summary>
+    public Task DeleteSecretAsync(string key, CancellationToken ct = default)
+        => throw NotSupported();
 }

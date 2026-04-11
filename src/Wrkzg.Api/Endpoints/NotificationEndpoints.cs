@@ -78,7 +78,7 @@ public static class NotificationEndpoints
             if (Array.IndexOf(EventTypes, type.ToLowerInvariant()) < 0)
             {
                 string safeType = type.Length > 50 ? type[..50] : type;
-                return Results.BadRequest(new { error = $"Unknown event type: '{safeType}'." });
+                return TypedResults.Problem(detail: $"Unknown event type: '{safeType}'.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             string normalizedType = type.ToLowerInvariant();
@@ -93,7 +93,7 @@ public static class NotificationEndpoints
             {
                 if (request.Template.Length > 500)
                 {
-                    return Results.BadRequest(new { error = "Template must be 500 characters or less." });
+                    return TypedResults.Problem(detail: "Template must be 500 characters or less.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
                 }
 
                 await repo.SetAsync($"Notifications.{normalizedType}.Template",
@@ -119,7 +119,7 @@ public static class NotificationEndpoints
             if (Array.IndexOf(EventTypes, type.ToLowerInvariant()) < 0)
             {
                 string safeType = type.Length > 50 ? type[..50] : type;
-                return Results.BadRequest(new { error = $"Unknown event type: '{safeType}'." });
+                return TypedResults.Problem(detail: $"Unknown event type: '{safeType}'.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             string normalizedType = type.ToLowerInvariant();

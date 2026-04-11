@@ -57,7 +57,13 @@ public enum ImportSourceType
     StreamlabsChatbot = 2,
 
     /// <summary>Generic CSV with user-defined column mapping.</summary>
-    GenericCsv = 3
+    GenericCsv = 3,
+
+    /// <summary>DeepBot binary save file (users*.bin — gzip-compressed protobuf).</summary>
+    DeepbotBin = 4,
+
+    /// <summary>DeepBot config save file (chanmsgconfig*.bin — commands, quotes, timed messages).</summary>
+    DeepbotBinConfig = 5
 }
 
 /// <summary>Strategy for handling conflicts when a user already exists during import.</summary>

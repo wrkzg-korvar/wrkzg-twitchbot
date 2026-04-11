@@ -43,7 +43,7 @@ public static class GameEndpoints
 
             if (game is null)
             {
-                return Results.NotFound(new { error = $"Game '{name}' not found." });
+                return TypedResults.Problem(detail: $"Game '{name}' not found.", title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             game.IsEnabled = !game.IsEnabled;
@@ -58,7 +58,7 @@ public static class GameEndpoints
 
             if (game is null)
             {
-                return Results.NotFound(new { error = $"Game '{name}' not found." });
+                return TypedResults.Problem(detail: $"Game '{name}' not found.", title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             // Save each setting under Games.{Name}.{Key}
@@ -83,7 +83,7 @@ public static class GameEndpoints
 
             if (game is null)
             {
-                return Results.NotFound(new { error = $"Game '{name}' not found." });
+                return TypedResults.Problem(detail: $"Game '{name}' not found.", title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             Dictionary<string, string> defaults = game.GetDefaultMessageTemplates();
@@ -112,7 +112,7 @@ public static class GameEndpoints
 
             if (game is null)
             {
-                return Results.NotFound(new { error = $"Game '{name}' not found." });
+                return TypedResults.Problem(detail: $"Game '{name}' not found.", title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             if (request.Messages is not null)
@@ -135,13 +135,13 @@ public static class GameEndpoints
 
             if (game is null)
             {
-                return Results.NotFound(new { error = $"Game '{name}' not found." });
+                return TypedResults.Problem(detail: $"Game '{name}' not found.", title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             Dictionary<string, string> defaults = game.GetDefaultMessageTemplates();
             if (!defaults.ContainsKey(messageKey))
             {
-                return Results.NotFound(new { error = $"Message key '{messageKey}' not found." });
+                return TypedResults.Problem(detail: $"Message key '{messageKey}' not found.", title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             // Delete the custom setting so it falls back to default
@@ -163,7 +163,7 @@ public static class GameEndpoints
         {
             if (string.IsNullOrWhiteSpace(request.Question) || string.IsNullOrWhiteSpace(request.Answer))
             {
-                return Results.BadRequest(new { error = "Question and answer are required." });
+                return TypedResults.Problem(detail: "Question and answer are required.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             TriviaQuestion question = new()

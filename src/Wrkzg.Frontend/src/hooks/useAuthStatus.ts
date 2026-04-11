@@ -19,6 +19,11 @@ export function useAuthStatus() {
 
     on<AuthAccountState>("AuthStateChanged", () => {
       queryClient.invalidateQueries({ queryKey: ["authStatus"] });
+      // Emotes hängen von Auth ab — nach Token-Änderung refetchen
+      // (Delay damit der Backend-EmoteService.RefreshAsync() Zeit hat)
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["emotes"] });
+      }, 3000);
     });
 
     return () => off("AuthStateChanged");

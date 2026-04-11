@@ -1,5 +1,7 @@
-import { useRef, useState, useEffect } from "react";
-import { renderWithEmotes } from "../../lib/emotes";
+import { useRef, useState, useEffect, useMemo } from "react";
+import { renderWithEmotes, renderWithEmoteMap } from "../../lib/emotes";
+import { useEmotes, buildEmoteMap } from "../../hooks/useEmotes";
+import { EmotePicker } from "./EmotePicker";
 import type { ChatMsg } from "../../types/status";
 
 interface LiveChatProps {
@@ -17,7 +19,14 @@ export function LiveChat({
 }: LiveChatProps) {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatInputRef = useRef<HTMLInputElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+
+  const { data: emotes } = useEmotes();
+  const emoteMap = useMemo(
+    () => buildEmoteMap(emotes ?? []),
+    [emotes],
+  );
 
   const [sendAs, setSendAs] = useState<"bot" | "broadcaster">(
     () =>
@@ -69,6 +78,29 @@ export function LiveChat({
     }
   };
 
+  const handleEmoteSelect = (emoteName: string) => {
+    const input = chatInputRef.current;
+    if (input) {
+      const start = input.selectionStart ?? chatInput.length;
+      const end = input.selectionEnd ?? chatInput.length;
+      const before = chatInput.slice(0, start);
+      const after = chatInput.slice(end);
+      const prefix = before.length > 0 && !before.endsWith(" ") ? " " : "";
+      const suffix = after.length > 0 && !after.startsWith(" ") ? " " : "";
+      const newValue = before + prefix + emoteName + suffix + after;
+      setChatInput(newValue);
+      const cursorPos = (before + prefix + emoteName + suffix).length;
+      requestAnimationFrame(() => {
+        input.focus();
+        input.setSelectionRange(cursorPos, cursorPos);
+      });
+    } else {
+      setChatInput((prev) =>
+        prev ? prev + " " + emoteName : emoteName,
+      );
+    }
+  };
+
   return (
     <div className="flex flex-1 min-h-0 flex-col rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
       <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3">
@@ -102,7 +134,11 @@ export function LiveChat({
                 {msg.displayName}
               </span>
               <span className="text-[var(--color-text-muted)]">: </span>
-              <span className="text-[var(--color-text)]">{renderWithEmotes(msg.content, msg.emotes, 20)}</span>
+              <span className="text-[var(--color-text)]">
+                {msg.emotes && Object.keys(msg.emotes).length > 0
+                  ? renderWithEmotes(msg.content, msg.emotes, 20)
+                  : renderWithEmoteMap(msg.content, emoteMap, 20)}
+              </span>
             </div>
           ))
         )}
@@ -125,6 +161,7 @@ export function LiveChat({
         </select>
 
         <input
+          ref={chatInputRef}
           type="text"
           value={chatInput}
           onChange={(e) => setChatInput(e.target.value)}
@@ -133,6 +170,11 @@ export function LiveChat({
           maxLength={500}
           disabled={!botConnected}
           className="flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-brand)] focus:outline-none disabled:opacity-50"
+        />
+
+        <EmotePicker
+          emotes={emotes ?? []}
+          onSelect={handleEmoteSelect}
         />
 
         <button

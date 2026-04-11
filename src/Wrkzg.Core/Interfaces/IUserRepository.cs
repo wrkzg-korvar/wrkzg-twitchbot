@@ -81,4 +81,27 @@ public interface IUserRepository
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The created user with its assigned database identifier.</returns>
     Task<User> CreateAsync(User user, CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns a paginated list of users with server-side sorting and search.
+    /// </summary>
+    /// <param name="search">Optional search term matching username or display name.</param>
+    /// <param name="sortBy">Column to sort by (points, username, watchtime, messages, lastseen, firstseen).</param>
+    /// <param name="sortDirection">Sort direction (asc or desc).</param>
+    /// <param name="page">Page number (1-based).</param>
+    /// <param name="pageSize">Number of items per page.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A paginated result containing the matching users.</returns>
+    Task<PaginatedResult<User>> GetPaginatedAsync(
+        string? search = null,
+        string sortBy = "points",
+        string sortDirection = "desc",
+        int page = 1,
+        int pageSize = 50,
+        CancellationToken ct = default);
+
+    /// <summary>Returns the total number of tracked users.</summary>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The total user count.</returns>
+    Task<int> CountAsync(CancellationToken ct = default);
 }

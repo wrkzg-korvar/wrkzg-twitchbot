@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,5 +26,14 @@ public interface IDataImportService
     Task<ImportResult> ExecuteAsync(
         Stream fileStream,
         ImportConfiguration config,
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// Executes the import with progress reporting, writing data to the database.
+    /// </summary>
+    Task<ImportResult> ExecuteAsync(
+        Stream fileStream,
+        ImportConfiguration config,
+        IProgress<int>? progress,
         CancellationToken ct = default);
 }

@@ -68,7 +68,10 @@ public static class PhotinoHosting
                 window.SetChromeless(true);
             }
 
-            if (File.Exists(iconPath))
+            // On Windows, skip SetIconFile — the Win32 API in ApplyWindowsTheme
+            // handles both title bar and taskbar icons via .ico file.
+            // SetIconFile with .png doesn't reliably set the Windows taskbar icon.
+            if (File.Exists(iconPath) && !OperatingSystem.IsWindows())
             {
                 window.SetIconFile(iconPath);
             }

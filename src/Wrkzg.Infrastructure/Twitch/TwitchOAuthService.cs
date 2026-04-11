@@ -31,7 +31,11 @@ public class TwitchOAuthService : ITwitchOAuthService
     private readonly IConfiguration _config;
     private readonly ILogger<TwitchOAuthService> _logger;
 
-    private const string BotScopes = "chat:read chat:edit user:write:chat";
+    private const string BotScopes =
+        "chat:read chat:edit user:write:chat " +
+        "moderator:manage:announcements " +
+        "moderator:manage:banned_users " +
+        "user:read:emotes";
 
     private const string BroadcasterScopes =
         "moderator:read:followers " +
@@ -42,7 +46,9 @@ public class TwitchOAuthService : ITwitchOAuthService
         "moderator:manage:shoutouts " +
         "user:write:chat " +
         "channel:read:redemptions " +
-        "channel:manage:redemptions";
+        "channel:manage:redemptions " +
+        "channel:manage:broadcast " +
+        "user:read:emotes";
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
