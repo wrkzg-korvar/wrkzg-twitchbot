@@ -18,6 +18,37 @@ const STORAGE_KEY = "__wrkzg_token";
 let apiToken: string | null = null;
 
 /**
+ * Returns true if the request targets the local Wrkzg backend (relative URL or same origin).
+ * External requests (e.g. api.github.com) must NOT receive the X-Wrkzg-Token header.
+ */
+function isInternalRequest(input: RequestInfo | URL): boolean {
+  if (typeof input === "string") {
+    // Relative URLs (e.g. "/api/status") are always internal
+    if (input.startsWith("/")) {
+      return true;
+    }
+    try {
+      const url = new URL(input, window.location.origin);
+      return url.origin === window.location.origin;
+    } catch {
+      return true; // Malformed URL — treat as internal to be safe
+    }
+  }
+  if (input instanceof URL) {
+    return input.origin === window.location.origin;
+  }
+  if (input instanceof Request) {
+    try {
+      const url = new URL(input.url);
+      return url.origin === window.location.origin;
+    } catch {
+      return true;
+    }
+  }
+  return true;
+}
+
+/**
  * Initialize the API token from the URL query parameter or sessionStorage.
  * Must be called once at app startup (in main.tsx) before any fetch calls.
  */
@@ -46,7 +77,7 @@ export function initApiToken(): void {
   // "The string did not match the expected pattern" errors.
   const originalFetch = window.fetch;
   window.fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    if (apiToken) {
+    if (apiToken && isInternalRequest(input)) {
       const existing = init?.headers;
       let headerRecord: Record<string, string> = {};
 
