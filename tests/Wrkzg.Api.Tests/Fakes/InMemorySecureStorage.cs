@@ -80,4 +80,25 @@ public class InMemorySecureStorage : ISecureStorage
     {
         return Task.FromResult(_store.ContainsKey("clientId") && _store.ContainsKey("clientSecret"));
     }
+
+    /// <summary>Saves a named secret to the in-memory store.</summary>
+    public Task SaveSecretAsync(string key, string value, CancellationToken ct = default)
+    {
+        _store[$"secret:{key}"] = value;
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Loads a named secret from the in-memory store.</summary>
+    public Task<string?> LoadSecretAsync(string key, CancellationToken ct = default)
+    {
+        _store.TryGetValue($"secret:{key}", out string? val);
+        return Task.FromResult(val);
+    }
+
+    /// <summary>Deletes a named secret from the in-memory store.</summary>
+    public Task DeleteSecretAsync(string key, CancellationToken ct = default)
+    {
+        _store.TryRemove($"secret:{key}", out _);
+        return Task.CompletedTask;
+    }
 }

@@ -31,7 +31,7 @@ public static class CustomOverlayEndpoints
         group.MapGet("/{id:int}", async (int id, ICustomOverlayRepository repo, CancellationToken ct) =>
         {
             CustomOverlay? overlay = await repo.GetByIdAsync(id, ct);
-            return overlay is not null ? Results.Ok(overlay) : Results.NotFound();
+            return overlay is not null ? Results.Ok(overlay) : TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
         });
 
         // Create
@@ -40,7 +40,7 @@ public static class CustomOverlayEndpoints
         {
             if (string.IsNullOrWhiteSpace(request.Name))
             {
-                return Results.BadRequest(new { error = "Name is required." });
+                return TypedResults.Problem(detail: "Name is required.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             CustomOverlay overlay = new()
@@ -68,7 +68,7 @@ public static class CustomOverlayEndpoints
             CustomOverlay? overlay = await repo.GetByIdAsync(id, ct);
             if (overlay is null)
             {
-                return Results.NotFound();
+                return TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             if (request.Name is not null) { overlay.Name = request.Name.Trim(); }
@@ -93,7 +93,7 @@ public static class CustomOverlayEndpoints
             CustomOverlay? overlay = await repo.GetByIdAsync(id, ct);
             if (overlay is null)
             {
-                return Results.NotFound();
+                return TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             overlay.FieldValues = request.FieldValues ?? "{}";
@@ -118,7 +118,7 @@ public static class CustomOverlayEndpoints
             CustomOverlay? overlay = await repo.GetByIdAsync(id, ct);
             if (overlay is null || !overlay.IsEnabled)
             {
-                return Results.NotFound("Overlay not found or disabled.");
+                return TypedResults.Problem(detail: "Overlay not found or disabled.", title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             string host = context.Request.Host.ToString();

@@ -17,15 +17,16 @@ public class UserEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         _client = factory.CreateAuthenticatedClient();
     }
 
-    /// <summary>Verifies that listing users on an empty database returns an empty JSON array.</summary>
+    /// <summary>Verifies that listing users on an empty database returns a paginated result with empty items.</summary>
     [Fact]
-    public async Task GetUsers_EmptyDatabase_ReturnsEmptyArray()
+    public async Task GetUsers_EmptyDatabase_ReturnsPaginatedEmpty()
     {
         HttpResponseMessage response = await _client.GetAsync("/api/users");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         string body = await response.Content.ReadAsStringAsync();
-        body.Should().Be("[]");
+        body.Should().Contain("\"items\"");
+        body.Should().Contain("\"totalCount\":0");
     }
 
     /// <summary>Verifies that fetching a non-existent user returns HTTP 404 Not Found.</summary>

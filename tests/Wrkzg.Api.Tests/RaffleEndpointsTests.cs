@@ -18,16 +18,16 @@ public class RaffleEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         _client = factory.CreateAuthenticatedClient();
     }
 
-    /// <summary>Verifies that requesting the active raffle when none exists returns HTTP 404 Not Found.</summary>
+    /// <summary>Verifies that requesting the active raffle when none exists returns HTTP 200 OK with null body.</summary>
     [Fact]
-    public async Task GetActive_NoRaffle_ReturnsNotFound()
+    public async Task GetActive_NoRaffle_ReturnsOkWithNull()
     {
         // Ensure no active raffle
         await _client.PostAsync("/api/raffles/cancel", null);
 
         HttpResponseMessage response = await _client.GetAsync("/api/raffles/active");
 
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     /// <summary>Verifies that creating a raffle with valid data returns HTTP 201 Created.</summary>

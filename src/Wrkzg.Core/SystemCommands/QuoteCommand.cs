@@ -131,7 +131,7 @@ public class QuoteCommand : ISystemCommand
 
         using IServiceScope scope = _scopeFactory.CreateScope();
         IQuoteRepository repo = scope.ServiceProvider.GetRequiredService<IQuoteRepository>();
-        ITwitchHelixClient helix = scope.ServiceProvider.GetRequiredService<ITwitchHelixClient>();
+        IBroadcasterHelixClient helix = scope.ServiceProvider.GetRequiredService<IBroadcasterHelixClient>();
 
         // Try to get the current game name
         string? gameName = null;

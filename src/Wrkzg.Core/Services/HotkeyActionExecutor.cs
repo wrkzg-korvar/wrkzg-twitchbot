@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -108,10 +109,11 @@ public class HotkeyActionExecutor
                             Data = new Dictionary<string, string>
                             {
                                 { "hotkey", binding.KeyCombination },
+                                { "binding_id", binding.Id.ToString() },
                                 { "description", binding.Description ?? "" }
                             }
                         };
-                        await _effectEngine.ProcessAsync(triggerContext, ct);
+                        await _effectEngine.ExecuteSingleAsync(effectListId, triggerContext, ct);
                     }
                     break;
 
@@ -196,6 +198,61 @@ public class HotkeyActionExecutor
                         await _broadcaster.BroadcastFollowEventAsync(alertMessage, ct);
                     }
                     break;
+
+                case "ObsSceneSwitch":
+                {
+                    IObsWebSocketService obs = _scopeFactory.CreateScope().ServiceProvider
+                        .GetRequiredService<IObsWebSocketService>();
+                    if (obs.IsConnected)
+                    {
+                        await obs.SwitchSceneAsync(binding.ActionPayload, ct);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("OBS not connected — cannot switch scene");
+                    }
+                    break;
+                }
+
+                case "ObsSourceToggle":
+                {
+                    IObsWebSocketService obs = _scopeFactory.CreateScope().ServiceProvider
+                        .GetRequiredService<IObsWebSocketService>();
+                    if (obs.IsConnected)
+                    {
+                        // Payload format: "SceneName|SourceName" or "SceneName|SourceName|true/false"
+                        string[] parts = binding.ActionPayload.Split('|', 3);
+                        if (parts.Length >= 2)
+                        {
+                            string scene = parts[0];
+                            string source = parts[1];
+                            bool? forceVisible = parts.Length >= 3 && bool.TryParse(parts[2], out bool v)
+                                ? v
+                                : null;
+
+                            if (forceVisible.HasValue)
+                            {
+                                await obs.SetSourceVisibilityAsync(scene, source, forceVisible.Value, ct);
+                            }
+                            else
+                            {
+                                // Toggle: get current visibility, then invert
+                                IReadOnlyList<ObsSourceInfo> sources = await obs.GetSourcesAsync(scene, ct);
+                                ObsSourceInfo? s = sources.FirstOrDefault(x =>
+                                    string.Equals(x.SourceName, source, StringComparison.OrdinalIgnoreCase));
+                                if (s is not null)
+                                {
+                                    await obs.SetSourceVisibilityAsync(scene, source, !s.IsVisible, ct);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("OBS not connected — cannot toggle source");
+                    }
+                    break;
+                }
 
                 default:
                     _logger.LogWarning("Unknown hotkey action type: {ActionType}", binding.ActionType);

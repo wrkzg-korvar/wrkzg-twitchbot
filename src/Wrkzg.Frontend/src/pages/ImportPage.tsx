@@ -2,10 +2,11 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Upload, ChevronRight, ChevronLeft, Check, AlertTriangle, Users, RefreshCw } from "lucide-react";
 import { importApi } from "../api/import";
-import type { ImportTemplate, ImportResult, CsvPreview } from "../api/import";
+import type { ImportTemplate, ImportResult, ImportJob, CsvPreview } from "../api/import";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Card } from "../components/ui/Card";
 import { showToast } from "../hooks/useToast";
+import { notificationStore } from "../lib/notificationStore";
 
 const CONFLICT_STRATEGIES = [
   { value: 0, label: "Skip", desc: "Keep existing data, don't import" },
@@ -108,20 +109,61 @@ export function ImportPage() {
     },
   });
 
-  const executeMutation = useMutation({
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
+
+  const startMutation = useMutation({
     mutationFn: () => {
       if (!file) { throw new Error("No file"); }
-      return importApi.execute(file, buildConfig());
+      return importApi.start(file, buildConfig());
     },
-    onSuccess: (result) => {
-      setImportResult(result);
-      setStep(3);
-      showToast("success", result.summary);
+    onSuccess: (data) => {
+      setActiveJobId(data.jobId);
+      showToast("info", "Import started — check the notification bell for progress.");
     },
-    onError: () => showToast("error", "Import failed."),
+    onError: (err: Error) => showToast("error", err.message || "Failed to start import."),
   });
 
-  const isImporting = executeMutation.isPending;
+  // Poll job status while import is running
+  const { data: activeJob } = useQuery<ImportJob>({
+    queryKey: ["import-job", activeJobId],
+    queryFn: () => importApi.getJob(activeJobId!),
+    enabled: !!activeJobId,
+    refetchInterval: (query) => {
+      const job = query.state.data;
+      if (job && (job.status >= 3)) { return false; } // Complete, Error, or Cancelled
+      return 1000;
+    },
+  });
+
+  // When job completes, move to result step
+  useEffect(() => {
+    if (!activeJob) { return; }
+
+    // Failsafe: dismiss any lingering import progress notifications
+    const dismissImportProgress = () => {
+      notificationStore
+        .getActive()
+        .filter((n) => n.type === "progress" && n.title.toLowerCase().includes("import"))
+        .forEach((n) => notificationStore.dismiss(n.id));
+    };
+
+    if (activeJob.status === 3 && activeJob.result) {
+      dismissImportProgress();
+      setImportResult(activeJob.result);
+      setStep(3);
+      setActiveJobId(null);
+    } else if (activeJob.status === 4) {
+      dismissImportProgress();
+      showToast("error", activeJob.errorMessage || "Import failed.");
+      setActiveJobId(null);
+    } else if (activeJob.status === 5) {
+      dismissImportProgress();
+      showToast("info", "Import was cancelled.");
+      setActiveJobId(null);
+    }
+  }, [activeJob]);
+
+  const isImporting = startMutation.isPending || (!!activeJobId && (!activeJob || activeJob.status < 3));
 
   // Re-run column preview when delimiter or hasHeader changes (only for Generic CSV with file loaded)
   const refreshPreview = useCallback(() => {
@@ -432,10 +474,21 @@ export function ImportPage() {
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-lg bg-[var(--color-surface)]/95 backdrop-blur-sm">
                 <div className="h-10 w-10 animate-spin rounded-full border-4 border-[var(--color-border)] border-t-[var(--color-brand)]" />
                 <p className="mt-4 text-sm font-medium text-[var(--color-text)]">Importing data...</p>
-                <p className="mt-1 text-xs text-[var(--color-text-muted)]">This may take a moment for large files. Please don't close the window.</p>
-                {/* Indeterminate progress bar */}
+                <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                  {activeJob && activeJob.progressPercent > 0
+                    ? `${activeJob.progressPercent.toFixed(0)}% complete`
+                    : "You can navigate away — the import will continue in the background."}
+                </p>
+                {/* Progress bar */}
                 <div className="mt-4 h-1.5 w-48 overflow-hidden rounded-full bg-[var(--color-border)]">
-                  <div className="h-full w-1/3 rounded-full bg-[var(--color-brand)]" style={{ animation: "shimmer 1.5s ease-in-out infinite" }} />
+                  {activeJob && activeJob.progressPercent > 0 ? (
+                    <div
+                      className="h-full rounded-full bg-[var(--color-brand)] transition-all duration-300"
+                      style={{ width: `${activeJob.progressPercent}%` }}
+                    />
+                  ) : (
+                    <div className="h-full w-1/3 rounded-full bg-[var(--color-brand)]" style={{ animation: "shimmer 1.5s ease-in-out infinite" }} />
+                  )}
                 </div>
               </div>
             )}
@@ -526,12 +579,12 @@ export function ImportPage() {
                     <ChevronLeft className="inline h-3.5 w-3.5 mr-1" /> Back
                   </button>
                   <button
-                    onClick={() => executeMutation.mutate()}
-                    disabled={executeMutation.isPending}
+                    onClick={() => startMutation.mutate()}
+                    disabled={isImporting}
                     className="rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-[var(--color-bg)] hover:bg-[var(--color-brand-hover)] disabled:opacity-50"
                   >
-                    {executeMutation.isPending ? "Importing..." : "Import"}
-                    {!executeMutation.isPending && <ChevronRight className="inline h-3.5 w-3.5 ml-1" />}
+                    {isImporting ? "Importing..." : "Import"}
+                    {!isImporting && <ChevronRight className="inline h-3.5 w-3.5 ml-1" />}
                   </button>
                 </div>
               </div>

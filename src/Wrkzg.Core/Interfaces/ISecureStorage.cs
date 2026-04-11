@@ -76,4 +76,23 @@ public interface ISecureStorage
     /// Used to determine whether the Setup Wizard should be shown.
     /// </summary>
     Task<bool> HasCredentialsAsync(CancellationToken ct = default);
+
+    // ─── Generic Secrets ──────────────────────────────────────────
+
+    /// <summary>
+    /// Saves a named secret to encrypted storage.
+    /// Used for integration credentials (e.g. OBS WebSocket password).
+    /// </summary>
+    Task SaveSecretAsync(string key, string value, CancellationToken ct = default);
+
+    /// <summary>
+    /// Loads a named secret from encrypted storage.
+    /// Returns null if no secret exists for the given key.
+    /// </summary>
+    Task<string?> LoadSecretAsync(string key, CancellationToken ct = default);
+
+    /// <summary>
+    /// Deletes a named secret from encrypted storage.
+    /// </summary>
+    Task DeleteSecretAsync(string key, CancellationToken ct = default);
 }

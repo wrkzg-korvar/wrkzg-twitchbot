@@ -124,6 +124,31 @@ public class WindowsSecureStorage : ISecureStorage
         return !string.IsNullOrWhiteSpace(clientId) && !string.IsNullOrWhiteSpace(clientSecret);
     }
 
+    // ─── Generic Secrets ──────────────────────────────────────────────
+
+    /// <summary>Saves a named secret encrypted with DPAPI.</summary>
+    public async Task SaveSecretAsync(string key, string value, CancellationToken ct = default)
+    {
+        byte[] raw = Encoding.UTF8.GetBytes(value);
+        await SaveEncryptedAsync(GetSecretFilePath(key), raw, ct);
+        _logger.LogDebug("Saved secret '{Key}' to secure storage", key);
+    }
+
+    /// <summary>Loads and decrypts a named secret.</summary>
+    public async Task<string?> LoadSecretAsync(string key, CancellationToken ct = default)
+    {
+        byte[]? raw = await LoadEncryptedAsync(GetSecretFilePath(key), ct);
+        return raw is null ? null : Encoding.UTF8.GetString(raw);
+    }
+
+    /// <summary>Deletes a named secret file.</summary>
+    public Task DeleteSecretAsync(string key, CancellationToken ct = default)
+    {
+        DeleteFile(GetSecretFilePath(key));
+        _logger.LogDebug("Deleted secret '{Key}' from secure storage", key);
+        return Task.CompletedTask;
+    }
+
     // ─── Low-Level DPAPI Helpers ──────────────────────────────────────
 
     private async Task SaveEncryptedAsync(string filePath, byte[] data, CancellationToken ct)
@@ -181,5 +206,12 @@ public class WindowsSecureStorage : ISecureStorage
     private string GetCredentialFilePath(string name)
     {
         return Path.Combine(_storagePath, $"{name}.enc");
+    }
+
+    private string GetSecretFilePath(string key)
+    {
+        // Sanitize key for filename
+        string safe = string.Join("_", key.Split(Path.GetInvalidFileNameChars()));
+        return Path.Combine(_storagePath, $"secret_{safe}.enc");
     }
 }

@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Wrkzg.Api;
 using Wrkzg.Api.Endpoints;
 using Wrkzg.Api.Hubs;
+using Wrkzg.Api.Middleware;
 using Wrkzg.Api.Security;
 using Wrkzg.Core;
 using Wrkzg.Core.Interfaces;
@@ -35,6 +36,15 @@ builder.WebHost.UseUrls($"http://localhost:{port}");
 PhotinoWindowController windowController = new();
 builder.Services.AddSingleton<IWindowController>(windowController);
 
+builder.Services.AddProblemDetails(options =>
+{
+    options.CustomizeProblemDetails = ctx =>
+    {
+        ctx.ProblemDetails.Extensions["traceId"] = ctx.HttpContext.TraceIdentifier;
+    };
+});
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
 builder.Services.AddCoreServices();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApiServices();
@@ -47,6 +57,9 @@ using (IServiceScope scope = app.Services.CreateScope())
     BotDbContext db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
     await db.Database.MigrateAsync();
 }
+
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 
 if (app.Environment.IsDevelopment())
 {
@@ -120,6 +133,7 @@ if (wwwrootPath is not null && Directory.Exists(wwwrootPath))
     app.MapImportEndpoints();
     app.MapAssetEndpoints();
     app.MapCustomOverlayEndpoints();
+    app.MapEmoteEndpoints();
 
     // SPA fallback: unmatched routes serve index.html for React Router
     app.MapFallbackToFile("index.html", new StaticFileOptions
@@ -160,6 +174,7 @@ else
     app.MapImportEndpoints();
     app.MapAssetEndpoints();
     app.MapCustomOverlayEndpoints();
+    app.MapEmoteEndpoints();
 }
 
 // In test environment, WebApplicationFactory manages the server lifecycle.

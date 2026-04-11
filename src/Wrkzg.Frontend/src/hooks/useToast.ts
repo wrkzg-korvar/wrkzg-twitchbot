@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { notify } from "../lib/notificationStore";
 
 export type ToastType = "success" | "error" | "info";
 
@@ -13,7 +14,15 @@ type ToastListener = (toast: Toast) => void;
 const listeners = new Set<ToastListener>();
 let nextId = 0;
 
+/**
+ * Shows a toast notification. Internally routes through the notification center
+ * so all messages appear in the NotificationPanel drawer.
+ */
 export function showToast(type: ToastType, message: string): void {
+  // Route through new notification center
+  notify(type, message);
+
+  // Also fire legacy listeners so ToastContainer still works during migration
   const toast: Toast = { id: nextId++, type, message };
   listeners.forEach((listener) => listener(toast));
 }

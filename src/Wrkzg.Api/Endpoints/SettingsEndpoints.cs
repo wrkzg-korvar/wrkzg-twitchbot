@@ -41,12 +41,12 @@ public static class SettingsEndpoints
             {
                 if (!ValidKeyPattern.IsMatch(kvp.Key))
                 {
-                    return Results.BadRequest(new { error = $"Invalid setting key: '{kvp.Key}'. Keys must be alphanumeric with dots, dashes, or underscores (max {MaxKeyLength} chars)." });
+                    return TypedResults.Problem(detail: $"Invalid setting key: '{kvp.Key}'. Keys must be alphanumeric with dots, dashes, or underscores (max {MaxKeyLength} chars).", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
                 }
 
                 if (kvp.Value is not null && kvp.Value.Length > MaxValueLength)
                 {
-                    return Results.BadRequest(new { error = $"Setting value for '{kvp.Key}' exceeds {MaxValueLength} characters." });
+                    return TypedResults.Problem(detail: $"Setting value for '{kvp.Key}' exceeds {MaxValueLength} characters.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
                 }
             }
 

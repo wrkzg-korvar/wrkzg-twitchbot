@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Wrkzg.Core.Interfaces;
+using Wrkzg.Core.Models;
 
 #pragma warning disable CA1848, CA1873 // Use LoggerMessage delegates — acceptable in application-level services
 
@@ -20,6 +21,9 @@ public class TimedMessageService : BackgroundService
     private readonly ITwitchChatClient _chat;
     private readonly ILogger<TimedMessageService> _logger;
     private int _chatLinesSinceLastCheck;
+
+    private string? _cachedBroadcasterId;
+    private readonly SemaphoreSlim _broadcasterIdLock = new(1, 1);
 
     /// <summary>
     /// Initializes a new instance of <see cref="TimedMessageService"/>.
@@ -71,20 +75,33 @@ public class TimedMessageService : BackgroundService
         using IServiceScope scope = _scopeFactory.CreateScope();
         ITimedMessageRepository repo = scope.ServiceProvider.GetRequiredService<ITimedMessageRepository>();
         ISettingsRepository settings = scope.ServiceProvider.GetRequiredService<ISettingsRepository>();
-        ITwitchHelixClient helix = scope.ServiceProvider.GetRequiredService<ITwitchHelixClient>();
+        IBroadcasterHelixClient broadcasterHelix = scope.ServiceProvider.GetRequiredService<IBroadcasterHelixClient>();
+        IBotHelixClient botHelix = scope.ServiceProvider.GetRequiredService<IBotHelixClient>();
 
-        string? channelName = await settings.GetAsync("channelName", ct);
+        string? channelName = await settings.GetAsync("Bot.Channel", ct);
         bool isLive = false;
-        if (channelName is not null)
+        string? broadcasterId = null;
+
+        if (!string.IsNullOrWhiteSpace(channelName))
         {
             try
             {
-                StreamInfo? stream = await helix.GetStreamAsync(channelName, ct);
+                StreamInfo? stream = await broadcasterHelix.GetStreamAsync(channelName, ct);
                 isLive = stream is not null;
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 _logger.LogWarning(ex, "Failed to check stream status for timed messages");
+            }
+
+            // Resolve broadcaster ID from token (cached, thread-safe)
+            try
+            {
+                broadcasterId = await ResolveBroadcasterIdAsync(scope.ServiceProvider, ct);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogWarning(ex, "Failed to resolve broadcaster ID for announcements");
             }
         }
 
@@ -125,7 +142,29 @@ public class TimedMessageService : BackgroundService
             string message = timer.Messages[timer.NextMessageIndex % timer.Messages.Length];
             if (timer.IsAnnouncement)
             {
-                await _chat.SendMessageAsync($"/announce {message}", ct);
+                if (broadcasterId is null)
+                {
+                    _logger.LogWarning(
+                        "Cannot send announcement for timer '{Name}': broadcasterId not resolved — falling back to normal message",
+                        timer.Name);
+                    await _chat.SendMessageAsync(message, ct);
+                }
+                else
+                {
+                    _logger.LogInformation("Attempting announcement for timer '{Name}'", timer.Name);
+
+                    string color = string.IsNullOrWhiteSpace(timer.AnnouncementColor) ? "primary" : timer.AnnouncementColor;
+                    bool success = await botHelix.SendAnnouncementAsync(broadcasterId, message, color, ct);
+                    if (success)
+                    {
+                        _logger.LogInformation("Announcement sent successfully for timer '{Name}'", timer.Name);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Announcement failed for timer '{Name}', falling back to normal message", timer.Name);
+                        await _chat.SendMessageAsync(message, ct);
+                    }
+                }
             }
             else
             {
@@ -138,6 +177,57 @@ public class TimedMessageService : BackgroundService
 
             _logger.LogInformation("Fired timed message '{Name}': {Message}",
                 timer.Name, message.Length > 60 ? message[..60] + "\u2026" : message);
+        }
+    }
+
+    /// <summary>
+    /// Resolves the broadcaster's Twitch user ID from the Broadcaster OAuth token.
+    /// Thread-safe with caching.
+    /// </summary>
+    private async Task<string?> ResolveBroadcasterIdAsync(IServiceProvider services, CancellationToken ct)
+    {
+        if (_cachedBroadcasterId is not null)
+        {
+            return _cachedBroadcasterId;
+        }
+
+        await _broadcasterIdLock.WaitAsync(ct);
+        try
+        {
+            if (_cachedBroadcasterId is not null)
+            {
+                return _cachedBroadcasterId;
+            }
+
+            ISecureStorage storage = services.GetRequiredService<ISecureStorage>();
+            ITwitchOAuthService oauth = services.GetRequiredService<ITwitchOAuthService>();
+
+            TwitchTokens? broadcasterToken = await storage.LoadTokensAsync(TokenType.Broadcaster, ct);
+            if (broadcasterToken is null)
+            {
+                return null;
+            }
+
+            TwitchTokenValidation? validation = await oauth.ValidateTokenAsync(broadcasterToken.AccessToken, ct);
+            if (validation is null)
+            {
+                _logger.LogInformation("Broadcaster token expired — refreshing for announcement");
+                TwitchTokens refreshed = await oauth.RefreshTokenAsync(broadcasterToken.RefreshToken, ct);
+                await storage.SaveTokensAsync(TokenType.Broadcaster, refreshed, ct);
+                validation = await oauth.ValidateTokenAsync(refreshed.AccessToken, ct);
+            }
+
+            _cachedBroadcasterId = validation?.UserId;
+            return _cachedBroadcasterId;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to resolve broadcaster ID");
+            return null;
+        }
+        finally
+        {
+            _broadcasterIdLock.Release();
         }
     }
 }

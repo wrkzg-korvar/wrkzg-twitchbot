@@ -126,7 +126,7 @@ public static class SongRequestEndpoints
             Dictionary<string, string> defaults = service.GetDefaultMessageTemplates();
             if (!defaults.ContainsKey(messageKey))
             {
-                return Results.NotFound(new { error = $"Message key '{messageKey}' not found." });
+                return TypedResults.Problem(detail: $"Message key '{messageKey}' not found.", title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             string key = $"Games.SongRequest.Msg.{messageKey}";

@@ -345,3 +345,17 @@ services.AddSingleton<IEffectType, MyCustomEffect>();
 - `context.Trigger.GetData("key")` — get event-specific data
 
 Similarly, you can add new **Trigger Types** (`ITriggerType` in `Effects/Triggers/`) and **Condition Types** (`IConditionType` in `Effects/Conditions/`).
+
+### How to Add an Integration
+
+Integrations (Discord, OBS, etc.) store credentials in the OS keychain via `ISecureStorage.SaveSecretAsync()` / `LoadSecretAsync()`. Never store secrets in the Settings database.
+
+```csharp
+// Save a secret
+await secureStorage.SaveSecretAsync("my_integration_api_key", apiKey, ct);
+
+// Load a secret
+string? apiKey = await secureStorage.LoadSecretAsync("my_integration_api_key", ct);
+```
+
+This uses DPAPI on Windows and Keychain on macOS — the same mechanism as Twitch OAuth tokens.

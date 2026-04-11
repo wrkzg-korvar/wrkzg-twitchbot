@@ -1,108 +1,150 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { usersApi } from "../api/users";
-import { DataTable } from "../components/ui/DataTable";
 import { PageHeader } from "../components/ui/PageHeader";
-import { SearchInput } from "../components/ui/SearchInput";
+import { SmartDataTable } from "../components/ui/DataTable";
+import { UserDetailModal } from "../components/features/users/UserDetailModal";
+import { LockBanner } from "../components/ui/LockBanner";
+import { useModuleLock } from "../hooks/useModuleLock";
+import type { SmartColumn } from "../components/ui/DataTable";
+import type { PaginatedUsers } from "../api/users";
 import type { User } from "../types/users";
 
 export function UsersPage() {
-  const [search, setSearch] = useState("");
+  const { isLocked, lockReason } = useModuleLock("/users");
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  const { data: users, isLoading, isError } = useQuery<User[]>({
+  const { data, isLoading, isError } = useQuery<PaginatedUsers>({
     queryKey: ["users"],
-    queryFn: () => usersApi.getAll("points", "desc", 100),
+    queryFn: () => usersApi.getPaginated({ sortBy: "points", order: "desc", pageSize: 10000 }),
   });
 
-  const filteredUsers = (users ?? []).filter(
-    (u) =>
-      search === "" ||
-      u.username.toLowerCase().includes(search.toLowerCase()) ||
-      (u.displayName ?? "").toLowerCase().includes(search.toLowerCase())
-  );
+  const users = data?.items ?? [];
 
-  return (
-    <div className="p-6 space-y-6">
-      <PageHeader
-        title="Users"
-        description="Tracked viewers, their points, watch time, and activity."
-        helpKey="users"
-      />
+  const columns: SmartColumn<User>[] = [
+    {
+      key: "displayName",
+      header: "User",
+      sortable: true,
+      searchable: true,
+      render: (_, row) => (
+        <span>
+          <span className="font-medium text-[var(--color-text)]">{row.displayName}</span>
+          {row.isBroadcaster && (
+            <span className="ml-2 rounded bg-red-500/20 px-1.5 py-0.5 text-[10px] text-red-400">
+              BROADCASTER
+            </span>
+          )}
+          {row.isMod && (
+            <span className="ml-2 rounded bg-green-500/20 px-1.5 py-0.5 text-[10px] text-green-400">
+              MOD
+            </span>
+          )}
+          {row.isSubscriber && (
+            <span className="ml-2 rounded bg-purple-500/20 px-1.5 py-0.5 text-[10px] text-purple-400">
+              SUB
+            </span>
+          )}
+          {row.isBanned && (
+            <span className="ml-2 rounded bg-red-900/30 px-1.5 py-0.5 text-[10px] text-red-400">
+              BANNED
+            </span>
+          )}
+        </span>
+      ),
+    },
+    {
+      key: "username",
+      header: "Username",
+      searchable: true,
+      className: "hidden",
+      render: () => null,
+    },
+    {
+      key: "points",
+      header: "Points",
+      sortable: true,
+      className: "text-right font-mono text-[var(--color-text)]",
+      render: (v) => (v as number).toLocaleString(),
+    },
+    {
+      key: "watchedMinutes",
+      header: "Watch Time",
+      sortable: true,
+      className: "text-right text-[var(--color-text-secondary)]",
+      render: (v) => formatWatchTime(v as number),
+    },
+    {
+      key: "messageCount",
+      header: "Messages",
+      sortable: true,
+      className: "text-right text-[var(--color-text-secondary)]",
+      render: (v) => (v as number).toLocaleString(),
+    },
+    {
+      key: "isBroadcaster",
+      header: "Role",
+      className: "text-center",
+      render: (_, row) => <RoleBadge user={row} />,
+    },
+    {
+      key: "lastSeenAt",
+      header: "Last Seen",
+      sortable: true,
+      className: "text-right text-xs text-[var(--color-text-muted)]",
+      render: (v) => formatRelativeTime(v as string),
+    },
+  ];
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--color-border)] border-t-[var(--color-brand)]" />
-        </div>
-      ) : isError ? (
+  if (isError) {
+    return (
+      <div className="p-6">
+        <PageHeader
+          title="Users"
+          description="Tracked viewers, their points, watch time, and activity."
+          helpKey="users"
+        />
         <div className="flex flex-col items-center justify-center py-20 text-[var(--color-text-muted)]">
           <p className="text-lg font-medium">Failed to load data</p>
           <p className="mt-1 text-sm">Please check your connection and try again.</p>
         </div>
-      ) : !users || users.length === 0 ? (
-        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-8 text-center">
-          <p className="text-[var(--color-text-secondary)]">No users tracked yet.</p>
-          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-            Users appear here when they send messages in your chat.
-          </p>
-        </div>
-      ) : (
-        <>
-          {users.length > 3 && (
-            <SearchInput
-              value={search}
-              onChange={setSearch}
-              placeholder="Search users..."
-            />
-          )}
+      </div>
+    );
+  }
 
-          <DataTable minWidth={700}>
-                <thead>
-                  <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
-                    <th className="px-4 py-3 text-left font-medium text-[var(--color-text-secondary)]">User</th>
-                    <th className="px-4 py-3 text-right font-medium text-[var(--color-text-secondary)]">Points</th>
-                    <th className="px-4 py-3 text-right font-medium text-[var(--color-text-secondary)]">Watch Time</th>
-                    <th className="px-4 py-3 text-right font-medium text-[var(--color-text-secondary)]">Messages</th>
-                    <th className="px-4 py-3 text-center font-medium text-[var(--color-text-secondary)]">Role</th>
-                    <th className="px-4 py-3 text-right font-medium text-[var(--color-text-secondary)]">Last Seen</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.map((user) => (
-                    <tr key={user.id} className="border-b border-[var(--color-border)] hover:bg-[var(--color-elevated)]">
-                      <td className="px-4 py-3">
-                        <span className="font-medium text-[var(--color-text)]">{user.displayName}</span>
-                        {user.isBanned && (
-                          <span className="ml-2 rounded bg-red-900/30 px-1.5 py-0.5 text-[10px] text-red-400">
-                            BANNED
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right text-[var(--color-text)] font-mono">
-                        {user.points.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-right text-[var(--color-text-secondary)]">
-                        {formatWatchTime(user.watchedMinutes)}
-                      </td>
-                      <td className="px-4 py-3 text-right text-[var(--color-text-secondary)]">
-                        {user.messageCount.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <RoleBadge user={user} />
-                      </td>
-                      <td className="px-4 py-3 text-right text-xs text-[var(--color-text-muted)]">
-                        {formatRelativeTime(user.lastSeenAt)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-          </DataTable>
+  return (
+    <div className="p-6 space-y-6">
+      {lockReason && <LockBanner message={lockReason} />}
+      <PageHeader
+        title="Users"
+        description="Tracked viewers, their points, watch time, and activity."
+        helpKey="users"
+        badge={
+          data && data.totalCount > 0 ? (
+            <span className="rounded-full bg-[var(--color-elevated)] px-2.5 py-0.5 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)]">
+              {data.totalCount.toLocaleString()}
+            </span>
+          ) : undefined
+        }
+      />
 
-          {search !== "" && filteredUsers.length === 0 && (
-            <p className="text-sm text-[var(--color-text-muted)] text-center py-4">
-              No users matching "{search}"
-            </p>
-          )}
-        </>
+      <SmartDataTable<User>
+        data={users}
+        columns={columns}
+        pageSize={50}
+        searchPlaceholder="Search users..."
+        emptyMessage="No users tracked yet. Users appear here when they send messages in your chat."
+        isLoading={isLoading}
+        getRowKey={(row) => row.id}
+        onRowClick={isLocked ? undefined : (row) => setSelectedUser(row)}
+      />
+
+      {selectedUser && (
+        <UserDetailModal
+          user={selectedUser}
+          onClose={() => setSelectedUser(null)}
+          readOnly={isLocked}
+        />
       )}
     </div>
   );

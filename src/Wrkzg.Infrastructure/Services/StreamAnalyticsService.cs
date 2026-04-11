@@ -122,7 +122,7 @@ public class StreamAnalyticsService : IHostedService, IDisposable
         }
 
         using IServiceScope scope = _scopeFactory.CreateScope();
-        ITwitchHelixClient helix = scope.ServiceProvider.GetRequiredService<ITwitchHelixClient>();
+        IBroadcasterHelixClient helix = scope.ServiceProvider.GetRequiredService<IBroadcasterHelixClient>();
         IStreamAnalyticsRepository repo = scope.ServiceProvider.GetRequiredService<IStreamAnalyticsRepository>();
 
         StreamInfo? stream = await helix.GetStreamAsync(_channelLogin);

@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trophy, ChevronDown, ChevronRight, RotateCcw } from "lucide-react";
 import { pollsApi } from "../../../api/polls";
-import { DataTable } from "../../../components/ui/DataTable";
+import { SmartDataTable } from "../../../components/ui/DataTable";
 import { showToast } from "../../../hooks/useToast";
+import type { SmartColumn } from "../../../components/ui/DataTable";
 import type { PollHistoryItem, PollTemplate } from "../../../types/polls";
 
 interface PollHistoryProps {
@@ -12,6 +13,64 @@ interface PollHistoryProps {
 
 export function PollHistory({ items }: PollHistoryProps) {
   const closedItems = items.filter((p) => !p.isActive);
+
+  const columns: SmartColumn<PollHistoryItem>[] = [
+    {
+      key: "question",
+      header: "Question",
+      searchable: true,
+      sortable: true,
+      className: "max-w-[200px] truncate text-[var(--color-text)]",
+    },
+    {
+      key: "winnerIndex",
+      header: "Winner",
+      className: "max-w-[150px] truncate",
+      render: (_, row) =>
+        row.winnerIndex !== null && row.options[row.winnerIndex] ? (
+          <span className="flex items-center gap-1 text-[var(--color-text)]">
+            <Trophy className="h-3 w-3 text-yellow-500 shrink-0" />
+            <span className="truncate">{row.options[row.winnerIndex]}</span>
+          </span>
+        ) : (
+          <span className="text-[var(--color-text-muted)]">No votes</span>
+        ),
+    },
+    {
+      key: "totalVotes",
+      header: "Votes",
+      sortable: true,
+      className: "text-right text-[var(--color-text)]",
+    },
+    {
+      key: "source",
+      header: "Source",
+      sortable: true,
+      render: (v) => (
+        <span
+          className={`inline-block rounded px-1.5 py-0.5 text-xs ${
+            v === "BotNative"
+              ? "bg-blue-500/10 text-blue-400"
+              : "bg-purple-500/10 text-purple-400"
+          }`}
+        >
+          {v === "BotNative" ? "Bot" : "Twitch"}
+        </span>
+      ),
+    },
+    {
+      key: "endReason",
+      header: "Status",
+      className: "text-xs text-[var(--color-text-muted)]",
+    },
+    {
+      key: "createdAt",
+      header: "Created",
+      sortable: true,
+      className: "text-xs text-[var(--color-text-muted)]",
+      render: (v) => new Date(v as string).toLocaleString(),
+    },
+  ];
 
   if (closedItems.length === 0) {
     return (
@@ -27,49 +86,14 @@ export function PollHistory({ items }: PollHistoryProps) {
       <div className="rounded-t-lg border border-b-0 border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3">
         <h2 className="text-sm font-semibold text-[var(--color-text)]">Poll History</h2>
       </div>
-      <DataTable minWidth={800} className="rounded-b-lg">
-          <thead>
-            <tr className="border-b border-[var(--color-border)] text-left text-xs text-[var(--color-text-muted)]">
-              <th className="px-4 py-2 font-medium">Question</th>
-              <th className="px-4 py-2 font-medium">Winner</th>
-              <th className="px-4 py-2 font-medium text-right">Votes</th>
-              <th className="px-4 py-2 font-medium">Source</th>
-              <th className="px-4 py-2 font-medium">Status</th>
-              <th className="px-4 py-2 font-medium">Created</th>
-            </tr>
-          </thead>
-          <tbody>
-            {closedItems.map((poll) => (
-              <tr key={poll.id} className="border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--color-elevated)] transition-colors">
-                <td className="max-w-[200px] truncate px-4 py-2.5 text-[var(--color-text)]" title={poll.question}>{poll.question}</td>
-                <td className="max-w-[150px] truncate px-4 py-2.5">
-                  {poll.winnerIndex !== null && poll.options[poll.winnerIndex] ? (
-                    <span className="flex items-center gap-1 text-[var(--color-text)]">
-                      <Trophy className="h-3 w-3 text-yellow-500 shrink-0" />
-                      <span className="truncate">{poll.options[poll.winnerIndex]}</span>
-                    </span>
-                  ) : (
-                    <span className="text-[var(--color-text-muted)]">No votes</span>
-                  )}
-                </td>
-                <td className="px-4 py-2.5 text-right text-[var(--color-text)]">{poll.totalVotes}</td>
-                <td className="px-4 py-2.5">
-                  <span className={`inline-block rounded px-1.5 py-0.5 text-xs ${
-                    poll.source === "BotNative"
-                      ? "bg-blue-500/10 text-blue-400"
-                      : "bg-purple-500/10 text-purple-400"
-                  }`}>
-                    {poll.source === "BotNative" ? "Bot" : "Twitch"}
-                  </span>
-                </td>
-                <td className="px-4 py-2.5 text-xs text-[var(--color-text-muted)]">{poll.endReason}</td>
-                <td className="px-4 py-2.5 text-xs text-[var(--color-text-muted)]">
-                  {new Date(poll.createdAt).toLocaleString()}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-      </DataTable>
+      <SmartDataTable<PollHistoryItem>
+        data={closedItems}
+        columns={columns}
+        pageSize={25}
+        searchPlaceholder="Search polls..."
+        emptyMessage="No polls yet."
+        getRowKey={(row) => row.id}
+      />
     </div>
   );
 }

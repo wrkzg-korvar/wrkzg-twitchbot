@@ -189,7 +189,7 @@ public static class OverlayEndpoints
             string normalizedType = type.ToLowerInvariant();
             if (!Defaults.ContainsKey(normalizedType))
             {
-                return Results.BadRequest(new { error = $"Unknown overlay type: '{type}'." });
+                return TypedResults.Problem(detail: $"Unknown overlay type: '{type}'.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             IDictionary<string, string> allSettings = await repo.GetAllAsync(ct);
@@ -213,7 +213,7 @@ public static class OverlayEndpoints
             string normalizedType = type.ToLowerInvariant();
             if (!Defaults.ContainsKey(normalizedType))
             {
-                return Results.BadRequest(new { error = $"Unknown overlay type: '{type}'." });
+                return TypedResults.Problem(detail: $"Unknown overlay type: '{type}'.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             return Results.Ok(Defaults[normalizedType]);
@@ -229,7 +229,7 @@ public static class OverlayEndpoints
             string normalizedType = type.ToLowerInvariant();
             if (!Defaults.ContainsKey(normalizedType))
             {
-                return Results.BadRequest(new { error = $"Unknown overlay type: '{type}'." });
+                return TypedResults.Problem(detail: $"Unknown overlay type: '{type}'.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             string prefix = $"Overlay.{normalizedType}.";
@@ -240,7 +240,7 @@ public static class OverlayEndpoints
                 int maxLen = kvp.Key == "customCSS" ? 10000 : 500;
                 if (kvp.Value.Length > maxLen)
                 {
-                    return Results.BadRequest(new { error = $"Value for '{kvp.Key}' exceeds {maxLen} characters." });
+                    return TypedResults.Problem(detail: $"Value for '{kvp.Key}' exceeds {maxLen} characters.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
                 }
 
                 toSave[prefix + kvp.Key] = kvp.Value;
@@ -260,7 +260,7 @@ public static class OverlayEndpoints
             string normalizedType = type.ToLowerInvariant();
             if (!RecommendedSizes.ContainsKey(normalizedType))
             {
-                return Results.BadRequest(new { error = $"Unknown overlay type: '{type}'." });
+                return TypedResults.Problem(detail: $"Unknown overlay type: '{type}'.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             (int width, int height) = RecommendedSizes[normalizedType];
@@ -281,7 +281,7 @@ public static class OverlayEndpoints
             Poll? poll = await repo.GetActiveAsync(ct);
             if (poll is null)
             {
-                return Results.NotFound();
+                return TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             return Results.Ok(new
@@ -300,7 +300,7 @@ public static class OverlayEndpoints
             Counter? counter = await repo.GetByIdAsync(id, ct);
             return counter is not null
                 ? Results.Ok(new { id = counter.Id, name = counter.Name, value = counter.Value })
-                : Results.NotFound();
+                : TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
         });
 
         // GET /api/overlays/data/counters — all counters for dropdown (no auth required)
@@ -346,7 +346,7 @@ public static class OverlayEndpoints
 
                 default:
                     string safeType = normalized.Length > 50 ? normalized[..50] : normalized;
-                    return Results.BadRequest(new { error = $"Unknown test event: '{safeType}'. Use: follow, subscribe, giftsub, resub, raid, counter." });
+                    return TypedResults.Problem(detail: $"Unknown test event: '{safeType}'. Use: follow, subscribe, giftsub, resub, raid, counter.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
         });
 

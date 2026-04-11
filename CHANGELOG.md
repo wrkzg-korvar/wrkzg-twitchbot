@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] — 2026-04-11
+
+### Added
+- **Twitch Emote Support:** EmoteService laedt alle verfuegbaren Emotes via User Emotes API (Global, Subscriber, Bits, Follower aus abonierten Kanaelen), EmotePicker im Dashboard-Chat mit Kategorien-Gruppierung, client-seitiges Emote-Rendering fuer gesendete Nachrichten
+- **User Emotes API:** Neuer Scope `user:read:emotes` auf Bot + Broadcaster Token, `GetUserEmotesAsync` mit Paginierung, Fallback auf Global+Channel fuer alte Tokens
+- **Visual Automation Builder:** Dual-Mode Editor (Visual/JSON) mit dynamischen Feldern, kontextabhaengigen Variablen-Chips, Beschreibungen und Validierung
+- **Mod Commands:** !titel/!title (Stream-Titel aendern), !game/!category (Kategorie aendern) — erfordern Moderator-Rolle
+- **OBS WebSocket Integration:** Scene wechseln und Quellen ein-/ausblenden ueber Hotkeys und Automations
+- **Async Import:** Imports laufen im Hintergrund mit Progress-Notifications, Module Locking waehrend Import
+- **Notification Center:** Sidebar-Glocke mit Notification-History, ersetzt fluechtige Toast-Nachrichten
+- **Users Overhaul:** SmartDataTable mit Sortierung, Suche, Pagination; User-Detail-Modal mit Punkte-Bearbeitung und Ban/Unban
+- **Timer Announcements:** Timed Messages als farbige Announcements senden (Primary, Blue, Green, Orange, Purple)
+- **Dual Helix Client:** Separate IBroadcasterHelixClient + IBotHelixClient mit eigenem Token-Management
+- **RFC 7807 Problem Details:** Standardisierte Fehlerantworten auf allen API-Endpoints
+- **SmartDataTable:** Einheitliche Tabellen mit integrierter Suche, Sortierung, Pagination auf allen Seiten
+- **Berechtigungsmatrix:** Dokumentation aller Rollen-Anforderungen fuer System Commands
+- **Channel Point Trigger:** Automations koennen auf Channel-Point-Einloesungen reagieren (war vorher implementiert aber nicht angebunden)
+- **Automatische Release Notes:** GitHub Actions generiert Release Notes aus CHANGELOG.md
+
+### Fixed
+- Command Parser: Korrekte Behandlung von Commands mit Sonderzeichen und Unicode
+- CORS: X-Wrkzg-Token Header wird nicht mehr an externe API-Calls (GitHub) gesendet
+- Windows Taskbar Icon: .ico Datei korrekt in Release-Build eingebettet
+- Announcement Color: DB-Migration Default korrigiert (war "" statt "primary")
+- Bot Token Scopes: Neue Scopes erfordern Neu-Autorisierung (kein stilles Scheitern mehr)
+- Emote Cache: Frontend-getriebener Refresh bei leerem Cache — POST /api/emotes/refresh statt blindes Polling des leeren GET-Caches
+- Emote Auth Callback: Fire-and-Forget Task.Run ersetzt durch awaited Call mit Logging
+- EmoteService Retry: 30s-Retry bei leerem initialem Load, diagnostisches Token-State-Logging
+- Test-Endpoint: Fuehrt nur die getestete Automation aus (nicht mehr alle)
+- Hotkey RunEffect: Fuehrt nur die spezifische Automation aus
+
+### Changed
+- ITwitchHelixClient aufgeloest in IBroadcasterHelixClient (10 Consumer) + IBotHelixClient (2 Consumer)
+- Timer IntervalMinutes: LastFiredAt wird bei neuen Timern nicht mehr auf now gesetzt
+- Import: Synchroner POST /execute ersetzt durch asynchronen POST /start + Job-Tracking
+- showToast() intern auf Notification-System umgeleitet (0 Migration noetig)
+
 ## [2.3.3] — 2026-04-04
 
 ### Added

@@ -41,6 +41,8 @@ public static class DependencyInjection
         services.AddSingleton<ISystemCommand, SkipSongCommand>();
         services.AddSingleton<ISystemCommand, QueueCommand>();
         services.AddSingleton<ISystemCommand, CurrentSongCommand>();
+        services.AddSingleton<ISystemCommand, TitleCommand>();
+        services.AddSingleton<ISystemCommand, GameCommand>();
 
         // Poll System
         services.AddScoped<PollService>();
@@ -93,6 +95,10 @@ public static class DependencyInjection
         // Effect System — Integration Effect Types (v2.1.0)
         services.AddSingleton<IEffectType, Effects.EffectTypes.DiscordSendMessageEffect>();
         services.AddSingleton<IEffectType, Effects.EffectTypes.DiscordSendEmbedEffect>();
+
+        // Effect System — OBS Integration Effect Types (v2.4.0)
+        services.AddSingleton<IEffectType, Effects.EffectTypes.ObsSceneSwitchEffect>();
+        services.AddSingleton<IEffectType, Effects.EffectTypes.ObsSourceToggleEffect>();
 
         // Effect Engine (Singleton — evaluates Trigger → Condition → Effect chains)
         services.AddSingleton<EffectEngine>();

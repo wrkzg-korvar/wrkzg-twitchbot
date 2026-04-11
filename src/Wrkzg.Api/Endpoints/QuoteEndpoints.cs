@@ -28,30 +28,30 @@ public static class QuoteEndpoints
         group.MapGet("/{id:int}", async (int id, IQuoteRepository repo, CancellationToken ct) =>
         {
             Quote? quote = await repo.GetByIdAsync(id, ct);
-            return quote is not null ? Results.Ok(quote) : Results.NotFound();
+            return quote is not null ? Results.Ok(quote) : TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
         });
 
         group.MapGet("/random", async (IQuoteRepository repo, CancellationToken ct) =>
         {
             Quote? quote = await repo.GetRandomAsync(ct);
-            return quote is not null ? Results.Ok(quote) : Results.NotFound();
+            return quote is not null ? Results.Ok(quote) : TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
         });
 
         group.MapPost("/", async (CreateQuoteRequest request, IQuoteRepository repo, CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(request.Text))
             {
-                return Results.BadRequest(new { error = "Quote text is required." });
+                return TypedResults.Problem(detail: "Quote text is required.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             if (request.Text.Length > 500)
             {
-                return Results.BadRequest(new { error = "Quote text must be 500 characters or less." });
+                return TypedResults.Problem(detail: "Quote text must be 500 characters or less.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             if (string.IsNullOrWhiteSpace(request.QuotedUser))
             {
-                return Results.BadRequest(new { error = "QuotedUser is required." });
+                return TypedResults.Problem(detail: "QuotedUser is required.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             int nextNumber = await repo.GetNextNumberAsync(ct);
@@ -73,7 +73,7 @@ public static class QuoteEndpoints
             Quote? quote = await repo.GetByIdAsync(id, ct);
             if (quote is null)
             {
-                return Results.NotFound();
+                return TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             await repo.DeleteAsync(id, ct);

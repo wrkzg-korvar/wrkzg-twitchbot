@@ -13,6 +13,7 @@
    - [3.1 Custom Commands](#31-custom-commands)
    - [3.2 System Commands Reference](#32-system-commands-reference)
    - [3.3 Quotes](#33-quotes)
+   - [3.4 Emotes](#34-emotes)
 4. [Community Engagement](#4-community-engagement)
    - [4.1 Points System](#41-points-system)
    - [4.2 Polls & Votes](#42-polls--votes)
@@ -26,7 +27,9 @@
    - [5.2 Event Notifications](#52-event-notifications)
    - [5.3 Hotkey Triggers](#53-hotkey-triggers)
    - [5.4 Effect System (Automations)](#54-effect-system-automations)
-   - [5.5 Integrations](#55-integrations)
+   - [5.5 OBS WebSocket](#55-obs-websocket)
+   - [5.6 Integrations](#56-integrations)
+   - [5.7 Mod Commands](#57-mod-commands)
 6. [Moderation](#6-moderation)
    - [6.1 Spam Filter](#61-spam-filter)
 7. [Stream Analytics](#7-stream-analytics)
@@ -47,7 +50,8 @@
 9. [Settings & Configuration](#9-settings--configuration)
 10. [Data Management](#10-data-management)
     - [10.1 Import Data from Another Bot](#101-import-data-from-another-bot)
-11. [Troubleshooting & FAQ](#11-troubleshooting--faq)
+11. [Berechtigungsmatrix](#11-berechtigungsmatrix)
+12. [Troubleshooting & FAQ](#12-troubleshooting--faq)
 
 ---
 
@@ -89,7 +93,7 @@ Your command center. The dashboard shows:
 - **Live Chat** — Messages appear in real-time with emote rendering and role badges
 - **Event Feed** — Recent follows, subscriptions, raids, and gift subs
 
-Use the chat input at the bottom to send messages as your bot account.
+Use the chat input at the bottom to send messages as your bot account. Klicke auf das Smiley-Icon um den Emote-Picker zu oeffnen.
 
 ---
 
@@ -176,6 +180,27 @@ Save memorable chat moments. Quotes are numbered sequentially and can be recalle
 | `!quote add That was amazing` | Save a new quote (Mod) | `Quote #43 saved!` |
 
 The current game/category is saved automatically when a quote is added during a live stream.
+
+### 3.4 Emotes
+
+Wrkzg loads all Twitch emotes your accounts can use — global emotes, subscriber emotes from channels you're subscribed to, Bits emotes, and follower emotes.
+
+**How it works:**
+- Emotes are cached when the app starts (10-second delay) and refresh every 30 minutes
+- After connecting or re-connecting an account, emotes refresh automatically
+- The EmotePicker in the dashboard chat groups emotes by category: Subscriber, Bits, Follower, Channel, Global
+
+**EmotePicker:**
+1. Open the dashboard Live Chat
+2. Click the smiley face button next to the message input
+3. Browse by category or search by name
+4. Click an emote to insert it into your message
+
+**Emotes in chat messages:**
+- Messages sent by other users render emotes automatically (using Twitch IRC emote positions)
+- Messages you send from the dashboard also render emotes (using the cached emote map)
+
+**Required Scope:** `user:read:emotes` — if your accounts were connected before v2.4.0, you need to re-connect them in Settings to grant this scope. Without it, only global emotes (302) are loaded as a fallback.
 
 ---
 
@@ -417,6 +442,8 @@ Map keyboard shortcuts to bot actions. Each hotkey has a unique ID that can be u
 4. Choose an action and configure the payload:
    - **Send Chat Message** — enter the message text
    - **Counter +1 / -1 / Reset** — select a counter from the dropdown
+   - **OBS Scene Switch** — wechselt eine OBS-Scene (erfordert OBS WebSocket Verbindung)
+   - **OBS Source Toggle** — blendet eine OBS-Quelle ein/aus
 5. Optionally add a description
 6. Click **Create**
 
@@ -451,77 +478,52 @@ Global keyboard hotkeys on macOS require Accessibility permission. If the permis
 
 > **Tip:** The API trigger method (`POST /api/hotkeys/{id}/trigger`) works without any permissions and is recommended for Stream Deck users on macOS.
 
-### 5.4 Effect System (Automations)
+### 5.4 Automations (Effect System)
 
-Create custom automations with Trigger → Conditions → Effects chains. Combine any trigger with any effect to build powerful workflows.
+Automations lassen dich individuelle Reaktionen auf Events einrichten. Jede Automation folgt dem Muster:
 
-#### How It Works
+**Trigger** -> **Bedingungen** -> **Aktionen**
 
-1. **Trigger** — What starts the automation (chat command, Twitch event, keyword, hotkey, channel point redemption)
-2. **Conditions** (optional) — Gates that must pass before effects run (role check, points check, random chance, stream status)
-3. **Effects** — Actions that execute sequentially (send chat message, wait, update counter, show alert, set variable, send Discord message/embed)
+#### Visual Builder
 
-#### Creating an Automation
+Der Visual Builder ist der Standard-Modus. Alle Felder werden als Formulare angezeigt mit Beschreibungen und Hilfetext.
 
-1. Go to **Automations** in the sidebar
-2. Click **New Automation**
-3. Choose a trigger type and configure it
-4. Optionally add conditions
-5. Add one or more effects in the desired order
-6. Set a cooldown to prevent spam
-7. Save and enable
+**Trigger-Typen:**
 
-#### Trigger Types
-
-| Trigger | Config Key | Description |
+| Trigger | Beschreibung | Variablen |
 |---|---|---|
-| **Chat Command** | `trigger` | Fires when a specific command is used (e.g. `!welcome`) |
-| **Twitch Event** | `event_type` | Fires on follow, sub, raid, gift sub, resub, or stream online |
-| **Chat Keyword** | `keyword` | Fires when a keyword appears anywhere in a message |
-| **Hotkey** | `hotkey_id` | Fires when a specific hotkey is pressed |
-| **Channel Point** | `reward_id` | Fires on a channel point redemption |
+| Chat Command | Reagiert auf einen Chat-Befehl (z.B. !welcome) | {user}, {args}, {target}, {points}, {hours} |
+| Twitch Event | Reagiert auf Follow, Sub, Raid, etc. | {user}, {viewers}, {tier}, {months}, {count}, {message} |
+| Chat Keyword | Reagiert wenn ein Wort im Chat vorkommt | {user} |
+| Channel Point | Reagiert auf Channel-Point-Einloesungen | {user}, {reward}, {input}, {cost} |
+| Hotkey | Reagiert auf Tastenkombination | {hotkey}, {description} |
 
-#### Available Event Types
+**Bedingungen (optional, UND-verknuepft):**
 
-| Event Type | When it fires |
+| Bedingung | Beschreibung |
 |---|---|
-| `event.follow` | Someone follows the channel |
-| `event.subscribe` | Someone subscribes |
-| `event.gift` | Someone gifts subscriptions |
-| `event.resub` | Someone resubscribes |
-| `event.raid` | Someone raids the channel |
-| `event.stream_online` | The stream goes live |
+| Benutzerrolle | Mindest-Rolle: Viewer -> Follower -> Subscriber -> Moderator -> Broadcaster |
+| Mindestpunkte | User muss mindestens X Punkte haben (werden nicht abgezogen) |
+| Zufallschance | Ausfuehrung mit X% Wahrscheinlichkeit |
+| Stream Status | Nur wenn Stream live/offline ist |
 
-#### Condition Types
+**Aktionen (sequenziell ausgefuehrt):**
 
-| Condition | Config Keys | Description |
+| Aktion | Beschreibung | Parameter |
 |---|---|---|
-| **Role Check** | `role_id` | User must have a specific community role |
-| **Points Check** | `min_points` | User must have at least X points |
-| **Random Chance** | `percent` | Only fires X% of the time |
-| **Stream Status** | `required_status` | Only fires when stream is online or offline |
+| Chat-Nachricht | Sendet Text in den Chat | message (mit Variablen) |
+| Warten | Pausiert X Sekunden (max 60) | seconds |
+| Counter aendern | +1, -1 oder Reset | counter_id, action |
+| Alert anzeigen | OBS Overlay Alert | message |
+| Variable setzen | Fuer spaetere Aktionen | name, value |
+| OBS: Scene wechseln | Wechselt die aktive OBS Scene (erfordert OBS WebSocket Verbindung) | scene_name |
+| OBS: Quelle ein-/ausblenden | Blendet eine Quelle in der aktuellen Scene ein oder aus | scene_name, source_name |
+| Discord-Nachricht | Webhook-Nachricht | message |
+| Discord Embed | Formatierte Embed-Nachricht | title, description, color |
 
-#### Effect Types
+**JSON-Modus:** Fuer Power-User — klicke auf "JSON" um die rohe JSON-Konfiguration zu bearbeiten.
 
-| Effect | Config Keys | Description |
-|---|---|---|
-| **Chat Message** | `message` | Send a message in chat. Use `{user}` for the viewer's name |
-| **Wait** | `seconds` | Pause before the next effect (max 60 seconds) |
-| **Counter** | `counter_id`, `action`, `amount` | Increment, decrement, or reset a counter |
-| **Alert** | `title`, `message` | Show an alert in the OBS Alert Box overlay |
-| **Variable** | `name`, `value` | Set a variable for use in later effects with `{variable_name}` |
-| **Discord Message** | `message` | Send a text message to the configured Discord webhook |
-| **Discord Embed** | `title`, `description`, `color` | Send a rich embed to Discord |
-
-#### Variables in Effects
-
-All effect templates support these variables:
-
-| Variable | Description |
-|---|---|
-| `{user}` | Display name of the user who triggered the automation |
-| Any trigger data | Event-specific data like `{viewers}`, `{tier}`, `{months}` |
-| Custom variables | Variables set by earlier effects in the same chain |
+**Testen:** Der "Test" Button fuehrt NUR diese eine Automation aus (Bedingungen werden geprueft, Trigger-Matching uebersprungen).
 
 #### Quick-Start Examples
 
@@ -539,9 +541,29 @@ The Automations page includes ready-to-use examples you can create with one clic
 - **Use the Test button** to simulate any automation without waiting for the real trigger
 - **Set cooldowns** to prevent spam — especially important for event-triggered automations
 
-### 5.5 Integrations
+### 5.5 OBS WebSocket
 
-Connect external services to your bot. Currently supports Discord via webhooks.
+Wrkzg can control OBS Studio directly via the OBS WebSocket 5.x protocol.
+
+**Setup:**
+1. In OBS: Tools → WebSocket Server Settings → Enable → set a password
+2. In Wrkzg: Go to Integrations → OBS WebSocket
+3. Enter host (`localhost`), port (`4455`), and password
+4. Click Connect — the password is stored securely in your OS keychain
+
+**Available Actions:**
+- **Switch Scene** — change the active OBS scene
+- **Toggle Source** — show or hide a source in the current scene
+
+**Usage:**
+- **Hotkeys:** Create a hotkey binding with action type "OBS: Switch Scene" or "OBS: Toggle Source"
+- **Automations:** Use the `obs.switch_scene` or `obs.toggle_source` effect in the Effect System
+
+**Example Automation:** When a raid event occurs → switch to "Raid Welcome" scene → wait 30 seconds → switch back to "Gaming" scene.
+
+### 5.6 Integrations
+
+Connect external services to your bot. Supports Discord via webhooks and OBS via WebSocket.
 
 #### Discord Webhook
 
@@ -579,6 +601,34 @@ This sends a message to your Discord channel every time your stream goes live.
 **Removing the Webhook:**
 
 Click the trash icon on the Integrations page to remove the webhook URL. The webhook is stored encrypted — only you can access it.
+
+#### OBS WebSocket
+
+Wrkzg kann OBS Studio ueber das WebSocket 5.x Protokoll steuern.
+
+**Einrichtung:**
+1. In OBS: Menue -> Tools -> WebSocket Server Settings -> "Enable WebSocket Server" aktivieren
+2. Optional: Passwort setzen
+3. In Wrkzg: Integrations -> OBS WebSocket -> Host, Port, Passwort eingeben -> Connect
+
+**Verfuegbare Aktionen:**
+- **OBS: Scene wechseln** — Wechselt zur angegebenen Scene
+- **OBS: Quelle ein-/ausblenden** — Blendet eine Quelle in einer Scene ein oder aus
+
+Diese Aktionen sind verfuegbar als:
+- Hotkey-Actions auf der Hotkeys-Seite
+- Automation-Effects im Visual Builder
+
+### 5.7 Mod Commands
+
+Chat-Befehle fuer Moderatoren und Broadcaster um den Stream direkt aus dem Chat zu steuern.
+
+| Command | Aliases | Beschreibung | Mindest-Rolle |
+|---|---|---|---|
+| `!titel Neuer Titel` | `!title` | Aendert den Stream-Titel | Moderator |
+| `!game Kategoriename` | `!category` | Aendert die Stream-Kategorie | Moderator |
+
+**Voraussetzung:** Der Broadcaster-Account muss mit dem Scope `channel:manage:broadcast` verbunden sein. Bei Scope-Aenderungen ist eine Neu-Autorisierung noetig.
 
 ---
 
@@ -998,6 +1048,8 @@ Wrkzg can import your community data from other Twitch bots so your viewers keep
 5. Choose a conflict strategy for existing users
 6. Click **Import** to start the migration
 
+Imports laufen im Hintergrund — du kannst die Seite verlassen und weiterarbeiten. Der Fortschritt wird in der Notification-Glocke (Sidebar) angezeigt. Waehrend ein Import laeuft, sind die betroffenen Seiten (Users, Commands, etc.) read-only (Lock-Banner).
+
 #### Conflict Strategies
 
 When importing, some users may already exist in Wrkzg. Choose how to handle them:
@@ -1034,7 +1086,45 @@ Imported users don't have a Twitch ID yet (Deepbot CSV/JSON only stores username
 
 ---
 
-## 11. Troubleshooting & FAQ
+## 11. Berechtigungsmatrix
+
+### System Commands
+
+| Command | Mindest-Rolle | Beschreibung |
+|---|---|---|
+| `!commands` / `!help` | Viewer | Zeigt verfuegbare Befehle |
+| `!points` / `!punkte` | Viewer | Zeigt eigene Punkte |
+| `!watchtime` | Viewer | Zeigt eigene Watchtime |
+| `!followage` | Viewer | Zeigt Follow-Alter |
+| `!uptime` | Viewer | Zeigt Stream-Uptime |
+| `!quote` | Viewer | Zeigt ein zufaelliges Zitat |
+| `!poll` | Moderator | Erstellt eine Umfrage |
+| `!vote` | Viewer | Stimmt in einer Umfrage ab |
+| `!endpoll` | Moderator | Beendet eine Umfrage |
+| `!pollresult` | Viewer | Zeigt Umfrage-Ergebnis |
+| `!raffle` | Moderator | Startet ein Gewinnspiel |
+| `!join` | Viewer | Nimmt am Gewinnspiel teil |
+| `!draw` | Moderator | Zieht einen Gewinner |
+| `!cancelraffle` | Moderator | Bricht Gewinnspiel ab |
+| `!editcmd` | Moderator | Bearbeitet Custom Commands |
+| `!titel` / `!title` | Moderator | Aendert Stream-Titel |
+| `!game` / `!category` | Moderator | Aendert Stream-Kategorie |
+| `!shoutout` / `!so` | Moderator | Shoutout an einen User |
+
+### Custom Commands
+
+Custom Commands sind standardmaessig fuer alle Viewer verfuegbar.
+Einschraenkungen koennen ueber die Automations konfiguriert werden
+(Bedingung: "Benutzerrolle pruefen" mit gewuenschter Mindest-Rolle).
+
+### Dashboard-Zugriff
+
+Das Dashboard ist localhost-only — nur wer am Computer sitzt hat Zugriff.
+Es gibt kein Berechtigungssystem innerhalb des Dashboards.
+
+---
+
+## 12. Troubleshooting & FAQ
 
 ### Bot Won't Connect
 

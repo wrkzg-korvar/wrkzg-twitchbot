@@ -1,58 +1,6 @@
 using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Wrkzg.Core.Interfaces;
-
-/// <summary>
-/// Abstraction over the Twitch Helix REST API.
-/// Used for stream status polling, user info, and future poll/EventSub management.
-/// </summary>
-public interface ITwitchHelixClient
-{
-    /// <summary>
-    /// Gets the current stream info for a channel. Returns null if offline.
-    /// </summary>
-    Task<StreamInfo?> GetStreamAsync(string channelLogin, CancellationToken ct = default);
-
-    /// <summary>
-    /// Gets user info by login name.
-    /// </summary>
-    Task<HelixUserInfo?> GetUserAsync(string login, CancellationToken ct = default);
-
-    /// <summary>
-    /// Sends a chat message via the Helix API (POST /chat/messages).
-    /// Uses the Broadcaster token. Returns true if sent successfully.
-    /// </summary>
-    Task<bool> SendChatMessageAsync(string broadcasterId, string senderId, string message, CancellationToken ct = default);
-
-    /// <summary>
-    /// Gets channel information including the game/category.
-    /// Helix API: GET /channels?broadcaster_id={id}
-    /// </summary>
-    Task<ChannelInfo?> GetChannelInfoAsync(string broadcasterId, CancellationToken ct = default);
-
-    /// <summary>Timeouts a user in the channel via Helix API (POST /moderation/bans).</summary>
-    Task<bool> TimeoutUserAsync(string userId, int durationSeconds, string reason, CancellationToken ct = default);
-
-    /// <summary>Creates a Twitch-native poll via Helix API.</summary>
-    Task<TwitchPollResponse?> CreateTwitchPollAsync(
-        string broadcasterId,
-        string question,
-        string[] options,
-        int durationSeconds,
-        CancellationToken ct = default);
-
-    /// <summary>Gets custom channel point rewards for the broadcaster.</summary>
-    Task<IReadOnlyList<TwitchCustomReward>> GetCustomRewardsAsync(CancellationToken ct = default);
-
-    /// <summary>Ends a Twitch-native poll.</summary>
-    Task<bool> EndTwitchPollAsync(
-        string broadcasterId,
-        string pollId,
-        string status,
-        CancellationToken ct = default);
-}
 
 /// <summary>
 /// Response from the Twitch Helix "Create Poll" endpoint.
@@ -132,6 +80,19 @@ public sealed class ChannelInfo
     public string Title { get; init; } = string.Empty;
 }
 
+/// <summary>Twitch emote information from the Helix API.</summary>
+public sealed class TwitchEmote
+{
+    /// <summary>The Twitch-assigned emote identifier.</summary>
+    public string Id { get; init; } = string.Empty;
+
+    /// <summary>The emote name that users type in chat.</summary>
+    public string Name { get; init; } = string.Empty;
+
+    /// <summary>The emote type: 'globals', 'subscriptions', 'bitstier', 'follower', etc.</summary>
+    public string EmoteType { get; init; } = string.Empty;
+}
+
 /// <summary>
 /// Custom Channel Point Reward from the Helix API.
 /// </summary>
@@ -154,4 +115,19 @@ public sealed class TwitchCustomReward
 
     /// <summary>Whether the reward requires the user to enter text when redeeming.</summary>
     public bool IsUserInputRequired { get; init; }
+}
+
+/// <summary>
+/// Game/category information from the Helix API.
+/// </summary>
+public sealed class TwitchGameInfo
+{
+    /// <summary>The Twitch-assigned game identifier.</summary>
+    public string Id { get; init; } = string.Empty;
+
+    /// <summary>The game/category name.</summary>
+    public string Name { get; init; } = string.Empty;
+
+    /// <summary>URL to the box art image template.</summary>
+    public string BoxArtUrl { get; init; } = string.Empty;
 }

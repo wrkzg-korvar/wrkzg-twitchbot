@@ -32,7 +32,7 @@ public static class EffectEndpoints
         group.MapGet("/{id:int}", async (int id, IEffectListRepository repo, CancellationToken ct) =>
         {
             EffectList? effectList = await repo.GetByIdAsync(id, ct);
-            return effectList is not null ? Results.Ok(effectList) : Results.NotFound();
+            return effectList is not null ? Results.Ok(effectList) : TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
         });
 
         // Create effect list
@@ -40,7 +40,7 @@ public static class EffectEndpoints
         {
             if (string.IsNullOrWhiteSpace(request.Name) || string.IsNullOrWhiteSpace(request.TriggerTypeId))
             {
-                return Results.BadRequest(new { error = "Name and trigger type are required." });
+                return TypedResults.Problem(detail: "Name and trigger type are required.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             EffectList effectList = new()
@@ -66,7 +66,7 @@ public static class EffectEndpoints
             EffectList? effectList = await repo.GetByIdAsync(id, ct);
             if (effectList is null)
             {
-                return Results.NotFound();
+                return TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             if (request.Name is not null) { effectList.Name = request.Name; }
@@ -115,61 +115,43 @@ public static class EffectEndpoints
             });
         });
 
-        // Test trigger — directly executes the effect chain (bypasses trigger matching)
+        // Test trigger — directly executes THIS effect chain only (bypasses trigger matching)
         group.MapPost("/{id:int}/test", async (int id, IEffectListRepository repo,
-            EffectEngine engine, Microsoft.Extensions.DependencyInjection.IServiceScopeFactory scopeFactory,
-            CancellationToken ct) =>
+            EffectEngine engine, CancellationToken ct) =>
         {
             EffectList? effectList = await repo.GetByIdAsync(id, ct);
             if (effectList is null)
             {
-                return Results.NotFound();
-            }
-
-            // Parse trigger config to enrich context with its parameters
-            Dictionary<string, string> triggerParams;
-            try
-            {
-                triggerParams = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(
-                    effectList.TriggerConfig) ?? new();
-            }
-            catch
-            {
-                triggerParams = new();
-            }
-
-            // Merge trigger config into the data so triggers can match
-            Dictionary<string, string> testData = new(triggerParams)
-            {
-                ["test"] = "true"
-            };
-
-            using Microsoft.Extensions.DependencyInjection.IServiceScope scope = scopeFactory.CreateScope();
-
-            // Determine the specific event type for matching
-            // For "event" trigger, use the event_type from config (e.g. "event.follow")
-            // For "command" trigger, use "chat_message" so CommandTrigger matches
-            string eventType = effectList.TriggerTypeId;
-            if (eventType == "event" && triggerParams.ContainsKey("event_type"))
-            {
-                eventType = triggerParams["event_type"];
-            }
-            else if (eventType == "command" || eventType == "keyword")
-            {
-                eventType = "chat_message";
+                return TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             EffectTriggerContext testContext = new()
             {
-                EventType = eventType,
+                EventType = effectList.TriggerTypeId,
                 Username = "TestUser",
                 UserId = "0",
-                MessageContent = triggerParams.GetValueOrDefault("trigger") ?? triggerParams.GetValueOrDefault("keyword") ?? "test",
-                Data = testData,
-                Scope = scope
+                MessageContent = "test",
+                Data = new Dictionary<string, string>
+                {
+                    ["test"] = "true",
+                    ["user"] = "TestUser",
+                    ["args"] = "test arguments",
+                    ["target"] = "@TestTarget",
+                    ["viewers"] = "42",
+                    ["tier"] = "1",
+                    ["months"] = "6",
+                    ["count"] = "5",
+                    ["message"] = "Test message",
+                    ["reward"] = "Test Reward",
+                    ["input"] = "test input",
+                    ["broadcaster"] = "TestBroadcaster",
+                    ["amount"] = "100",
+                    ["points"] = "500",
+                    ["hours"] = "24",
+                }
             };
 
-            await engine.ProcessAsync(testContext, ct);
+            await engine.ExecuteSingleAsync(id, testContext, ct);
             return Results.Ok(new { tested = true, name = effectList.Name });
         });
     }

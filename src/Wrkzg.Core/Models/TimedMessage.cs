@@ -38,6 +38,9 @@ public class TimedMessage
     /// <summary>Whether messages are sent as Twitch announcements (highlighted in chat). Requires the bot to be a moderator.</summary>
     public bool IsAnnouncement { get; set; }
 
+    /// <summary>Color for Twitch announcements (primary, blue, green, orange, purple).</summary>
+    public string AnnouncementColor { get; set; } = "primary";
+
     /// <summary>When this timer last fired.</summary>
     public DateTimeOffset? LastFiredAt { get; set; }
 

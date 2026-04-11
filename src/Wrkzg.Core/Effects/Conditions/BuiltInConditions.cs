@@ -142,7 +142,7 @@ public class StreamStatusCondition : IConditionType
             return !requireLive;
         }
 
-        ITwitchHelixClient helix = context.Scope.ServiceProvider.GetRequiredService<ITwitchHelixClient>();
+        IBroadcasterHelixClient helix = context.Scope.ServiceProvider.GetRequiredService<IBroadcasterHelixClient>();
         StreamInfo? stream = await helix.GetStreamAsync(channel, ct);
         bool isLive = stream is not null;
         return requireLive ? isLive : !isLive;

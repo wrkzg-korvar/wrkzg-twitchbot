@@ -152,7 +152,9 @@ public class TwitchChatClient : ITwitchChatClient
             return Task.CompletedTask;
         }
 
-        _client.SendMessage(_joinedChannel, message);
+        // Safety net: Twitch silently drops messages over 500 chars
+        string safeMessage = message.Length > 500 ? message[..497] + "..." : message;
+        _client.SendMessage(_joinedChannel, safeMessage);
         return Task.CompletedTask;
     }
 

@@ -9,6 +9,7 @@ export interface TimedMessage {
   runWhenOnline: boolean;
   runWhenOffline: boolean;
   isAnnouncement: boolean;
+  announcementColor?: string;
   lastFiredAt: string | null;
   createdAt: string;
 }
@@ -22,6 +23,7 @@ export interface CreateTimerRequest {
   runWhenOnline: boolean;
   runWhenOffline: boolean;
   isAnnouncement: boolean;
+  announcementColor?: string;
 }
 
 export type UpdateTimerRequest = Partial<CreateTimerRequest>;

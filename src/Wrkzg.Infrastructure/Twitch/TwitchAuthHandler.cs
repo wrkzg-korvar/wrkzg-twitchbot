@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -12,27 +13,36 @@ using Wrkzg.Core.Models;
 namespace Wrkzg.Infrastructure.Twitch;
 
 /// <summary>
-/// HTTP message handler that automatically injects the Broadcaster access token
-/// into outgoing Twitch Helix API requests and handles token refresh on 401.
+/// HTTP message handler that automatically injects the access token for a specific
+/// <see cref="TokenType"/> into outgoing Twitch Helix API requests and handles token refresh on 401.
 /// </summary>
 public class TwitchAuthHandler : DelegatingHandler
 {
+    private readonly TokenType _tokenType;
     private readonly ISecureStorage _storage;
     private readonly ITwitchOAuthService _oauth;
     private readonly IAuthStateNotifier _authNotifier;
     private readonly ILogger<TwitchAuthHandler> _logger;
 
-    private static readonly SemaphoreSlim _refreshLock = new(1, 1);
+    private static readonly ConcurrentDictionary<TokenType, SemaphoreSlim> _refreshLocks = new();
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="TwitchAuthHandler"/> class.
+    /// Initializes a new instance of the <see cref="TwitchAuthHandler"/> class
+    /// for the specified token type.
     /// </summary>
+    /// <param name="tokenType">Which token (Bot or Broadcaster) this handler manages.</param>
+    /// <param name="storage">Secure storage for loading and saving tokens.</param>
+    /// <param name="oauth">OAuth service for refreshing expired tokens.</param>
+    /// <param name="authNotifier">Notifier for broadcasting auth state changes to the frontend.</param>
+    /// <param name="logger">Logger for diagnostics.</param>
     public TwitchAuthHandler(
+        TokenType tokenType,
         ISecureStorage storage,
         ITwitchOAuthService oauth,
         IAuthStateNotifier authNotifier,
         ILogger<TwitchAuthHandler> logger)
     {
+        _tokenType = tokenType;
         _storage = storage;
         _oauth = oauth;
         _authNotifier = authNotifier;
@@ -46,18 +56,18 @@ public class TwitchAuthHandler : DelegatingHandler
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request, CancellationToken ct)
     {
-        TwitchTokens? tokens = await _storage.LoadTokensAsync(TokenType.Broadcaster, ct);
+        TwitchTokens? tokens = await _storage.LoadTokensAsync(_tokenType, ct);
 
         if (tokens is null)
         {
-            _logger.LogWarning("No Broadcaster token available — Helix API request will likely fail");
+            _logger.LogWarning("No {TokenType} token available — Helix API request will likely fail", _tokenType);
             return await base.SendAsync(request, ct);
         }
 
         // Proactive refresh if token is likely expired
         if (tokens.IsLikelyExpired)
         {
-            _logger.LogInformation("Broadcaster token is likely expired — refreshing proactively");
+            _logger.LogInformation("{TokenType} token is likely expired — refreshing proactively", _tokenType);
             tokens = await TryRefreshAsync(tokens, ct);
             if (tokens is null)
             {
@@ -77,10 +87,10 @@ public class TwitchAuthHandler : DelegatingHandler
 
         HttpResponseMessage response = await base.SendAsync(request, ct);
 
-        // 401 → refresh and retry once
+        // 401 -> refresh and retry once
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
-            _logger.LogInformation("Received 401 from Twitch — attempting token refresh");
+            _logger.LogInformation("Received 401 from Twitch for {TokenType} — attempting token refresh", _tokenType);
 
             tokens = await TryRefreshAsync(tokens, ct);
             if (tokens is null)
@@ -101,37 +111,40 @@ public class TwitchAuthHandler : DelegatingHandler
 
     private async Task<TwitchTokens?> TryRefreshAsync(TwitchTokens currentTokens, CancellationToken ct)
     {
-        bool lockTaken = await _refreshLock.WaitAsync(TimeSpan.FromSeconds(10), ct);
+        SemaphoreSlim refreshLock = _refreshLocks.GetOrAdd(_tokenType, _ => new SemaphoreSlim(1, 1));
+
+        bool lockTaken = await refreshLock.WaitAsync(TimeSpan.FromSeconds(10), ct);
         if (!lockTaken)
         {
-            _logger.LogWarning("Timed out waiting for refresh lock — skipping refresh");
+            _logger.LogWarning("Timed out waiting for {TokenType} refresh lock — skipping refresh", _tokenType);
             return null;
         }
 
         try
         {
             // Double-check: another thread may have already refreshed
-            TwitchTokens? stored = await _storage.LoadTokensAsync(TokenType.Broadcaster, ct);
+            TwitchTokens? stored = await _storage.LoadTokensAsync(_tokenType, ct);
             if (stored is not null && stored.AccessToken != currentTokens.AccessToken)
             {
-                _logger.LogDebug("Another thread already refreshed the token — using new token");
+                _logger.LogDebug("Another thread already refreshed the {TokenType} token — using new token", _tokenType);
                 return stored;
             }
 
             TwitchTokens newTokens = await _oauth.RefreshTokenAsync(currentTokens.RefreshToken, ct);
-            await _storage.SaveTokensAsync(TokenType.Broadcaster, newTokens, ct);
+            await _storage.SaveTokensAsync(_tokenType, newTokens, ct);
 
-            _logger.LogInformation("Broadcaster token refreshed successfully");
+            _logger.LogInformation("{TokenType} token refreshed successfully", _tokenType);
             return newTokens;
         }
         catch (HttpRequestException ex)
         {
             _logger.LogError(ex,
-                "Token refresh failed — the user may need to re-authorize. Notifying frontend.");
+                "{TokenType} token refresh failed — the user may need to re-authorize. Notifying frontend.",
+                _tokenType);
 
             await _authNotifier.NotifyAuthStateChangedAsync(new AuthState
             {
-                TokenType = TokenType.Broadcaster,
+                TokenType = _tokenType,
                 IsAuthenticated = false,
                 TwitchUsername = null,
                 TwitchDisplayName = null,
@@ -139,12 +152,12 @@ public class TwitchAuthHandler : DelegatingHandler
                 Scopes = null
             }, ct);
 
-            await _storage.DeleteTokensAsync(TokenType.Broadcaster, ct);
+            await _storage.DeleteTokensAsync(_tokenType, ct);
             return null;
         }
         finally
         {
-            _refreshLock.Release();
+            refreshLock.Release();
         }
     }
 

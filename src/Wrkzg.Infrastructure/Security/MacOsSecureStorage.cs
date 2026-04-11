@@ -118,6 +118,32 @@ public class MacOsSecureStorage : ISecureStorage
         return !string.IsNullOrWhiteSpace(clientId) && !string.IsNullOrWhiteSpace(clientSecret);
     }
 
+    // ─── Generic Secrets ──────────────────────────────────────────────
+
+    /// <summary>Saves a named secret to the macOS Keychain.</summary>
+    public async Task SaveSecretAsync(string key, string value, CancellationToken ct = default)
+    {
+        string account = $"secret_{key}";
+        await SaveToKeychainAsync(account, value, ct);
+        _logger.LogDebug("Saved secret '{Key}' to macOS Keychain", key);
+    }
+
+    /// <summary>Loads a named secret from the macOS Keychain.</summary>
+    public async Task<string?> LoadSecretAsync(string key, CancellationToken ct = default)
+    {
+        string account = $"secret_{key}";
+        string? value = await LoadFromKeychainAsync(account, ct);
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    /// <summary>Deletes a named secret from the macOS Keychain.</summary>
+    public async Task DeleteSecretAsync(string key, CancellationToken ct = default)
+    {
+        string account = $"secret_{key}";
+        await DeleteFromKeychainAsync(account, ct);
+        _logger.LogDebug("Deleted secret '{Key}' from macOS Keychain", key);
+    }
+
     // ─── Low-Level Keychain Helpers ───────────────────────────────────
 
     private async Task SaveToKeychainAsync(string account, string value, CancellationToken ct)

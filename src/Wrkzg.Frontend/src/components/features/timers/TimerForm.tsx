@@ -22,6 +22,7 @@ export function TimerForm({ initial, onClose }: TimerFormProps) {
   const [runWhenOnline, setRunWhenOnline] = useState(initial?.runWhenOnline ?? true);
   const [runWhenOffline, setRunWhenOffline] = useState(initial?.runWhenOffline ?? false);
   const [isAnnouncement, setIsAnnouncement] = useState(initial?.isAnnouncement ?? false);
+  const [announcementColor, setAnnouncementColor] = useState(initial?.announcementColor || "primary");
 
   const isEditing = !!initial;
 
@@ -34,6 +35,7 @@ export function TimerForm({ initial, onClose }: TimerFormProps) {
     runWhenOnline,
     runWhenOffline,
     isAnnouncement,
+    announcementColor: isAnnouncement ? announcementColor : undefined,
   });
 
   const createMutation = useMutation({
@@ -96,13 +98,26 @@ export function TimerForm({ initial, onClose }: TimerFormProps) {
             {messages.map((msg, i) => (
               <div key={i} className="flex items-start gap-2">
                 <span className="text-xs text-[var(--color-text-muted)] w-5 mt-2">{i + 1}.</span>
-                <textarea
-                  value={msg}
-                  onChange={(e) => updateMessage(i, e.target.value)}
-                  placeholder={`Message ${i + 1}...`}
-                  rows={2}
-                  className="flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-brand)] focus:outline-none"
-                />
+                <div className="flex-1">
+                  <textarea
+                    value={msg}
+                    onChange={(e) => updateMessage(i, e.target.value)}
+                    placeholder={`Message ${i + 1}...`}
+                    rows={2}
+                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-brand)] focus:outline-none"
+                  />
+                  <div className="flex justify-end mt-0.5">
+                    <span className={`text-xs ${
+                      msg.length > 500
+                        ? "text-red-500 font-semibold"
+                        : msg.length > 400
+                          ? "text-yellow-500"
+                          : "text-[var(--color-text-muted)]"
+                    }`}>
+                      {msg.length}/500
+                    </span>
+                  </div>
+                </div>
                 {messages.length > 1 && (
                   <button
                     onClick={() => removeMessage(i)}
@@ -152,9 +167,25 @@ export function TimerForm({ initial, onClose }: TimerFormProps) {
           <Toggle label="Announcement" checked={isAnnouncement} onChange={setIsAnnouncement} />
         </div>
         {isAnnouncement && (
-          <p className="text-xs text-[var(--color-text-muted)]">
-            Messages will appear highlighted in chat. Requires the bot account to be a moderator in your channel.
-          </p>
+          <div className="space-y-2">
+            <p className="text-xs text-[var(--color-text-muted)]">
+              Messages will appear highlighted in chat. Requires the bot account to be a moderator in your channel.
+            </p>
+            <div>
+              <label className="text-xs text-[var(--color-text-muted)] mb-1 block">Announcement Color</label>
+              <select
+                value={announcementColor}
+                onChange={(e) => setAnnouncementColor(e.target.value)}
+                className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] focus:border-[var(--color-brand)] focus:outline-none"
+              >
+                <option value="primary">Primary</option>
+                <option value="blue">Blue</option>
+                <option value="green">Green</option>
+                <option value="orange">Orange</option>
+                <option value="purple">Purple</option>
+              </select>
+            </div>
+          </div>
         )}
 
         <div className="flex gap-2">

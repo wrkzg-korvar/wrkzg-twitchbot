@@ -3,16 +3,16 @@ import { Trash2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { quotesApi } from "../../../api/quotes";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
-import { DataTable } from "../../../components/ui/DataTable";
+import { SmartDataTable } from "../../../components/ui/DataTable";
 import { showToast } from "../../../hooks/useToast";
+import type { SmartColumn } from "../../../components/ui/DataTable";
 import type { Quote } from "../../../types/quotes";
 
 interface QuoteTableProps {
   quotes: Quote[];
-  search: string;
 }
 
-export function QuoteTable({ quotes, search }: QuoteTableProps) {
+export function QuoteTable({ quotes }: QuoteTableProps) {
   const queryClient = useQueryClient();
   const [deleteTarget, setDeleteTarget] = useState<Quote | null>(null);
 
@@ -25,81 +25,70 @@ export function QuoteTable({ quotes, search }: QuoteTableProps) {
     onError: (err: Error) => showToast("error", err.message),
   });
 
-  const filteredQuotes = quotes.filter(
-    (q) =>
-      search === "" ||
-      q.text.toLowerCase().includes(search.toLowerCase()) ||
-      q.quotedUser.toLowerCase().includes(search.toLowerCase()) ||
-      (q.gameName ?? "").toLowerCase().includes(search.toLowerCase()) ||
-      q.number.toString() === search.trim()
-  );
+  const columns: SmartColumn<Quote>[] = [
+    {
+      key: "number",
+      header: "#",
+      sortable: true,
+      className: "w-16 font-mono text-[var(--color-text-muted)]",
+    },
+    {
+      key: "text",
+      header: "Quote",
+      searchable: true,
+      render: (v) => <span>&ldquo;{v as string}&rdquo;</span>,
+    },
+    {
+      key: "quotedUser",
+      header: "Said by",
+      searchable: true,
+      sortable: true,
+      className: "w-32 text-[var(--color-text-secondary)]",
+    },
+    {
+      key: "gameName",
+      header: "Game",
+      searchable: true,
+      className: "w-40 text-[var(--color-text-muted)] text-xs",
+      render: (v) => (v as string) || "\u2014",
+    },
+    {
+      key: "createdAt",
+      header: "Date",
+      sortable: true,
+      className: "w-28 text-[var(--color-text-muted)] text-xs",
+      render: (v) => new Date(v as string).toLocaleDateString(),
+    },
+    {
+      key: "actions",
+      header: "",
+      className: "w-20 text-right",
+      render: (_, row) => (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setDeleteTarget(row);
+          }}
+          disabled={deleteMut.isPending}
+          className="rounded p-1 text-[var(--color-text-muted)] hover:text-red-400 hover:bg-[var(--color-elevated)] transition-colors"
+          title="Delete quote"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      ),
+    },
+  ];
 
   return (
     <>
-      <DataTable minWidth={640}>
-            <thead>
-              <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
-                <th className="px-4 py-3 text-left font-medium text-[var(--color-text-secondary)] w-16">
-                  #
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-[var(--color-text-secondary)]">
-                  Quote
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-[var(--color-text-secondary)] w-32">
-                  Said by
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-[var(--color-text-secondary)] w-40">
-                  Game
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-[var(--color-text-secondary)] w-28">
-                  Date
-                </th>
-                <th className="px-4 py-3 text-right font-medium text-[var(--color-text-secondary)] w-20">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredQuotes.map((quote) => (
-                <tr
-                  key={quote.id}
-                  className="border-b border-[var(--color-border)] hover:bg-[var(--color-elevated)]"
-                >
-                  <td className="px-4 py-3 text-[var(--color-text-muted)] font-mono">
-                    {quote.number}
-                  </td>
-                  <td className="px-4 py-3 text-[var(--color-text)]">
-                    &ldquo;{quote.text}&rdquo;
-                  </td>
-                  <td className="px-4 py-3 text-[var(--color-text-secondary)]">
-                    {quote.quotedUser}
-                  </td>
-                  <td className="px-4 py-3 text-[var(--color-text-muted)] text-xs">
-                    {quote.gameName ?? "\u2014"}
-                  </td>
-                  <td className="px-4 py-3 text-[var(--color-text-muted)] text-xs">
-                    {new Date(quote.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => setDeleteTarget(quote)}
-                      disabled={deleteMut.isPending}
-                      className="rounded p-1 text-[var(--color-text-muted)] hover:text-red-400 hover:bg-[var(--color-elevated)] transition-colors"
-                      title="Delete quote"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-      </DataTable>
-
-      {search && filteredQuotes.length === 0 && (
-        <p className="text-sm text-[var(--color-text-muted)] text-center">
-          No quotes match &ldquo;{search}&rdquo;.
-        </p>
-      )}
+      <SmartDataTable<Quote>
+        data={quotes}
+        columns={columns}
+        pageSize={50}
+        searchPlaceholder="Search quotes..."
+        emptyMessage="No quotes saved yet."
+        getRowKey={(row) => row.id}
+      />
 
       <ConfirmDialog
         open={deleteTarget !== null}

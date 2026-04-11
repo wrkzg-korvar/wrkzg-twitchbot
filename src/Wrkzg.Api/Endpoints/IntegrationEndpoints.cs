@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
@@ -32,14 +33,14 @@ public static class IntegrationEndpoints
         {
             if (string.IsNullOrWhiteSpace(request.WebhookUrl))
             {
-                return Results.BadRequest(new { error = "Webhook URL is required." });
+                return TypedResults.Problem(detail: "Webhook URL is required.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             // Basic validation: Discord webhook URLs start with https://discord.com/api/webhooks/
             if (!request.WebhookUrl.StartsWith("https://discord.com/api/webhooks/") &&
                 !request.WebhookUrl.StartsWith("https://discordapp.com/api/webhooks/"))
             {
-                return Results.BadRequest(new { error = "Invalid Discord webhook URL. Must start with https://discord.com/api/webhooks/" });
+                return TypedResults.Problem(detail: "Invalid Discord webhook URL. Must start with https://discord.com/api/webhooks/", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             await settings.SetAsync("Integration.Discord.WebhookUrl", request.WebhookUrl.Trim(), ct);
@@ -57,7 +58,7 @@ public static class IntegrationEndpoints
             string? webhookUrl = await settings.GetAsync("Integration.Discord.WebhookUrl", ct);
             if (string.IsNullOrWhiteSpace(webhookUrl))
             {
-                return Results.BadRequest(new { error = "Discord webhook not configured." });
+                return TypedResults.Problem(detail: "Discord webhook not configured.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             try
@@ -78,15 +79,134 @@ public static class IntegrationEndpoints
                     return Results.Ok(new { success = true, message = "Test message sent to Discord!" });
                 }
 
-                return Results.BadRequest(new { error = $"Discord returned {response.StatusCode}. Check your webhook URL." });
+                return TypedResults.Problem(detail: $"Discord returned {response.StatusCode}. Check your webhook URL.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
             catch (System.Exception ex)
             {
-                return Results.BadRequest(new { error = $"Failed to reach Discord: {ex.Message}" });
+                return TypedResults.Problem(detail: $"Failed to reach Discord: {ex.Message}", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
+        });
+        // ─── OBS WebSocket ───────────────────────────────────────
+
+        // GET /api/integrations/obs
+        group.MapGet("/obs", (IObsWebSocketService obs) =>
+        {
+            return Results.Ok(obs.GetStatus());
+        });
+
+        // PUT /api/integrations/obs — Save connection settings
+        group.MapPut("/obs", async (
+            UpdateObsRequest request,
+            ISettingsRepository settings,
+            ISecureStorage secureStorage,
+            CancellationToken ct) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.Host))
+            {
+                return TypedResults.Problem(
+                    detail: "Host is required.",
+                    title: "Validation Error",
+                    statusCode: StatusCodes.Status400BadRequest,
+                    type: "https://wrkzg.app/problems/validation-error");
+            }
+
+            await settings.SetAsync("Integration.Obs.Host", request.Host.Trim(), ct);
+            await settings.SetAsync("Integration.Obs.Port", request.Port.ToString(), ct);
+
+            if (request.Password is not null)
+            {
+                if (string.IsNullOrWhiteSpace(request.Password))
+                {
+                    await secureStorage.DeleteSecretAsync("obs-websocket-password", ct);
+                }
+                else
+                {
+                    await secureStorage.SaveSecretAsync("obs-websocket-password", request.Password, ct);
+                }
+            }
+
+            return Results.Ok(new { configured = true });
+        });
+
+        // DELETE /api/integrations/obs — Remove settings
+        group.MapDelete("/obs", async (
+            ISettingsRepository settings,
+            ISecureStorage secureStorage,
+            IObsWebSocketService obs,
+            CancellationToken ct) =>
+        {
+            await obs.DisconnectAsync(ct);
+            await settings.DeleteAsync("Integration.Obs.Host", ct);
+            await settings.DeleteAsync("Integration.Obs.Port", ct);
+            await secureStorage.DeleteSecretAsync("obs-websocket-password", ct);
+            return Results.Ok(new { removed = true });
+        });
+
+        // POST /api/integrations/obs/connect
+        group.MapPost("/obs/connect", async (IObsWebSocketService obs, CancellationToken ct) =>
+        {
+            bool connected = await obs.ConnectAsync(ct);
+            return Results.Ok(new { connected });
+        });
+
+        // POST /api/integrations/obs/disconnect
+        group.MapPost("/obs/disconnect", async (IObsWebSocketService obs, CancellationToken ct) =>
+        {
+            await obs.DisconnectAsync(ct);
+            return Results.Ok(new { disconnected = true });
+        });
+
+        // GET /api/integrations/obs/scenes
+        group.MapGet("/obs/scenes", async (IObsWebSocketService obs, CancellationToken ct) =>
+        {
+            if (!obs.IsConnected)
+            {
+                return Results.BadRequest(new { error = "Not connected to OBS" });
+            }
+
+            IReadOnlyList<string> scenes = await obs.GetScenesAsync(ct);
+            return Results.Ok(scenes);
+        });
+
+        // POST /api/integrations/obs/scenes/switch
+        group.MapPost("/obs/scenes/switch", async (
+            SwitchSceneRequest request,
+            IObsWebSocketService obs,
+            CancellationToken ct) =>
+        {
+            if (!obs.IsConnected)
+            {
+                return Results.BadRequest(new { error = "Not connected to OBS" });
+            }
+
+            bool success = await obs.SwitchSceneAsync(request.SceneName, ct);
+            return success
+                ? Results.Ok(new { switched = true })
+                : Results.BadRequest(new { error = "Scene not found" });
+        });
+
+        // GET /api/integrations/obs/sources?scene=SceneName
+        group.MapGet("/obs/sources", async (
+            string? scene,
+            IObsWebSocketService obs,
+            CancellationToken ct) =>
+        {
+            if (!obs.IsConnected)
+            {
+                return Results.BadRequest(new { error = "Not connected to OBS" });
+            }
+
+            IReadOnlyList<ObsSourceInfo> sources = await obs.GetSourcesAsync(scene, ct);
+            return Results.Ok(sources);
         });
     }
 }
 
 /// <summary>Request payload for updating the Discord webhook URL.</summary>
 public record UpdateDiscordRequest(string WebhookUrl);
+
+/// <summary>Request payload for updating OBS WebSocket connection settings.</summary>
+public sealed record UpdateObsRequest(string Host, int Port = 4455, string? Password = null);
+
+/// <summary>Request payload for switching OBS scenes.</summary>
+public sealed record SwitchSceneRequest(string SceneName);

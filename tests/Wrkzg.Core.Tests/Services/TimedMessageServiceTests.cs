@@ -19,7 +19,8 @@ public class TimedMessageServiceTests
     private readonly ITimedMessageRepository _timerRepo;
     private readonly ISettingsRepository _settings;
     private readonly ITwitchChatClient _chatClient;
-    private readonly ITwitchHelixClient _helix;
+    private readonly IBroadcasterHelixClient _broadcasterHelix;
+    private readonly IBotHelixClient _botHelix;
     private readonly TimedMessageService _sut;
 
     /// <summary>Initializes the test fixture.</summary>
@@ -28,13 +29,17 @@ public class TimedMessageServiceTests
         _timerRepo = Substitute.For<ITimedMessageRepository>();
         _settings = Substitute.For<ISettingsRepository>();
         _chatClient = Substitute.For<ITwitchChatClient>();
-        _helix = Substitute.For<ITwitchHelixClient>();
+        _broadcasterHelix = Substitute.For<IBroadcasterHelixClient>();
+        _botHelix = Substitute.For<IBotHelixClient>();
         _chatClient.IsConnected.Returns(true);
 
         ServiceCollection services = new();
         services.AddScoped(_ => _timerRepo);
         services.AddScoped(_ => _settings);
-        services.AddScoped(_ => _helix);
+        services.AddScoped(_ => _broadcasterHelix);
+        services.AddScoped(_ => _botHelix);
+        services.AddScoped(_ => Substitute.For<ISecureStorage>());
+        services.AddScoped(_ => Substitute.For<ITwitchOAuthService>());
         ServiceProvider provider = services.BuildServiceProvider();
         IServiceScopeFactory scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
 

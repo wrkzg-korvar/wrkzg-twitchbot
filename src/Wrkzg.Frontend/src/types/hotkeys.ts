@@ -19,4 +19,6 @@ export const ACTION_TYPES = [
   { value: "RaffleStart", label: "Start Raffle" },
   { value: "SongSkip", label: "Skip Song" },
   { value: "PlayAlert", label: "Show Alert" },
+  { value: "ObsSceneSwitch", label: "OBS: Switch Scene" },
+  { value: "ObsSourceToggle", label: "OBS: Toggle Source" },
 ] as const;

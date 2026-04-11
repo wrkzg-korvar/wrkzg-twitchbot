@@ -41,7 +41,7 @@ public static class ChatEndpoints
         group.MapPost("/send", async (
             SendChatMessageRequest request,
             ITwitchChatClient chatClient,
-            ITwitchHelixClient helixClient,
+            IBroadcasterHelixClient helixClient,
             ISecureStorage storage,
             ITwitchOAuthService oauth,
             IChatEventBroadcaster broadcaster,
@@ -49,12 +49,12 @@ public static class ChatEndpoints
         {
             if (string.IsNullOrWhiteSpace(request.Message))
             {
-                return Results.BadRequest(new { error = "Message cannot be empty." });
+                return TypedResults.Problem(detail: "Message cannot be empty.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             if (request.Message.Length > 500)
             {
-                return Results.BadRequest(new { error = "Message too long (max 500 chars)." });
+                return TypedResults.Problem(detail: "Message too long (max 500 chars).", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             string trimmedMessage = request.Message.Trim();
@@ -64,7 +64,7 @@ public static class ChatEndpoints
             {
                 if (!chatClient.IsConnected)
                 {
-                    return Results.BadRequest(new { error = "Bot is not connected to chat." });
+                    return TypedResults.Problem(detail: "Bot is not connected to chat.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
                 }
 
                 await chatClient.SendMessageAsync(trimmedMessage, ct);
@@ -75,14 +75,14 @@ public static class ChatEndpoints
                 TwitchTokens? broadcasterTokens = await storage.LoadTokensAsync(TokenType.Broadcaster, ct);
                 if (broadcasterTokens is null)
                 {
-                    return Results.BadRequest(new { error = "Broadcaster account not connected." });
+                    return TypedResults.Problem(detail: "Broadcaster account not connected.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
                 }
 
                 // Get broadcaster user ID from token validation
                 TwitchTokenValidation? validation = await oauth.ValidateTokenAsync(broadcasterTokens.AccessToken, ct);
                 if (validation is null)
                 {
-                    return Results.BadRequest(new { error = "Broadcaster token is invalid." });
+                    return TypedResults.Problem(detail: "Broadcaster token is invalid.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
                 }
 
                 bool sent = await helixClient.SendChatMessageAsync(

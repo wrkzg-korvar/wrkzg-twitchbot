@@ -45,7 +45,7 @@ public static class AuthEndpoints
     {
         if (!TryParseTokenType(type, out TokenType tokenType))
         {
-            return Results.BadRequest(new { error = $"Invalid token type: '{type}'. Use 'bot' or 'broadcaster'." });
+            return TypedResults.Problem(detail: $"Invalid token type: '{type}'. Use 'bot' or 'broadcaster'.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
         }
 
         CleanupExpiredStates();
@@ -65,7 +65,7 @@ public static class AuthEndpoints
     {
         if (!TryParseTokenType(type, out TokenType tokenType))
         {
-            return Results.BadRequest(new { error = $"Invalid token type: '{type}'. Use 'bot' or 'broadcaster'." });
+            return TypedResults.Problem(detail: $"Invalid token type: '{type}'. Use 'bot' or 'broadcaster'.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
         }
 
         CleanupExpiredStates();
@@ -83,6 +83,7 @@ public static class AuthEndpoints
         ITwitchOAuthService oauth,
         ISecureStorage storage,
         IAuthStateNotifier notifier,
+        IEmoteService emoteService,
         ILogger<ITwitchOAuthService> logger,
         CancellationToken ct)
     {
@@ -101,7 +102,7 @@ public static class AuthEndpoints
 
         if (string.IsNullOrEmpty(code) || string.IsNullOrEmpty(state))
         {
-            return Results.BadRequest(new { error = "Missing code or state parameter." });
+            return TypedResults.Problem(detail: "Missing code or state parameter.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
         }
 
         if (!_pendingStates.TryRemove(state, out DateTimeOffset createdAt))
@@ -146,6 +147,17 @@ public static class AuthEndpoints
                 Scopes = tokens.Scope
             }, ct);
 
+            // Trigger emote cache refresh after new auth
+            try
+            {
+                await emoteService.RefreshAsync(ct);
+                logger.LogInformation("Emote cache refreshed after {TokenType} auth", tokenType);
+            }
+            catch (Exception emoteEx)
+            {
+                logger.LogWarning(emoteEx, "Emote cache refresh failed after {TokenType} auth — emotes will load on next timer tick or manual refresh", tokenType);
+            }
+
             return Results.Content(
                 BuildCallbackHtml(success: true, message: $"{tokenType} account connected successfully!"),
                 "text/html");
@@ -180,7 +192,7 @@ public static class AuthEndpoints
     {
         if (!TryParseTokenType(type, out TokenType tokenType))
         {
-            return Results.BadRequest(new { error = $"Invalid token type: '{type}'." });
+            return TypedResults.Problem(detail: $"Invalid token type: '{type}'.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
         }
 
         TwitchTokens? tokens = await storage.LoadTokensAsync(tokenType, ct);
@@ -216,7 +228,7 @@ public static class AuthEndpoints
     {
         if (string.IsNullOrWhiteSpace(request.ClientSecret))
         {
-            return Results.BadRequest(new { error = "clientSecret is required." });
+            return TypedResults.Problem(detail: "clientSecret is required.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
         }
 
         // If clientId is provided, save it. Otherwise keep the existing one.
@@ -230,7 +242,7 @@ public static class AuthEndpoints
             string? existingId = await storage.LoadClientIdAsync(ct);
             if (string.IsNullOrWhiteSpace(existingId))
             {
-                return Results.BadRequest(new { error = "clientId is required (no existing clientId found)." });
+                return TypedResults.Problem(detail: "clientId is required (no existing clientId found).", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
         }
 
@@ -274,7 +286,7 @@ public static class AuthEndpoints
     {
         if (!TryParseTokenType(type, out TokenType tokenType))
         {
-            return Results.BadRequest(new { error = $"Invalid token type: '{type}'. Use 'bot' or 'broadcaster'." });
+            return TypedResults.Problem(detail: $"Invalid token type: '{type}'. Use 'bot' or 'broadcaster'.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
         }
 
         CleanupExpiredStates();

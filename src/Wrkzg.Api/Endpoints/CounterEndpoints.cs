@@ -29,14 +29,14 @@ public static class CounterEndpoints
         group.MapGet("/{id:int}", async (int id, ICounterRepository repo, CancellationToken ct) =>
         {
             Counter? counter = await repo.GetByIdAsync(id, ct);
-            return counter is not null ? Results.Ok(counter) : Results.NotFound();
+            return counter is not null ? Results.Ok(counter) : TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
         });
 
         group.MapPost("/", async (CreateCounterRequest request, ICounterRepository repo, CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(request.Name))
             {
-                return Results.BadRequest(new { error = "Counter needs a name." });
+                return TypedResults.Problem(detail: "Counter needs a name.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             string trigger = "!" + request.Name.Trim().ToLowerInvariant().Replace(" ", "");
@@ -44,7 +44,7 @@ public static class CounterEndpoints
             Counter? existing = await repo.GetByTriggerAsync(trigger, ct);
             if (existing is not null)
             {
-                return Results.BadRequest(new { error = $"A counter with trigger {trigger} already exists." });
+                return TypedResults.Problem(detail: $"A counter with trigger {trigger} already exists.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             Counter counter = new()
@@ -64,7 +64,7 @@ public static class CounterEndpoints
             Counter? counter = await repo.GetByIdAsync(id, ct);
             if (counter is null)
             {
-                return Results.NotFound();
+                return TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             if (request.Name is not null)
@@ -96,7 +96,7 @@ public static class CounterEndpoints
             Counter? counter = await repo.GetByIdAsync(id, ct);
             if (counter is null)
             {
-                return Results.NotFound();
+                return TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
             counter.Value++;
             await repo.UpdateAsync(counter, ct);
@@ -109,7 +109,7 @@ public static class CounterEndpoints
             Counter? counter = await repo.GetByIdAsync(id, ct);
             if (counter is null)
             {
-                return Results.NotFound();
+                return TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
             counter.Value--;
             await repo.UpdateAsync(counter, ct);
@@ -122,7 +122,7 @@ public static class CounterEndpoints
             Counter? counter = await repo.GetByIdAsync(id, ct);
             if (counter is null)
             {
-                return Results.NotFound();
+                return TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
             counter.Value = 0;
             await repo.UpdateAsync(counter, ct);

@@ -28,7 +28,7 @@ namespace Wrkzg.Core.Services;
 /// </summary>
 public class UserTrackingService : IUserTrackingService, IDisposable
 {
-    private readonly ITwitchHelixClient _helix;
+    private readonly IBroadcasterHelixClient _helix;
     private readonly ITwitchChatClient _chatClient;
     private readonly IChatEventBroadcaster _broadcaster;
     private readonly IServiceScopeFactory _scopeFactory;
@@ -52,7 +52,7 @@ public class UserTrackingService : IUserTrackingService, IDisposable
     /// <param name="scopeFactory">Factory for creating DI scopes to resolve scoped repositories.</param>
     /// <param name="logger">Logger instance for diagnostics.</param>
     public UserTrackingService(
-        ITwitchHelixClient helix,
+        IBroadcasterHelixClient helix,
         ITwitchChatClient chatClient,
         IChatEventBroadcaster broadcaster,
         IServiceScopeFactory scopeFactory,

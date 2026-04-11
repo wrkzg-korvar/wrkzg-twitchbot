@@ -37,25 +37,25 @@ public static class AssetEndpoints
             string cat = category.ToLowerInvariant();
             if (!AllowedExtensions.ContainsKey(cat))
             {
-                return Results.BadRequest(new { error = "Category must be 'sounds' or 'images'." });
+                return TypedResults.Problem(detail: "Category must be 'sounds' or 'images'.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             IFormFile? file = request.Form.Files.GetFile("file");
             if (file is null || file.Length == 0)
             {
-                return Results.BadRequest(new { error = "No file uploaded." });
+                return TypedResults.Problem(detail: "No file uploaded.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             if (file.Length > MaxFileSize)
             {
-                return Results.BadRequest(new { error = "File exceeds 10 MB limit." });
+                return TypedResults.Problem(detail: "File exceeds 10 MB limit.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             string extension = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (!AllowedExtensions[cat].Contains(extension))
             {
                 string allowed = string.Join(", ", AllowedExtensions[cat]);
-                return Results.BadRequest(new { error = $"File type '{extension}' not allowed. Allowed: {allowed}" });
+                return TypedResults.Problem(detail: $"File type '{extension}' not allowed. Allowed: {allowed}", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             string safeName = SanitizeFileName(file.FileName);
@@ -90,7 +90,7 @@ public static class AssetEndpoints
             string cat = category.ToLowerInvariant();
             if (!AllowedExtensions.ContainsKey(cat))
             {
-                return Results.BadRequest(new { error = "Category must be 'sounds' or 'images'." });
+                return TypedResults.Problem(detail: "Category must be 'sounds' or 'images'.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             string dir = cat == "sounds" ? WrkzgPaths.SoundsDirectory : WrkzgPaths.ImagesDirectory;
@@ -121,12 +121,12 @@ public static class AssetEndpoints
             string cat = category.ToLowerInvariant();
             if (!AllowedExtensions.ContainsKey(cat))
             {
-                return Results.BadRequest(new { error = "Category must be 'sounds' or 'images'." });
+                return TypedResults.Problem(detail: "Category must be 'sounds' or 'images'.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             if (fileName.Contains("..") || fileName.Contains('/') || fileName.Contains('\\'))
             {
-                return Results.BadRequest(new { error = "Invalid file name." });
+                return TypedResults.Problem(detail: "Invalid file name.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             string dir = cat == "sounds" ? WrkzgPaths.SoundsDirectory : WrkzgPaths.ImagesDirectory;
@@ -134,7 +134,7 @@ public static class AssetEndpoints
 
             if (!File.Exists(filePath))
             {
-                return Results.NotFound();
+                return TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             File.Delete(filePath);

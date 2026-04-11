@@ -58,7 +58,7 @@ public static class CommandEndpoints
             if (string.Equals(trigger, "!editcmd", System.StringComparison.OrdinalIgnoreCase)
                 && request.CustomResponseTemplate is not null)
             {
-                return Results.BadRequest(new { error = "The !editcmd response cannot be customized." });
+                return TypedResults.Problem(detail: "The !editcmd response cannot be customized.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             // Verify system command exists
@@ -66,7 +66,7 @@ public static class CommandEndpoints
                 string.Equals(c.Trigger, trigger, System.StringComparison.OrdinalIgnoreCase));
             if (!exists)
             {
-                return Results.NotFound(new { error = $"System command '{trigger}' not found." });
+                return TypedResults.Problem(detail: $"System command '{trigger}' not found.", title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             SystemCommandOverride entity = new()
@@ -101,7 +101,7 @@ public static class CommandEndpoints
         group.MapGet("/{id:int}", async (int id, ICommandRepository repo, CancellationToken ct) =>
         {
             Command? command = await repo.GetByIdAsync(id, ct);
-            return command is null ? Results.NotFound() : Results.Ok(command);
+            return command is null ? TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found") : Results.Ok(command);
         });
 
         // POST /api/commands — create new command
@@ -110,24 +110,24 @@ public static class CommandEndpoints
             // Validate
             if (string.IsNullOrWhiteSpace(request.Trigger) || !request.Trigger.StartsWith('!'))
             {
-                return Results.BadRequest(new { error = "Trigger must start with '!' and be non-empty." });
+                return TypedResults.Problem(detail: "Trigger must start with '!' and be non-empty.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             if (string.IsNullOrWhiteSpace(request.ResponseTemplate))
             {
-                return Results.BadRequest(new { error = "ResponseTemplate is required." });
+                return TypedResults.Problem(detail: "ResponseTemplate is required.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             if (request.ResponseTemplate.Length > 500)
             {
-                return Results.BadRequest(new { error = "ResponseTemplate must be 500 characters or less." });
+                return TypedResults.Problem(detail: "ResponseTemplate must be 500 characters or less.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             // Check for duplicate trigger
             Command? existing = await repo.GetByTriggerOrAliasAsync(request.Trigger.ToLowerInvariant(), ct);
             if (existing is not null)
             {
-                return Results.BadRequest(new { error = $"A command with trigger '{request.Trigger}' already exists." });
+                return TypedResults.Problem(detail: $"A command with trigger '{request.Trigger}' already exists.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             Command command = new()
@@ -150,7 +150,7 @@ public static class CommandEndpoints
             Command? command = await repo.GetByIdAsync(id, ct);
             if (command is null)
             {
-                return Results.NotFound();
+                return TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             // Apply partial updates
@@ -168,7 +168,7 @@ public static class CommandEndpoints
             {
                 if (request.ResponseTemplate.Length > 500)
                 {
-                    return Results.BadRequest(new { error = "ResponseTemplate must be 500 characters or less." });
+                    return TypedResults.Problem(detail: "ResponseTemplate must be 500 characters or less.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
                 }
 
                 command.ResponseTemplate = request.ResponseTemplate;
@@ -204,7 +204,7 @@ public static class CommandEndpoints
             Command? command = await repo.GetByIdAsync(id, ct);
             if (command is null)
             {
-                return Results.NotFound();
+                return TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             await repo.DeleteAsync(id, ct);

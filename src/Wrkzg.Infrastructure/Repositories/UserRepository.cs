@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -120,5 +121,51 @@ public class UserRepository : IUserRepository
         _db.Users.Add(user);
         await _db.SaveChangesAsync(ct);
         return user;
+    }
+
+    /// <summary>Returns a paginated list of users with server-side sorting and search.</summary>
+    public async Task<PaginatedResult<User>> GetPaginatedAsync(
+        string? search, string sortBy, string sortDirection,
+        int page, int pageSize, CancellationToken ct = default)
+    {
+        IQueryable<User> query = _db.Users.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            string lower = search.ToLowerInvariant();
+            query = query.Where(u =>
+                u.Username.ToLower().Contains(lower) ||
+                u.DisplayName.ToLower().Contains(lower));
+        }
+
+        int totalCount = await query.CountAsync(ct);
+
+        bool desc = string.Equals(sortDirection, "desc", StringComparison.OrdinalIgnoreCase);
+        query = sortBy?.ToLowerInvariant() switch
+        {
+            "username" => desc ? query.OrderByDescending(u => u.Username) : query.OrderBy(u => u.Username),
+            "watchtime" => desc ? query.OrderByDescending(u => u.WatchedMinutes) : query.OrderBy(u => u.WatchedMinutes),
+            "messages" => desc ? query.OrderByDescending(u => u.MessageCount) : query.OrderBy(u => u.MessageCount),
+            "lastseen" => desc ? query.OrderByDescending(u => u.LastSeenAt) : query.OrderBy(u => u.LastSeenAt),
+            "firstseen" => desc ? query.OrderByDescending(u => u.FirstSeenAt) : query.OrderBy(u => u.FirstSeenAt),
+            _ => desc ? query.OrderByDescending(u => u.Points) : query.OrderBy(u => u.Points),
+        };
+
+        int skip = (page - 1) * pageSize;
+        List<User> items = await query.Skip(skip).Take(pageSize).ToListAsync(ct);
+
+        return new PaginatedResult<User>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize,
+        };
+    }
+
+    /// <summary>Returns the total number of tracked users.</summary>
+    public Task<int> CountAsync(CancellationToken ct = default)
+    {
+        return _db.Users.CountAsync(ct);
     }
 }

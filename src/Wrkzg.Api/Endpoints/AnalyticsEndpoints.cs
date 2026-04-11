@@ -52,7 +52,7 @@ public static class AnalyticsEndpoints
             StreamSession? session = await repo.GetLatestSessionAsync(ct);
             if (session is null)
             {
-                return Results.NotFound(new { error = "No stream sessions recorded yet." });
+                return TypedResults.Problem(detail: "No stream sessions recorded yet.", title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             return Results.Ok(MapSessionDetail(session));
@@ -63,7 +63,7 @@ public static class AnalyticsEndpoints
             StreamSession? session = await repo.GetSessionByIdAsync(id, ct);
             if (session is null)
             {
-                return Results.NotFound();
+                return TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             return Results.Ok(MapSessionDetail(session));

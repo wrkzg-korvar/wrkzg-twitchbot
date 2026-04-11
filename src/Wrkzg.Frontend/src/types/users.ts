@@ -11,5 +11,7 @@ export interface User {
   isMod: boolean;
   isBroadcaster: boolean;
   isBanned: boolean;
+  followDate: string | null;
+  firstSeenAt: string;
   lastSeenAt: string;
 }

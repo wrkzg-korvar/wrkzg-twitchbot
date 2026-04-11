@@ -98,6 +98,95 @@ public class EffectEngine
         }
     }
 
+    /// <summary>
+    /// Executes a single EffectList directly — bypasses trigger matching.
+    /// Used by the Test button and the Hotkey "RunEffect" action.
+    /// Evaluates conditions and runs the effect chain.
+    /// </summary>
+    public async Task ExecuteSingleAsync(int effectListId, EffectTriggerContext context, CancellationToken ct = default)
+    {
+        try
+        {
+            using IServiceScope scope = _scopeFactory.CreateScope();
+            IEffectListRepository repo = scope.ServiceProvider.GetRequiredService<IEffectListRepository>();
+            EffectList? effectList = await repo.GetByIdAsync(effectListId, ct);
+
+            if (effectList is null)
+            {
+                _logger.LogWarning("ExecuteSingleAsync: EffectList {Id} not found", effectListId);
+                return;
+            }
+
+            context = context with { Scope = scope };
+
+            // Parse trigger config and merge into context data (for variable resolution)
+            Dictionary<string, string> triggerParams = ParseJsonConfig(effectList.TriggerConfig);
+            EffectTriggerContext enrichedContext = context with
+            {
+                Data = MergeDictionaries(context.Data, triggerParams)
+            };
+
+            // Evaluate conditions (AND logic)
+            List<ConditionConfig> conditions = ParseConditions(effectList.ConditionsConfig);
+            foreach (ConditionConfig condition in conditions)
+            {
+                IConditionType? conditionType = _conditionTypes.FirstOrDefault(c =>
+                    string.Equals(c.Id, condition.Type, StringComparison.OrdinalIgnoreCase));
+
+                if (conditionType is null)
+                {
+                    continue;
+                }
+
+                EffectConditionContext condContext = new()
+                {
+                    Trigger = enrichedContext,
+                    Parameters = condition.Params,
+                    Scope = scope
+                };
+
+                if (!await conditionType.EvaluateAsync(condContext, ct))
+                {
+                    _logger.LogInformation("ExecuteSingleAsync: Condition {Type} failed for '{Name}'",
+                        condition.Type, effectList.Name);
+                    return;
+                }
+            }
+
+            // Execute effect chain
+            _logger.LogInformation("ExecuteSingleAsync: Executing '{Name}' (ID: {Id})", effectList.Name, effectList.Id);
+
+            List<EffectConfig> effects = ParseEffects(effectList.EffectsConfig);
+            Dictionary<string, string> sharedVariables = new();
+
+            foreach (EffectConfig effect in effects)
+            {
+                IEffectType? effectType = _effectTypes.FirstOrDefault(e =>
+                    string.Equals(e.Id, effect.Type, StringComparison.OrdinalIgnoreCase));
+
+                if (effectType is null)
+                {
+                    _logger.LogWarning("Unknown effect type: {Type}", effect.Type);
+                    continue;
+                }
+
+                EffectExecutionContext execContext = new()
+                {
+                    Trigger = enrichedContext,
+                    Parameters = effect.Params,
+                    Variables = sharedVariables,
+                    Scope = scope
+                };
+
+                await effectType.ExecuteAsync(execContext, ct);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "ExecuteSingleAsync failed for EffectList {Id}", effectListId);
+        }
+    }
+
     private async Task EvaluateEffectListAsync(EffectList effectList, EffectTriggerContext context, CancellationToken ct)
     {
         // 1. Check cooldown

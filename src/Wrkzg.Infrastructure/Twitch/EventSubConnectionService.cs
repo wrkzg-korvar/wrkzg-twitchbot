@@ -550,7 +550,21 @@ public class EventSubConnectionService : IHostedService
         string username = e.Payload.Event.UserName;
         string? userInput = e.Payload.Event.UserInput;
 
-        _logger.LogInformation("Channel Point Redemption: {Username} redeemed {RewardId}", username, rewardId);
+        string rewardTitle = e.Payload.Event.Reward.Title;
+        int rewardCost = e.Payload.Event.Reward.Cost;
+
+        _logger.LogInformation("Channel Point Redemption: {Username} redeemed {RewardTitle}", username, rewardTitle);
+
+        // Always dispatch to Effect Engine for ChannelPoint trigger automations
+        await DispatchToEffectEngineAsync("channelpoint", username, null,
+            new Dictionary<string, string>
+            {
+                { "user", username },
+                { "reward", rewardTitle },
+                { "reward_id_actual", rewardId },
+                { "input", userInput ?? "" },
+                { "cost", rewardCost.ToString() }
+            });
 
         try
         {

@@ -107,8 +107,17 @@ public class DataImportService : IDataImportService
     /// <summary>
     /// Executes the import, creating or merging users and optionally assigning VIP roles.
     /// </summary>
-    public async Task<ImportResult> ExecuteAsync(
+    public Task<ImportResult> ExecuteAsync(
         Stream fileStream, ImportConfiguration config, CancellationToken ct = default)
+    {
+        return ExecuteAsync(fileStream, config, null, ct);
+    }
+
+    /// <summary>
+    /// Executes the import with progress reporting, creating or merging users and optionally assigning VIP roles.
+    /// </summary>
+    public async Task<ImportResult> ExecuteAsync(
+        Stream fileStream, ImportConfiguration config, IProgress<int>? progress, CancellationToken ct = default)
     {
         if (config.SourceType == ImportSourceType.DeepbotBinConfig)
         {
@@ -193,6 +202,8 @@ public class DataImportService : IDataImportService
                 }
             }
 
+            int totalWork = toCreate.Count + toUpdate.Count;
+
             // STEP 3: Bulk insert new users in batches of 500
             _logger.LogInformation("Import: Creating {Count} new users in batches...", toCreate.Count);
             const int batchSize = 500;
@@ -208,6 +219,13 @@ public class DataImportService : IDataImportService
                     db.Entry(u).State = EntityState.Detached;
                 }
                 result.CreatedCount += batch.Count;
+
+                // Progress: Create-Phase = 0-60%
+                if (totalWork > 0)
+                {
+                    int done = result.CreatedCount;
+                    progress?.Report((int)((double)done / totalWork * 60));
+                }
             }
 
             // STEP 4: Bulk update existing users in batches of 500
@@ -273,6 +291,12 @@ public class DataImportService : IDataImportService
                     }
 
                     result.UpdatedCount += tracked.Count;
+
+                    // Progress: Update-Phase = 60-95%
+                    if (totalWork > 0 && toUpdate.Count > 0)
+                    {
+                        progress?.Report(60 + (int)((double)result.UpdatedCount / toUpdate.Count * 35));
+                    }
                 }
             }
 
@@ -306,6 +330,8 @@ public class DataImportService : IDataImportService
                     }
                 }
             }
+
+            progress?.Report(100);
         }
         finally
         {

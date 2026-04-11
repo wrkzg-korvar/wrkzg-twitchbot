@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using System.Text.Json;
 using System.Threading;
 using Microsoft.AspNetCore.Builder;
@@ -28,7 +30,7 @@ public static class ImportEndpoints
             IFormFile? file = request.Form.Files.GetFile("file");
             if (file is null)
             {
-                return Results.BadRequest(new { error = "No file uploaded." });
+                return TypedResults.Problem(detail: "No file uploaded.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             ImportConfiguration config = ParseConfig(request);
@@ -47,7 +49,7 @@ public static class ImportEndpoints
             IFormFile? file = request.Form.Files.GetFile("file");
             if (file is null)
             {
-                return Results.BadRequest(new { error = "No file uploaded." });
+                return TypedResults.Problem(detail: "No file uploaded.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             ImportConfiguration config = ParseConfig(request);
@@ -63,7 +65,7 @@ public static class ImportEndpoints
             IFormFile? file = request.Form.Files.GetFile("file");
             if (file is null)
             {
-                return Results.BadRequest(new { error = "No file uploaded." });
+                return TypedResults.Problem(detail: "No file uploaded.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             bool hasHeader = request.Form.ContainsKey("hasHeader")
@@ -79,6 +81,60 @@ public static class ImportEndpoints
 
             return Results.Ok(preview);
         }).DisableAntiforgery();
+
+        // Start async import (returns immediately with job ID)
+        group.MapPost("/start", async (
+            HttpRequest request,
+            IImportJobService jobService,
+            CancellationToken ct) =>
+        {
+            IFormFile? file = request.Form.Files.GetFile("file");
+            if (file is null)
+            {
+                return TypedResults.Problem(detail: "No file uploaded.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
+            }
+
+            ImportConfiguration config = ParseConfig(request);
+
+            using Stream stream = file.OpenReadStream();
+
+            try
+            {
+                ImportJob job = await jobService.StartAsync(stream, config, ct);
+                return Results.Ok(new { jobId = job.Id });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return TypedResults.Problem(detail: ex.Message, title: "Conflict", statusCode: StatusCodes.Status409Conflict, type: "https://wrkzg.app/problems/import-conflict");
+            }
+        }).DisableAntiforgery();
+
+        // Get all jobs
+        group.MapGet("/jobs", (IImportJobService jobService) =>
+        {
+            return Results.Ok(jobService.GetAll());
+        });
+
+        // Get specific job
+        group.MapGet("/jobs/{id}", (string id, IImportJobService jobService) =>
+        {
+            ImportJob? job = jobService.GetById(id);
+            return job is not null ? Results.Ok(job) : Results.NotFound();
+        });
+
+        // Cancel job
+        group.MapDelete("/jobs/{id}", (string id, IImportJobService jobService) =>
+        {
+            return jobService.Cancel(id)
+                ? Results.Ok(new { cancelled = true })
+                : Results.NotFound();
+        });
+
+        // Get locked modules
+        group.MapGet("/locks", (IImportJobService jobService) =>
+        {
+            return Results.Ok(new { lockedModules = jobService.GetLockedModules() });
+        });
 
         // Available import templates
         group.MapGet("/templates", () =>

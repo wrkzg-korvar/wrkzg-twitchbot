@@ -274,4 +274,22 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
             timestamp = DateTimeOffset.UtcNow
         }, ct);
     }
+
+    /// <summary>Broadcasts import job progress to all connected clients.</summary>
+    public Task BroadcastImportProgressAsync(object progress, CancellationToken ct = default)
+    {
+        return BroadcastToAllAsync("ImportProgress", progress, ct);
+    }
+
+    /// <summary>Broadcasts import job completion to all connected clients.</summary>
+    public Task BroadcastImportCompleteAsync(object result, CancellationToken ct = default)
+    {
+        return BroadcastToAllAsync("ImportComplete", result, ct);
+    }
+
+    /// <summary>Broadcasts import job error to all connected clients.</summary>
+    public Task BroadcastImportErrorAsync(object importError, CancellationToken ct = default)
+    {
+        return BroadcastToAllAsync("ImportError", importError, ct);
+    }
 }

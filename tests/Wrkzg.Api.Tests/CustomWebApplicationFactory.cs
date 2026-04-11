@@ -27,8 +27,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IDisp
     public InMemorySecureStorage SecureStorage { get; } = new();
     /// <summary>Mock Twitch IRC chat client.</summary>
     public ITwitchChatClient TwitchChatClient { get; } = Substitute.For<ITwitchChatClient>();
-    /// <summary>Mock Twitch Helix API client.</summary>
-    public ITwitchHelixClient TwitchHelixClient { get; } = Substitute.For<ITwitchHelixClient>();
+    /// <summary>Mock Broadcaster Helix API client.</summary>
+    public IBroadcasterHelixClient BroadcasterHelixClient { get; } = Substitute.For<IBroadcasterHelixClient>();
+    /// <summary>Mock Bot Helix API client.</summary>
+    public IBotHelixClient BotHelixClient { get; } = Substitute.For<IBotHelixClient>();
     /// <summary>Mock Twitch OAuth service.</summary>
     public ITwitchOAuthService TwitchOAuthService { get; } = Substitute.For<ITwitchOAuthService>();
     /// <summary>Mock chat event broadcaster.</summary>
@@ -62,7 +64,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IDisp
             // Replace external dependencies with fakes/mocks
             ReplaceService<ISecureStorage>(services, SecureStorage);
             ReplaceService(services, TwitchChatClient);
-            ReplaceService(services, TwitchHelixClient);
+            ReplaceService(services, BroadcasterHelixClient);
+            ReplaceService(services, BotHelixClient);
             ReplaceService(services, TwitchOAuthService);
             ReplaceService(services, ChatEventBroadcaster);
             ReplaceService(services, AuthStateNotifier);

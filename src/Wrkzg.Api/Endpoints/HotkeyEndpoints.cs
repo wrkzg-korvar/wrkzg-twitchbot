@@ -52,7 +52,7 @@ public static class HotkeyEndpoints
         {
             if (string.IsNullOrWhiteSpace(request.KeyCombination) || string.IsNullOrWhiteSpace(request.ActionType))
             {
-                return Results.BadRequest(new { error = "Key combination and action type are required." });
+                return TypedResults.Problem(detail: "Key combination and action type are required.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             HotkeyBinding binding = new()
@@ -75,7 +75,7 @@ public static class HotkeyEndpoints
             HotkeyBinding? binding = await repo.GetByIdAsync(id, ct);
             if (binding is null)
             {
-                return Results.NotFound();
+                return TypedResults.Problem(title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             if (request.KeyCombination is not null) { binding.KeyCombination = request.KeyCombination; }
@@ -104,7 +104,7 @@ public static class HotkeyEndpoints
             HotkeyBinding? binding = await repo.GetByIdAsync(id, ct);
             if (binding is null)
             {
-                return Results.NotFound(new { error = "Hotkey binding not found." });
+                return TypedResults.Problem(detail: "Hotkey binding not found.", title: "Not Found", statusCode: StatusCodes.Status404NotFound, type: "https://wrkzg.app/problems/not-found");
             }
 
             await executor.ExecuteAsync(binding, ct);

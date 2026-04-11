@@ -97,4 +97,13 @@ public interface IChatEventBroadcaster
 
     /// <summary>Notifies dashboard that the stream went online.</summary>
     Task BroadcastStreamOnlineAsync(string broadcasterName, CancellationToken ct = default);
+
+    /// <summary>Broadcasts import job progress to all connected clients.</summary>
+    Task BroadcastImportProgressAsync(object progress, CancellationToken ct = default);
+
+    /// <summary>Broadcasts import job completion to all connected clients.</summary>
+    Task BroadcastImportCompleteAsync(object result, CancellationToken ct = default);
+
+    /// <summary>Broadcasts import job error to all connected clients.</summary>
+    Task BroadcastImportErrorAsync(object importError, CancellationToken ct = default);
 }

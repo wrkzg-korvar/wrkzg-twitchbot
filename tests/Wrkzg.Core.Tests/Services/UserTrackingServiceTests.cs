@@ -15,7 +15,7 @@ namespace Wrkzg.Core.Tests.Services;
 /// <summary>Tests for the UserTrackingService background service.</summary>
 public class UserTrackingServiceTests
 {
-    private readonly ITwitchHelixClient _helix;
+    private readonly IBroadcasterHelixClient _helix;
     private readonly ITwitchChatClient _chatClient;
     private readonly IChatEventBroadcaster _broadcaster;
     private readonly IUserRepository _userRepo;
@@ -26,7 +26,7 @@ public class UserTrackingServiceTests
     /// <summary>Initializes test dependencies with NSubstitute mocks and a real service scope factory.</summary>
     public UserTrackingServiceTests()
     {
-        _helix = Substitute.For<ITwitchHelixClient>();
+        _helix = Substitute.For<IBroadcasterHelixClient>();
         _chatClient = Substitute.For<ITwitchChatClient>();
         _broadcaster = Substitute.For<IChatEventBroadcaster>();
         _userRepo = Substitute.For<IUserRepository>();
