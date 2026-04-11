@@ -92,7 +92,8 @@ public static class ImportEndpoints
                     sourceType = ImportSourceType.DeepbotCsv,
                     description = "3 columns: Username, Points, Minutes Watched. No header row.",
                     fields = new[] { "Username", "Points", "Watch Time (Minutes)" },
-                    fileTypes = new[] { ".csv" }
+                    fileTypes = new[] { ".csv" },
+                    fileHint = "Exported CSV file from DeepBot"
                 },
                 new
                 {
@@ -101,7 +102,8 @@ public static class ImportEndpoints
                     sourceType = ImportSourceType.DeepbotJson,
                     description = "Full export with VIP levels, mod status, join date, and last seen.",
                     fields = new[] { "Username", "Points", "Watch Time", "VIP Level", "Mod Status", "Join Date", "Last Seen" },
-                    fileTypes = new[] { ".json" }
+                    fileTypes = new[] { ".json" },
+                    fileHint = "Exported JSON file from DeepBot WebSocket API"
                 },
                 new
                 {
@@ -110,7 +112,8 @@ public static class ImportEndpoints
                     sourceType = ImportSourceType.StreamlabsChatbot,
                     description = "CSV export with header. Columns: Username, Points, Hours.",
                     fields = new[] { "Username", "Points", "Watch Time (Hours)" },
-                    fileTypes = new[] { ".csv" }
+                    fileTypes = new[] { ".csv" },
+                    fileHint = "Exported CSV from Streamlabs Chatbot settings"
                 },
                 new
                 {
@@ -119,7 +122,28 @@ public static class ImportEndpoints
                     sourceType = ImportSourceType.GenericCsv,
                     description = "Any CSV file with custom column mapping.",
                     fields = new[] { "Username", "Points (optional)", "Watch Time (optional)" },
-                    fileTypes = new[] { ".csv" }
+                    fileTypes = new[] { ".csv" },
+                    fileHint = "Any .csv file with user data"
+                },
+                new
+                {
+                    id = "deepbot_bin",
+                    name = "Deepbot Users (Save File)",
+                    sourceType = ImportSourceType.DeepbotBin,
+                    description = "DeepBot users*.bin save file. Contains usernames, points, watch time, and (if available) display names and Twitch IDs.",
+                    fields = new[] { "Username", "Points", "Watch Time (Minutes)", "Display Name", "Twitch ID" },
+                    fileTypes = new[] { ".bin" },
+                    fileHint = "File: users*.bin (e.g. users20260404-185357.bin)"
+                },
+                new
+                {
+                    id = "deepbot_bin_config",
+                    name = "Deepbot Commands & Quotes (Save File)",
+                    sourceType = ImportSourceType.DeepbotBinConfig,
+                    description = "DeepBot chanmsgconfig*.bin save file. Contains custom chat commands, quotes, and timed messages.",
+                    fields = new[] { "Commands", "Quotes", "Timed Messages" },
+                    fileTypes = new[] { ".bin" },
+                    fileHint = "File: chanmsgconfig*.bin (e.g. chanmsgconfig20260404-135348.bin)"
                 }
             });
         });

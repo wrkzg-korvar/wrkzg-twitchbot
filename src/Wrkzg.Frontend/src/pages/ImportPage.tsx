@@ -64,7 +64,10 @@ export function ImportPage() {
   const [delimiter, setDelimiter] = useState(";");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [isDragging, setIsDragging] = useState(false);
+
   const isGenericCsv = selectedSource?.sourceType === 3;
+  const isConfigImport = selectedSource?.sourceType === 5;
 
   const { data: templates, isLoading, isError } = useQuery<ImportTemplate[]>({
     queryKey: ["import-templates"],
@@ -118,6 +121,8 @@ export function ImportPage() {
     onError: () => showToast("error", "Import failed."),
   });
 
+  const isImporting = executeMutation.isPending;
+
   // Re-run column preview when delimiter or hasHeader changes (only for Generic CSV with file loaded)
   const refreshPreview = useCallback(() => {
     if (file && isGenericCsv) {
@@ -155,6 +160,34 @@ export function ImportPage() {
     }
   }
 
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile) {
+      setFile(droppedFile);
+      setCsvPreview(null);
+      setColumnMapping({});
+      if (isGenericCsv) {
+        columnPreviewMutation.mutate({ f: droppedFile, hdr: hasHeader, delim: delimiter });
+      }
+    }
+  }
+
   function handleReset() {
     setStep(0);
     setSelectedSource(null);
@@ -186,6 +219,13 @@ export function ImportPage() {
 
   return (
     <div className="space-y-6 p-6">
+      <style>{`
+        @keyframes shimmer {
+          0% { transform: translateX(-200%); }
+          100% { transform: translateX(400%); }
+        }
+      `}</style>
+
       <PageHeader
         title="Import Data"
         description="Migrate your community data from another bot."
@@ -226,6 +266,11 @@ export function ImportPage() {
                   <span key={f} className="rounded bg-[var(--color-elevated)] px-2 py-0.5 text-xs text-[var(--color-text-muted)]">{f}</span>
                 ))}
               </div>
+              {t.fileHint && (
+                <div className="mt-2 rounded bg-[var(--color-info-subtle)] px-2.5 py-1.5 text-xs text-[var(--color-text-info)]">
+                  {t.fileHint}
+                </div>
+              )}
               <div className="mt-2 text-xs text-[var(--color-text-muted)]">
                 Accepts: {t.fileTypes.join(", ")}
               </div>
@@ -265,15 +310,28 @@ export function ImportPage() {
 
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-[var(--color-border)] p-8 hover:bg-[var(--color-elevated)] transition-colors"
+              onDragOver={handleDragOver}
+              onDragEnter={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors ${
+                isDragging
+                  ? "border-[var(--color-brand)] bg-[var(--color-brand)]/10"
+                  : "border-[var(--color-border)] hover:bg-[var(--color-elevated)]"
+              }`}
             >
               <Upload className="h-8 w-8 text-[var(--color-text-muted)] mb-2" />
               <p className="text-sm text-[var(--color-text-secondary)]">
-                {file ? file.name : "Click to browse or drag and drop"}
+                {file ? file.name : isDragging ? "Drop file here" : "Click to browse or drag and drop"}
               </p>
               <p className="text-xs text-[var(--color-text-muted)] mt-1">
                 Supported: {selectedSource.fileTypes.join(", ")}
               </p>
+              {selectedSource.fileHint && (
+                <p className="text-xs text-[var(--color-text-info)] mt-1">
+                  {selectedSource.fileHint}
+                </p>
+              )}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -346,8 +404,10 @@ export function ImportPage() {
             )}
 
             <div className="flex gap-2">
-              <button onClick={() => { setStep(0); setFile(null); setCsvPreview(null); setColumnMapping({}); }}
-                className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm text-[var(--color-text-secondary)]">
+              <button
+                onClick={() => { setStep(0); setFile(null); setCsvPreview(null); setColumnMapping({}); }}
+                disabled={previewMutation.isPending}
+                className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm text-[var(--color-text-secondary)] disabled:opacity-30 disabled:cursor-not-allowed">
                 <ChevronLeft className="inline h-3.5 w-3.5 mr-1" /> Back
               </button>
               <button
@@ -366,65 +426,115 @@ export function ImportPage() {
       {/* Step 2: Settings & Preview */}
       {step === 2 && previewResult && (
         <Card title="Import Settings">
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm font-medium text-[var(--color-text)] mb-2">When a user already exists in Wrkzg:</p>
-              <div className="space-y-2">
-                {CONFLICT_STRATEGIES.map((s) => (
-                  <label key={s.value} className="flex items-start gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="conflict"
-                      checked={conflictStrategy === s.value}
-                      onChange={() => setConflictStrategy(s.value)}
-                      className="mt-1"
-                    />
-                    <div>
-                      <span className="text-sm font-medium text-[var(--color-text)]">{s.label}</span>
-                      <span className="text-sm text-[var(--color-text-secondary)]"> — {s.desc}</span>
+          <div className="relative">
+            {/* Import overlay — blocks interaction during import */}
+            {isImporting && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-lg bg-[var(--color-surface)]/95 backdrop-blur-sm">
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-[var(--color-border)] border-t-[var(--color-brand)]" />
+                <p className="mt-4 text-sm font-medium text-[var(--color-text)]">Importing data...</p>
+                <p className="mt-1 text-xs text-[var(--color-text-muted)]">This may take a moment for large files. Please don't close the window.</p>
+                {/* Indeterminate progress bar */}
+                <div className="mt-4 h-1.5 w-48 overflow-hidden rounded-full bg-[var(--color-border)]">
+                  <div className="h-full w-1/3 rounded-full bg-[var(--color-brand)]" style={{ animation: "shimmer 1.5s ease-in-out infinite" }} />
+                </div>
+              </div>
+            )}
+
+            <div className={isImporting ? "pointer-events-none opacity-30" : ""}>
+              <div className="space-y-4">
+                {/* Conflict strategy — only for user imports, not config imports */}
+                {!isConfigImport && (
+                  <div>
+                    <p className="text-sm font-medium text-[var(--color-text)] mb-2">When a user already exists in Wrkzg:</p>
+                    <div className="space-y-2">
+                      {CONFLICT_STRATEGIES.map((s) => (
+                        <label key={s.value} className="flex items-start gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="conflict"
+                            checked={conflictStrategy === s.value}
+                            onChange={() => setConflictStrategy(s.value)}
+                            className="mt-1"
+                          />
+                          <div>
+                            <span className="text-sm font-medium text-[var(--color-text)]">{s.label}</span>
+                            <span className="text-sm text-[var(--color-text-secondary)]"> — {s.desc}</span>
+                          </div>
+                        </label>
+                      ))}
                     </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-lg bg-[var(--color-elevated)] p-4 space-y-1">
-              <p className="text-sm font-medium text-[var(--color-text)]">Preview</p>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <span className="text-[var(--color-text-secondary)]">Total users in file:</span>
-                <span className="text-[var(--color-text)] font-mono">{previewResult.totalRows.toLocaleString()}</span>
-                <span className="text-[var(--color-text-secondary)]">New users (will be created):</span>
-                <span className="text-[var(--color-text)] font-mono">{previewResult.createdCount.toLocaleString()}</span>
-                <span className="text-[var(--color-text-secondary)]">Existing users (will be merged):</span>
-                <span className="text-[var(--color-text)] font-mono">{previewResult.updatedCount.toLocaleString()}</span>
-                {previewResult.skippedCount > 0 && (
-                  <>
-                    <span className="text-[var(--color-text-secondary)]">Skipped (empty/invalid):</span>
-                    <span className="text-[var(--color-text)] font-mono">{previewResult.skippedCount.toLocaleString()}</span>
-                  </>
+                  </div>
                 )}
-                {previewResult.rolesAssignedCount > 0 && (
-                  <>
-                    <span className="text-[var(--color-text-secondary)]">Roles to assign:</span>
-                    <span className="text-[var(--color-text)] font-mono">{previewResult.rolesAssignedCount.toLocaleString()}</span>
-                  </>
-                )}
-              </div>
-            </div>
 
-            <div className="flex gap-2">
-              <button onClick={() => setStep(1)}
-                className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm text-[var(--color-text-secondary)]">
-                <ChevronLeft className="inline h-3.5 w-3.5 mr-1" /> Back
-              </button>
-              <button
-                onClick={() => executeMutation.mutate()}
-                disabled={executeMutation.isPending}
-                className="rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-[var(--color-bg)] hover:bg-[var(--color-brand-hover)] disabled:opacity-50"
-              >
-                {executeMutation.isPending ? "Importing..." : "Import"}
-                {!executeMutation.isPending && <ChevronRight className="inline h-3.5 w-3.5 ml-1" />}
-              </button>
+                <div className="rounded-lg bg-[var(--color-elevated)] p-4 space-y-1">
+                  <p className="text-sm font-medium text-[var(--color-text)]">Preview</p>
+
+                  {/* User-related stats (show only when user data is being imported) */}
+                  {previewResult.createdCount + previewResult.updatedCount > 0 && (
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <span className="text-[var(--color-text-secondary)]">Total users in file:</span>
+                      <span className="text-[var(--color-text)] font-mono">{previewResult.totalRows.toLocaleString()}</span>
+                      <span className="text-[var(--color-text-secondary)]">New users (will be created):</span>
+                      <span className="text-[var(--color-text)] font-mono">{previewResult.createdCount.toLocaleString()}</span>
+                      <span className="text-[var(--color-text-secondary)]">Existing users (will be merged):</span>
+                      <span className="text-[var(--color-text)] font-mono">{previewResult.updatedCount.toLocaleString()}</span>
+                      {previewResult.skippedCount > 0 && (
+                        <>
+                          <span className="text-[var(--color-text-secondary)]">Skipped (empty/invalid):</span>
+                          <span className="text-[var(--color-text)] font-mono">{previewResult.skippedCount.toLocaleString()}</span>
+                        </>
+                      )}
+                      {previewResult.rolesAssignedCount > 0 && (
+                        <>
+                          <span className="text-[var(--color-text-secondary)]">Roles to assign:</span>
+                          <span className="text-[var(--color-text)] font-mono">{previewResult.rolesAssignedCount.toLocaleString()}</span>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Config-related stats (show for DeepBot config imports) */}
+                  {(previewResult.commandsImportedCount > 0 || previewResult.commandsSkippedCount > 0 || previewResult.quotesImportedCount > 0 || previewResult.timersImportedCount > 0) && (
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      {(previewResult.commandsImportedCount > 0 || previewResult.commandsSkippedCount > 0) && (
+                        <>
+                          <span className="text-[var(--color-text-secondary)]">Commands to import:</span>
+                          <span className="text-[var(--color-text)] font-mono">{previewResult.commandsImportedCount.toLocaleString()}{previewResult.commandsSkippedCount > 0 ? ` (${previewResult.commandsSkippedCount} duplicates)` : ""}</span>
+                        </>
+                      )}
+                      {previewResult.quotesImportedCount > 0 && (
+                        <>
+                          <span className="text-[var(--color-text-secondary)]">Quotes to import:</span>
+                          <span className="text-[var(--color-text)] font-mono">{previewResult.quotesImportedCount.toLocaleString()}</span>
+                        </>
+                      )}
+                      {previewResult.timersImportedCount > 0 && (
+                        <>
+                          <span className="text-[var(--color-text-secondary)]">Timed messages to import:</span>
+                          <span className="text-[var(--color-text)] font-mono">{previewResult.timersImportedCount.toLocaleString()}</span>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setStep(1)}
+                    disabled={isImporting}
+                    className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm text-[var(--color-text-secondary)] disabled:opacity-30 disabled:cursor-not-allowed">
+                    <ChevronLeft className="inline h-3.5 w-3.5 mr-1" /> Back
+                  </button>
+                  <button
+                    onClick={() => executeMutation.mutate()}
+                    disabled={executeMutation.isPending}
+                    className="rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-[var(--color-bg)] hover:bg-[var(--color-brand-hover)] disabled:opacity-50"
+                  >
+                    {executeMutation.isPending ? "Importing..." : "Import"}
+                    {!executeMutation.isPending && <ChevronRight className="inline h-3.5 w-3.5 ml-1" />}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </Card>
@@ -439,20 +549,53 @@ export function ImportPage() {
               <span className="font-medium">{importResult.summary}</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-sm rounded-lg bg-[var(--color-elevated)] p-4">
-              <span className="text-[var(--color-text-secondary)]">New users created:</span>
-              <span className="text-[var(--color-text)] font-mono">{importResult.createdCount.toLocaleString()}</span>
-              <span className="text-[var(--color-text-secondary)]">Existing users updated:</span>
-              <span className="text-[var(--color-text)] font-mono">{importResult.updatedCount.toLocaleString()}</span>
-              <span className="text-[var(--color-text-secondary)]">Skipped:</span>
-              <span className="text-[var(--color-text)] font-mono">{importResult.skippedCount.toLocaleString()}</span>
-              {importResult.rolesAssignedCount > 0 && (
-                <>
-                  <span className="text-[var(--color-text-secondary)]">Roles assigned:</span>
-                  <span className="text-[var(--color-text)] font-mono">{importResult.rolesAssignedCount.toLocaleString()}</span>
-                </>
-              )}
-            </div>
+            {/* User stats */}
+            {(importResult.createdCount > 0 || importResult.updatedCount > 0 || importResult.skippedCount > 0) && (
+              <div className="grid grid-cols-2 gap-2 text-sm rounded-lg bg-[var(--color-elevated)] p-4">
+                <span className="text-[var(--color-text-secondary)]">New users created:</span>
+                <span className="text-[var(--color-text)] font-mono">{importResult.createdCount.toLocaleString()}</span>
+                <span className="text-[var(--color-text-secondary)]">Existing users updated:</span>
+                <span className="text-[var(--color-text)] font-mono">{importResult.updatedCount.toLocaleString()}</span>
+                <span className="text-[var(--color-text-secondary)]">Skipped:</span>
+                <span className="text-[var(--color-text)] font-mono">{importResult.skippedCount.toLocaleString()}</span>
+                {importResult.rolesAssignedCount > 0 && (
+                  <>
+                    <span className="text-[var(--color-text-secondary)]">Roles assigned:</span>
+                    <span className="text-[var(--color-text)] font-mono">{importResult.rolesAssignedCount.toLocaleString()}</span>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Config stats */}
+            {(importResult.commandsImportedCount > 0 || importResult.commandsSkippedCount > 0 || importResult.quotesImportedCount > 0 || importResult.timersImportedCount > 0) && (
+              <div className="grid grid-cols-2 gap-2 text-sm rounded-lg bg-[var(--color-elevated)] p-4">
+                {importResult.commandsImportedCount > 0 && (
+                  <>
+                    <span className="text-[var(--color-text-secondary)]">Commands imported:</span>
+                    <span className="text-[var(--color-text)] font-mono">{importResult.commandsImportedCount.toLocaleString()}</span>
+                  </>
+                )}
+                {importResult.commandsSkippedCount > 0 && (
+                  <>
+                    <span className="text-[var(--color-text-secondary)]">Commands skipped (duplicate):</span>
+                    <span className="text-[var(--color-text)] font-mono">{importResult.commandsSkippedCount.toLocaleString()}</span>
+                  </>
+                )}
+                {importResult.quotesImportedCount > 0 && (
+                  <>
+                    <span className="text-[var(--color-text-secondary)]">Quotes imported:</span>
+                    <span className="text-[var(--color-text)] font-mono">{importResult.quotesImportedCount.toLocaleString()}</span>
+                  </>
+                )}
+                {importResult.timersImportedCount > 0 && (
+                  <>
+                    <span className="text-[var(--color-text-secondary)]">Timed messages imported:</span>
+                    <span className="text-[var(--color-text)] font-mono">{importResult.timersImportedCount.toLocaleString()}</span>
+                  </>
+                )}
+              </div>
+            )}
 
             {importResult.errors.length > 0 && (
               <div className="space-y-1">
@@ -469,11 +612,25 @@ export function ImportPage() {
               </div>
             )}
 
-            <div className="flex gap-2">
-              <a href="/users"
-                className="flex items-center gap-1.5 rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-[var(--color-bg)] hover:bg-[var(--color-brand-hover)]">
-                <Users className="h-3.5 w-3.5" /> View Users
-              </a>
+            <div className="flex flex-wrap gap-2">
+              {(importResult.createdCount > 0 || importResult.updatedCount > 0) && (
+                <a href="/users"
+                  className="flex items-center gap-1.5 rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-[var(--color-bg)] hover:bg-[var(--color-brand-hover)]">
+                  <Users className="h-3.5 w-3.5" /> View Users
+                </a>
+              )}
+              {importResult.commandsImportedCount > 0 && (
+                <a href="/commands"
+                  className="flex items-center gap-1.5 rounded-lg bg-[var(--color-brand)] px-4 py-2 text-sm font-medium text-[var(--color-bg)] hover:bg-[var(--color-brand-hover)]">
+                  View Commands
+                </a>
+              )}
+              {importResult.quotesImportedCount > 0 && (
+                <a href="/quotes"
+                  className="flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-elevated)]">
+                  View Quotes
+                </a>
+              )}
               <button onClick={handleReset}
                 className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm text-[var(--color-text-secondary)]">
                 Import Another File

@@ -969,6 +969,8 @@ Wrkzg can import your community data from other Twitch bots so your viewers keep
 |---|---|---|
 | **Deepbot (CSV)** | .csv, 3 columns, no header | Username, Points, Watch Time |
 | **Deepbot (JSON)** | .json from API export | All above + VIP level, Mod status, Join Date, Last Seen |
+| **Deepbot Users (Save File)** | users*.bin | Username, Points, Watch Time, Display Name, Twitch ID |
+| **Deepbot Commands & Quotes (Save File)** | chanmsgconfig*.bin | Commands, Quotes, Timed Messages |
 | **Streamlabs Chatbot** | .csv export | Username, Points, Watch Hours |
 | **Generic CSV** | Any .csv | Customizable column mapping |
 
@@ -1007,9 +1009,28 @@ When importing, some users may already exist in Wrkzg. Choose how to handle them
 | **Keep Higher** | Use the bigger value | Use the bigger value | Merging data from two sources |
 | **Add** | Sum both values | Sum both values | Combining multiple bot exports |
 
+#### DeepBot Save Files (.bin)
+
+If Deepbot doesn't offer a CSV/JSON export (common in v0.12.x), you can import directly from DeepBot's save files. These are two separate files that can be imported independently, in any order:
+
+**User data (`users*.bin`):**
+1. Navigate to DeepBot's data folder (usually next to the Deepbot.exe)
+2. Find the file starting with `users` and ending with `.bin` (e.g. `users20241201.bin`)
+3. This file contains all user records: usernames, points, watch time, and (for some users) display names and Twitch IDs
+4. Import using the **Deepbot Users (Save File)** template
+
+**Commands, Quotes & Timers (`chanmsgconfig*.bin`):**
+1. In the same folder, find the file starting with `chanmsgconfig` and ending with `.bin`
+2. This file contains custom chat commands, saved quotes, and timed messages
+3. Import using the **Deepbot Commands & Quotes (Save File)** template
+4. Existing commands with the same trigger are skipped (not overwritten)
+5. DeepBot variables (`@user@`, `@target@`, etc.) are automatically converted to Wrkzg format
+
+**Note:** `usersconfig*.bin` files contain only bot settings (point multipliers, UI preferences) and are not imported.
+
 #### Imported User ID Resolution
 
-Imported users don't have a Twitch ID yet (Deepbot only stores usernames). Wrkzg creates them with a temporary placeholder ID. The first time an imported user types in your chat, Wrkzg automatically links their Twitch account to the imported data. This happens silently — no action needed from you or the viewer.
+Imported users don't have a Twitch ID yet (Deepbot CSV/JSON only stores usernames). Wrkzg creates them with a temporary placeholder ID. The first time an imported user types in your chat, Wrkzg automatically links their Twitch account to the imported data. This happens silently — no action needed from you or the viewer. DeepBot Save File imports may include real Twitch IDs for some users, which are used directly.
 
 ---
 

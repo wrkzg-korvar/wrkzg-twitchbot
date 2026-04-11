@@ -263,7 +263,7 @@ jobs:
           body: |
             ## Wrkzg ${{ github.ref_name }}
 
-            Self-hosted Twitch community bot with built-in dashboard.
+            Wrkzg runs directly on your computer — no cloud services, no subscriptions, no data leaving your machine.
 
             ### Downloads
 

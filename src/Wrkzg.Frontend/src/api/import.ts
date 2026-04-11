@@ -7,6 +7,10 @@ export interface ImportResult {
   createdCount: number;
   updatedCount: number;
   rolesAssignedCount: number;
+  commandsImportedCount: number;
+  commandsSkippedCount: number;
+  quotesImportedCount: number;
+  timersImportedCount: number;
   errors: ImportRowError[];
   success: boolean;
   summary: string;
@@ -26,6 +30,7 @@ export interface ImportTemplate {
   description: string;
   fields: string[];
   fileTypes: string[];
+  fileHint?: string;
 }
 
 export interface CsvPreview {

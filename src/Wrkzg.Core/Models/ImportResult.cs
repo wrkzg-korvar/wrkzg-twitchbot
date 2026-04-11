@@ -32,8 +32,47 @@ public class ImportResult
     /// <summary>Whether the import completed successfully.</summary>
     public bool Success => !Errors.Any(e => e.Severity == ImportErrorSeverity.Error);
 
+    /// <summary>Commands imported from the source file.</summary>
+    public int CommandsImportedCount { get; set; }
+
+    /// <summary>Commands skipped (duplicate trigger exists).</summary>
+    public int CommandsSkippedCount { get; set; }
+
+    /// <summary>Quotes imported from the source file.</summary>
+    public int QuotesImportedCount { get; set; }
+
+    /// <summary>Timed messages imported.</summary>
+    public int TimersImportedCount { get; set; }
+
     /// <summary>Summary message for display.</summary>
-    public string Summary => $"Imported {ImportedCount}/{TotalRows} users ({CreatedCount} new, {UpdatedCount} updated, {SkippedCount} skipped)";
+    public string Summary
+    {
+        get
+        {
+            // Config import (commands/quotes/timers — no users)
+            if (CommandsImportedCount > 0 || QuotesImportedCount > 0 || TimersImportedCount > 0)
+            {
+                List<string> parts = new();
+                if (CommandsImportedCount > 0)
+                {
+                    string skip = CommandsSkippedCount > 0 ? $", {CommandsSkippedCount} skipped" : "";
+                    parts.Add($"{CommandsImportedCount} commands{skip}");
+                }
+                if (QuotesImportedCount > 0)
+                {
+                    parts.Add($"{QuotesImportedCount} quotes");
+                }
+                if (TimersImportedCount > 0)
+                {
+                    parts.Add($"{TimersImportedCount} timers");
+                }
+                return $"Imported {string.Join(", ", parts)}";
+            }
+
+            // User import
+            return $"Imported {ImportedCount}/{TotalRows} users ({CreatedCount} new, {UpdatedCount} updated, {SkippedCount} skipped)";
+        }
+    }
 }
 
 /// <summary>
