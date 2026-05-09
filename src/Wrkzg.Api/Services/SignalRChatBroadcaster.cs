@@ -256,15 +256,6 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
         }, ct);
     }
 
-    /// <summary>Broadcasts a song queue updated event to all connected clients.</summary>
-    public Task BroadcastSongQueueUpdatedAsync(CancellationToken ct = default)
-    {
-        return BroadcastToAllAsync("SongQueueUpdated", new
-        {
-            timestamp = DateTimeOffset.UtcNow
-        }, ct);
-    }
-
     /// <summary>Broadcasts a stream online event to all connected clients.</summary>
     public Task BroadcastStreamOnlineAsync(string broadcasterName, CancellationToken ct = default)
     {

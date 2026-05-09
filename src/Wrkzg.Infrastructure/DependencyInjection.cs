@@ -51,7 +51,6 @@ public static class DependencyInjection
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<ITriviaQuestionRepository, TriviaQuestionRepository>();
         services.AddScoped<IStreamAnalyticsRepository, StreamAnalyticsRepository>();
-        services.AddScoped<ISongRequestRepository, SongRequestRepository>();
         services.AddScoped<IHotkeyBindingRepository, HotkeyBindingRepository>();
         services.AddScoped<IEffectListRepository, EffectListRepository>();
         services.AddScoped<IDataImportService, DataImportService>();

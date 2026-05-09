@@ -37,10 +37,6 @@ public static class DependencyInjection
         services.AddSingleton<ISystemCommand, UptimeCommand>();
         services.AddSingleton<ISystemCommand, ShoutoutCommand>();
         services.AddSingleton<ISystemCommand, QuoteCommand>();
-        services.AddSingleton<ISystemCommand, SongRequestCommand>();
-        services.AddSingleton<ISystemCommand, SkipSongCommand>();
-        services.AddSingleton<ISystemCommand, QueueCommand>();
-        services.AddSingleton<ISystemCommand, CurrentSongCommand>();
         services.AddSingleton<ISystemCommand, TitleCommand>();
         services.AddSingleton<ISystemCommand, GameCommand>();
 
@@ -102,9 +98,6 @@ public static class DependencyInjection
 
         // Effect Engine (Singleton — evaluates Trigger → Condition → Effect chains)
         services.AddSingleton<EffectEngine>();
-
-        // Song Request Service (Singleton — manages song queue)
-        services.AddSingleton<SongRequestService>();
 
         // Chat Game Manager (Singleton — manages all chat games)
         services.AddSingleton<ChatGameManager>();

@@ -19,7 +19,6 @@ import { ChannelPointsPage } from "./pages/ChannelPointsPage";
 import { RolesPage } from "./pages/RolesPage";
 import { ChatGamesPage } from "./pages/ChatGamesPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
-import { SongRequestsPage } from "./pages/SongRequestsPage";
 import { HotkeysPage } from "./pages/HotkeysPage";
 import { EffectsPage } from "./pages/EffectsPage";
 import { IntegrationsPage } from "./pages/IntegrationsPage";
@@ -32,7 +31,6 @@ import { PollOverlay } from "./components/overlay/PollOverlay";
 import { RaffleOverlay } from "./components/overlay/RaffleOverlay";
 import { CounterOverlay } from "./components/overlay/CounterOverlay";
 import { EventListOverlay } from "./components/overlay/EventListOverlay";
-import { SongPlayerOverlay } from "./components/overlay/SongPlayerOverlay";
 
 export default function App() {
   const location = useLocation();
@@ -48,7 +46,6 @@ export default function App() {
         <Route path="/overlay/raffle" element={<RaffleOverlay />} />
         <Route path="/overlay/counter" element={<CounterOverlay />} />
         <Route path="/overlay/events" element={<EventListOverlay />} />
-        <Route path="/overlay/song-player" element={<SongPlayerOverlay />} />
       </Routes>
     );
   }
@@ -94,7 +91,6 @@ function AppShell() {
           <Route path="roles" element={<RolesPage />} />
           <Route path="games" element={<ChatGamesPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
-          <Route path="song-requests" element={<SongRequestsPage />} />
           <Route path="hotkeys" element={<HotkeysPage />} />
           <Route path="effects" element={<EffectsPage />} />
           <Route path="integrations" element={<IntegrationsPage />} />

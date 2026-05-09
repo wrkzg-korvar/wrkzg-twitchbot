@@ -649,53 +649,6 @@ namespace Wrkzg.Infrastructure.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Wrkzg.Core.Models.SongRequest", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("DurationSeconds")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTimeOffset?>("PlayedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("PointsCost")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTimeOffset>("RequestedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("RequestedBy")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("ThumbnailUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("VideoId")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Status");
-
-                    b.ToTable("SongRequests");
-                });
-
             modelBuilder.Entity("Wrkzg.Core.Models.StreamSession", b =>
                 {
                     b.Property<int>("Id")

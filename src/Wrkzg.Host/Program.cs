@@ -170,7 +170,6 @@ try
         app.MapRoleEndpoints();
         app.MapGameEndpoints();
         app.MapAnalyticsEndpoints();
-        app.MapSongRequestEndpoints();
         app.MapHotkeyEndpoints();
         app.MapEffectEndpoints();
         app.MapIntegrationEndpoints();
@@ -211,7 +210,6 @@ try
         app.MapRoleEndpoints();
         app.MapGameEndpoints();
         app.MapAnalyticsEndpoints();
-        app.MapSongRequestEndpoints();
         app.MapHotkeyEndpoints();
         app.MapEffectEndpoints();
         app.MapIntegrationEndpoints();
