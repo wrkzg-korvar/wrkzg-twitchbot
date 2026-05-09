@@ -245,6 +245,63 @@ public class BotHelixClient : IBotHelixClient
         }
     }
 
+    /// <summary>
+    /// Gets all users currently in the broadcaster's chat room via paginated Helix API calls.
+    /// Twitch limits to 1000 per page. We paginate through all results.
+    /// </summary>
+    public async Task<IReadOnlyList<string>> GetChattersAsync(string broadcasterId, CancellationToken ct = default)
+    {
+        string? botUserId = await ResolveBotUserIdAsync(ct);
+        if (botUserId is null)
+        {
+            _logger.LogWarning("Cannot get chatters — failed to resolve bot user ID");
+            return Array.Empty<string>();
+        }
+
+        try
+        {
+            List<string> allUserIds = new();
+            string? cursor = null;
+
+            JsonSerializerOptions opts = new()
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+                PropertyNameCaseInsensitive = true,
+            };
+
+            do
+            {
+                string url = $"chat/chatters?broadcaster_id={Uri.EscapeDataString(broadcasterId)}&moderator_id={Uri.EscapeDataString(botUserId)}&first=1000";
+                if (cursor is not null)
+                {
+                    url += $"&after={Uri.EscapeDataString(cursor)}";
+                }
+
+                HelixPaginatedResponse<TwitchChatter>? response = await _http.GetFromJsonAsync<HelixPaginatedResponse<TwitchChatter>>(
+                    url, opts, ct);
+
+                if (response?.Data is not null)
+                {
+                    foreach (TwitchChatter chatter in response.Data)
+                    {
+                        allUserIds.Add(chatter.UserId);
+                    }
+                }
+
+                cursor = response?.Pagination?.Cursor;
+            }
+            while (!string.IsNullOrEmpty(cursor));
+
+            _logger.LogDebug("Fetched {Count} chatters for broadcaster {BroadcasterId}", allUserIds.Count, broadcasterId);
+            return allUserIds;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "Failed to get chatters for broadcaster {BroadcasterId}", broadcasterId);
+            return Array.Empty<string>();
+        }
+    }
+
     private sealed class HelixDataResponse<T>
     {
         [JsonPropertyName("data")]

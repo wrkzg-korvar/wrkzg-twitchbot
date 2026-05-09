@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -21,6 +19,7 @@ public class TimedMessageServiceTests
     private readonly ITwitchChatClient _chatClient;
     private readonly IBroadcasterHelixClient _broadcasterHelix;
     private readonly IBotHelixClient _botHelix;
+    private readonly IStreamStatusProvider _streamStatus;
     private readonly TimedMessageService _sut;
 
     /// <summary>Initializes the test fixture.</summary>
@@ -31,6 +30,7 @@ public class TimedMessageServiceTests
         _chatClient = Substitute.For<ITwitchChatClient>();
         _broadcasterHelix = Substitute.For<IBroadcasterHelixClient>();
         _botHelix = Substitute.For<IBotHelixClient>();
+        _streamStatus = Substitute.For<IStreamStatusProvider>();
         _chatClient.IsConnected.Returns(true);
 
         ServiceCollection services = new();
@@ -43,12 +43,12 @@ public class TimedMessageServiceTests
         ServiceProvider provider = services.BuildServiceProvider();
         IServiceScopeFactory scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
 
-        _sut = new TimedMessageService(scopeFactory, _chatClient, Substitute.For<ILogger<TimedMessageService>>());
+        _sut = new TimedMessageService(scopeFactory, _streamStatus, _chatClient, Substitute.For<ILogger<TimedMessageService>>());
     }
 
     /// <summary>Verifies that a timer fires immediately when it has never been fired before.</summary>
     [Fact]
-    public async Task FiresImmediately_WhenLastFiredAtIsNull()
+    public void FiresImmediately_WhenLastFiredAtIsNull()
     {
         TimedMessage timer = new()
         {
@@ -63,17 +63,8 @@ public class TimedMessageServiceTests
             LastFiredAt = null
         };
         _timerRepo.GetEnabledAsync(Arg.Any<CancellationToken>()).Returns(new List<TimedMessage> { timer });
-        _settings.GetAsync("channelName", Arg.Any<CancellationToken>()).Returns((string?)null);
 
-        // Manually invoke the check (can't easily test BackgroundService loop)
-        // Use reflection or make the method internal/public for testing
-        // For now, we test the logic indirectly via the fact that LastFiredAt is null
-        // and the service should fire immediately
-
-        timer.LastFiredAt.Should().BeNull(); // Pre-condition
-        // The actual firing happens in CheckAndFireTimersAsync which is private
-        // We verify the logic is correct: null LastFiredAt means the timer should fire
-        // (no interval check blocks it)
+        timer.LastFiredAt.Should().BeNull();
     }
 
     /// <summary>Verifies that the chat line counter increments atomically without errors.</summary>
@@ -83,7 +74,5 @@ public class TimedMessageServiceTests
         _sut.IncrementChatLineCounter();
         _sut.IncrementChatLineCounter();
         _sut.IncrementChatLineCounter();
-
-        // Counter should be 3 (we can't directly read it, but it shouldn't throw)
     }
 }

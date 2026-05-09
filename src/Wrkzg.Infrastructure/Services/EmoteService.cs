@@ -23,6 +23,7 @@ public class EmoteService : IHostedService, IEmoteService, IDisposable
 
     private volatile IReadOnlyList<EmoteDto> _cachedEmotes = Array.Empty<EmoteDto>();
     private Timer? _timer;
+    private bool _initialLoadDone;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="EmoteService"/> class.
@@ -45,6 +46,38 @@ public class EmoteService : IHostedService, IEmoteService, IDisposable
 
     /// <inheritdoc />
     public async Task RefreshAsync(CancellationToken ct = default)
+    {
+        if (!await _refreshLock.WaitAsync(TimeSpan.FromSeconds(5), ct))
+        {
+            _logger.LogDebug("Emote refresh already in progress, skipping");
+            return;
+        }
+
+        try
+        {
+            // If another caller already populated the cache while we were waiting
+            // for the semaphore, skip the expensive Helix API calls.
+            if (_cachedEmotes.Count > 0)
+            {
+                _logger.LogDebug(
+                    "Emote cache already populated ({Count} emotes), skipping redundant refresh",
+                    _cachedEmotes.Count);
+                return;
+            }
+
+            await LoadEmotesAsync(ct);
+        }
+        finally
+        {
+            _refreshLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// Forces a full reload of the emote cache, even if already populated.
+    /// Used by the 30-minute periodic timer to pick up newly added emotes.
+    /// </summary>
+    private async Task ForceRefreshAsync(CancellationToken ct = default)
     {
         if (!await _refreshLock.WaitAsync(TimeSpan.FromSeconds(5), ct))
         {
@@ -89,7 +122,18 @@ public class EmoteService : IHostedService, IEmoteService, IDisposable
     {
         try
         {
-            await RefreshAsync();
+            // First tick after startup: defer to RefreshAsync (skips when the
+            // frontend has already populated the cache via /api/emotes/refresh).
+            // Subsequent 30-min ticks force-reload to pick up newly added emotes.
+            if (!_initialLoadDone)
+            {
+                _initialLoadDone = true;
+                await RefreshAsync();
+            }
+            else
+            {
+                await ForceRefreshAsync();
+            }
 
             // Retry after 30s if cache is still empty (typical at startup when tokens aren't ready yet)
             if (_cachedEmotes.Count == 0)
@@ -99,7 +143,7 @@ public class EmoteService : IHostedService, IEmoteService, IDisposable
                 {
                     try
                     {
-                        await RefreshAsync();
+                        await ForceRefreshAsync();
                         if (_cachedEmotes.Count > 0)
                         {
                             _logger.LogInformation("Emote retry successful — {Count} emotes loaded", _cachedEmotes.Count);

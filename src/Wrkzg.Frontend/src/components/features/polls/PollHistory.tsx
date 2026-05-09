@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Trophy, ChevronDown, ChevronRight, RotateCcw } from "lucide-react";
+import { Trophy, ChevronDown, ChevronRight, RotateCcw, BarChart3 } from "lucide-react";
 import { pollsApi } from "../../../api/polls";
 import { SmartDataTable } from "../../../components/ui/DataTable";
+import { EmptyState } from "../../../components/ui/EmptyState";
 import { showToast } from "../../../hooks/useToast";
 import type { SmartColumn } from "../../../components/ui/DataTable";
 import type { PollHistoryItem, PollTemplate } from "../../../types/polls";
@@ -74,16 +75,22 @@ export function PollHistory({ items }: PollHistoryProps) {
 
   if (closedItems.length === 0) {
     return (
-      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-        <h2 className="text-sm font-semibold text-[var(--color-text)] mb-2">Poll History</h2>
-        <p className="text-sm text-[var(--color-text-muted)]">No polls yet.</p>
+      <div className="rounded-lg border border-[var(--color-border)] overflow-hidden">
+        <div className="bg-[var(--color-surface)] px-4 py-3 border-b border-[var(--color-border)]">
+          <h2 className="text-sm font-semibold text-[var(--color-text)]">Poll History</h2>
+        </div>
+        <EmptyState
+          icon={BarChart3}
+          title="No poll history yet"
+          description="Completed polls will appear here."
+        />
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="rounded-t-lg border border-b-0 border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3">
+    <div className="rounded-lg border border-[var(--color-border)] overflow-hidden">
+      <div className="bg-[var(--color-surface)] px-4 py-3 border-b border-[var(--color-border)]">
         <h2 className="text-sm font-semibold text-[var(--color-text)]">Poll History</h2>
       </div>
       <SmartDataTable<PollHistoryItem>
@@ -93,6 +100,7 @@ export function PollHistory({ items }: PollHistoryProps) {
         searchPlaceholder="Search polls..."
         emptyMessage="No polls yet."
         getRowKey={(row) => row.id}
+        containerClassName=""
       />
     </div>
   );

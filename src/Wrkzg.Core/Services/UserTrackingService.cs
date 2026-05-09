@@ -17,28 +17,31 @@ namespace Wrkzg.Core.Services;
 /// Background service that runs every 60 seconds while the app is active.
 ///
 /// Each tick:
-///   1. Check if the stream is live (via Helix API)
-///   2. If live: award points and increment watch time for active users
-///   3. Broadcast viewer count to dashboard via SignalR
+///   1. Read cached stream status from <see cref="IStreamStatusProvider"/>.
+///   2. If live: pull all current chatters via Helix Get Chatters and mark them active
+///      (covers lurkers who don't send messages).
+///   3. Award points and increment watch time for active users.
+///   4. Broadcast viewer count to dashboard via SignalR.
 ///
-/// "Active users" are tracked by the TwitchChatClient — anyone who sent
-/// a message or joined the channel in the last 5 minutes is considered active.
-///
-/// Uses IServiceScopeFactory for scoped DB access from this Singleton service.
+/// "Active users" combines two sources:
+///   - Chatters from Helix Get Chatters (refreshed every 60s, includes lurkers)
+///   - Message senders marked via <see cref="MarkUserActive"/> by ChatMessagePipeline
 /// </summary>
 public class UserTrackingService : IUserTrackingService, IDisposable
 {
-    private readonly IBroadcasterHelixClient _helix;
+    private readonly IStreamStatusProvider _streamStatus;
+    private readonly IBotHelixClient _botHelix;
     private readonly ITwitchChatClient _chatClient;
     private readonly IChatEventBroadcaster _broadcaster;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<UserTrackingService> _logger;
 
     private Timer? _timer;
+    private string? _cachedBroadcasterId;
 
     /// <summary>
-    /// Tracks recently active users (sent a message within the last 5 minutes).
-    /// Key: TwitchId. Populated by ChatMessagePipeline when processing messages.
+    /// Tracks recently active users (chatters from Helix or message senders within the last 5 minutes).
+    /// Key: TwitchId.
     /// </summary>
     private readonly Dictionary<string, DateTimeOffset> _recentlyActiveUsers = new();
     private readonly object _activeUsersLock = new();
@@ -46,19 +49,22 @@ public class UserTrackingService : IUserTrackingService, IDisposable
     /// <summary>
     /// Initializes a new instance of <see cref="UserTrackingService"/>.
     /// </summary>
-    /// <param name="helix">The Twitch Helix API client for checking stream live status.</param>
+    /// <param name="streamStatus">Cached stream live status provider — replaces direct Helix polling.</param>
+    /// <param name="botHelix">Bot-authenticated Helix client used for Get Chatters polling.</param>
     /// <param name="chatClient">The Twitch IRC chat client for checking connection state.</param>
     /// <param name="broadcaster">Broadcasts viewer count updates to the dashboard.</param>
     /// <param name="scopeFactory">Factory for creating DI scopes to resolve scoped repositories.</param>
     /// <param name="logger">Logger instance for diagnostics.</param>
     public UserTrackingService(
-        IBroadcasterHelixClient helix,
+        IStreamStatusProvider streamStatus,
+        IBotHelixClient botHelix,
         ITwitchChatClient chatClient,
         IChatEventBroadcaster broadcaster,
         IServiceScopeFactory scopeFactory,
         ILogger<UserTrackingService> logger)
     {
-        _helix = helix;
+        _streamStatus = streamStatus;
+        _botHelix = botHelix;
         _chatClient = chatClient;
         _broadcaster = broadcaster;
         _scopeFactory = scopeFactory;
@@ -68,13 +74,10 @@ public class UserTrackingService : IUserTrackingService, IDisposable
     /// <summary>
     /// Starts the 60-second polling timer for user tracking and point awards.
     /// </summary>
-    /// <param name="cancellationToken">Cancellation token for startup.</param>
-    /// <returns>A completed task once the timer is started.</returns>
     public Task StartAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("UserTrackingService starting — polling every 60 seconds");
 
-        // Start polling every 60 seconds
         _timer = new Timer(OnTick, null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(60));
 
         return Task.CompletedTask;
@@ -83,8 +86,6 @@ public class UserTrackingService : IUserTrackingService, IDisposable
     /// <summary>
     /// Stops the polling timer and releases resources.
     /// </summary>
-    /// <param name="cancellationToken">Cancellation token for shutdown.</param>
-    /// <returns>A completed task once the timer is disposed.</returns>
     public Task StopAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("UserTrackingService stopping");
@@ -127,40 +128,70 @@ public class UserTrackingService : IUserTrackingService, IDisposable
 
     private async Task TickAsync(CancellationToken ct)
     {
-        // Only track if bot is connected
         if (!_chatClient.IsConnected || _chatClient.JoinedChannel is null)
         {
+            _logger.LogDebug("UserTracking tick skipped — chat client not connected");
             return;
         }
 
-        string channel = _chatClient.JoinedChannel;
-
-        // Check if stream is live
-        StreamInfo? stream = await _helix.GetStreamAsync(channel, ct);
-
-        if (stream is null)
+        if (!_streamStatus.IsLive)
         {
-            // Stream is offline — no points, no watch time
+            _logger.LogDebug("UserTracking tick skipped — stream is offline");
             return;
         }
 
-        // Broadcast viewer count to dashboard
-        await _broadcaster.BroadcastViewerCountAsync(stream.ViewerCount, ct);
+        await _broadcaster.BroadcastViewerCountAsync(_streamStatus.ViewerCount, ct);
 
-        // Get recently active users (last 5 minutes)
+        // Resolve broadcaster ID for the Get Chatters endpoint (cached after first lookup).
+        if (_cachedBroadcasterId is null)
+        {
+            _cachedBroadcasterId = await ResolveBroadcasterIdAsync(ct);
+            if (_cachedBroadcasterId is null)
+            {
+                _logger.LogWarning(
+                    "Cannot resolve broadcaster ID — falling back to chat-message-only tracking");
+            }
+        }
+
+        // Pull all current chatters (lurkers + speakers) and mark them active.
+        if (_cachedBroadcasterId is not null)
+        {
+            try
+            {
+                IReadOnlyList<string> chatters = await _botHelix.GetChattersAsync(_cachedBroadcasterId, ct);
+                lock (_activeUsersLock)
+                {
+                    DateTimeOffset now = DateTimeOffset.UtcNow;
+                    foreach (string chatterId in chatters)
+                    {
+                        _recentlyActiveUsers[chatterId] = now;
+                    }
+                }
+                _logger.LogDebug(
+                    "Marked {Count} chatters as active from Helix GetChatters", chatters.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Failed to poll chatters — using chat-message-only tracking this tick");
+            }
+        }
+
         List<string> activeUserIds = GetAndCleanActiveUsers();
+
+        _logger.LogDebug(
+            "UserTracking tick — connected: {Connected}, live: {IsLive}, active users: {ActiveCount}",
+            _chatClient.IsConnected, _streamStatus.IsLive, activeUserIds.Count);
 
         if (activeUserIds.Count == 0)
         {
             return;
         }
 
-        // Award points and watch time
         using IServiceScope scope = _scopeFactory.CreateScope();
         IUserRepository users = scope.ServiceProvider.GetRequiredService<IUserRepository>();
         ISettingsRepository settings = scope.ServiceProvider.GetRequiredService<ISettingsRepository>();
 
-        // Read settings
         string? pointsPerMinuteStr = await settings.GetAsync("Points.PerMinute", ct);
         string? subMultiplierStr = await settings.GetAsync("Points.SubMultiplier", ct);
 
@@ -177,7 +208,6 @@ public class UserTrackingService : IUserTrackingService, IDisposable
                 continue;
             }
 
-            // Calculate points
             long points = user.IsSubscriber
                 ? (long)(pointsPerMinute * subMultiplier)
                 : pointsPerMinute;
@@ -191,9 +221,9 @@ public class UserTrackingService : IUserTrackingService, IDisposable
 
         if (usersRewarded > 0)
         {
-            _logger.LogDebug(
-                "Awarded {Points} points to {Count} active users (stream: {Channel})",
-                pointsPerMinute, usersRewarded, channel);
+            _logger.LogInformation(
+                "Awarded {Points} points to {Count} active users (chatters + message senders)",
+                pointsPerMinute, usersRewarded);
         }
     }
 
@@ -228,5 +258,48 @@ public class UserTrackingService : IUserTrackingService, IDisposable
         }
 
         return active;
+    }
+
+    /// <summary>
+    /// Resolves the broadcaster's Twitch user ID from the Broadcaster OAuth token.
+    /// Cached after first successful resolution.
+    /// </summary>
+    private async Task<string?> ResolveBroadcasterIdAsync(CancellationToken ct)
+    {
+        try
+        {
+            using IServiceScope scope = _scopeFactory.CreateScope();
+            ISecureStorage storage = scope.ServiceProvider.GetRequiredService<ISecureStorage>();
+            ITwitchOAuthService oauth = scope.ServiceProvider.GetRequiredService<ITwitchOAuthService>();
+
+            TwitchTokens? broadcasterToken = await storage.LoadTokensAsync(TokenType.Broadcaster, ct);
+            if (broadcasterToken is null)
+            {
+                return null;
+            }
+
+            TwitchTokenValidation? validation = await oauth.ValidateTokenAsync(broadcasterToken.AccessToken, ct);
+            if (validation is null)
+            {
+                try
+                {
+                    TwitchTokens refreshed = await oauth.RefreshTokenAsync(broadcasterToken.RefreshToken, ct);
+                    await storage.SaveTokensAsync(TokenType.Broadcaster, refreshed, ct);
+                    validation = await oauth.ValidateTokenAsync(refreshed.AccessToken, ct);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to refresh broadcaster token for chatters endpoint");
+                    return null;
+                }
+            }
+
+            return validation?.UserId;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to resolve broadcaster ID for chatters endpoint");
+            return null;
+        }
     }
 }

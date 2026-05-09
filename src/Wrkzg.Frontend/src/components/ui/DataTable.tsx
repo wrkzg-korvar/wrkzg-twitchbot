@@ -70,6 +70,18 @@ interface SmartDataTableProps<T> {
   onRowClick?: (row: T) => void;
   /** Custom row class */
   rowClassName?: (row: T) => string;
+  /**
+   * CSS class applied to the outer wrapper. When provided (even as empty string)
+   * it completely replaces the default `"rounded-lg border ... overflow-hidden"`,
+   * letting a parent component control rounding/border.
+   */
+  containerClassName?: string;
+  /**
+   * When provided, the table delegates sort handling to the parent (server-side
+   * sorting). The parent receives the new sort key and direction; SmartDataTable
+   * still updates its own indicator state so the arrow renders correctly.
+   */
+  onSortChange?: (sortKey: string, sortDir: "asc" | "desc") => void;
 }
 
 function getNestedValue(obj: unknown, key: string): unknown {
@@ -92,6 +104,8 @@ export function SmartDataTable<T>({
   getRowKey,
   onRowClick,
   rowClassName,
+  containerClassName,
+  onSortChange,
 }: SmartDataTableProps<T>) {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -160,12 +174,10 @@ export function SmartDataTable<T>({
     : processedData;
 
   function handleSort(key: string) {
-    if (sortKey === key) {
-      setSortDir(sortDir === "asc" ? "desc" : "asc");
-    } else {
-      setSortKey(key);
-      setSortDir("asc");
-    }
+    const newDir: "asc" | "desc" = sortKey === key && sortDir === "asc" ? "desc" : "asc";
+    setSortKey(key);
+    setSortDir(newDir);
+    onSortChange?.(key, newDir);
   }
 
   function handlePageSizeChange(newSize: number) {
@@ -175,10 +187,12 @@ export function SmartDataTable<T>({
 
   const hasSearch = searchableKeys.length > 0;
 
+  const wrapperClass = containerClassName ?? "rounded-lg border border-[var(--color-border)] overflow-hidden";
+
   // Loading skeleton
   if (isLoading) {
     return (
-      <div className="rounded-lg border border-[var(--color-border)] overflow-hidden">
+      <div className={wrapperClass}>
         <div className="space-y-0">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="flex gap-4 border-b border-[var(--color-border)] px-4 py-3">
@@ -195,7 +209,7 @@ export function SmartDataTable<T>({
   }
 
   return (
-    <div className="rounded-lg border border-[var(--color-border)] overflow-hidden">
+    <div className={wrapperClass}>
       {/* Header bar with search + actions */}
       {(hasSearch || headerActions) && (
         <div className="flex items-center gap-3 border-b border-[var(--color-border)] px-4 py-3">

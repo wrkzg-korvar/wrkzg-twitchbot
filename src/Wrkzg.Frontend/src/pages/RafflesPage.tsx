@@ -72,9 +72,9 @@ export function RafflesPage() {
         />
       )}
 
-      <RaffleAnnouncementTemplates />
-
       <RaffleHistory items={history ?? []} />
+
+      <RaffleAnnouncementTemplates />
     </div>
   );
 }

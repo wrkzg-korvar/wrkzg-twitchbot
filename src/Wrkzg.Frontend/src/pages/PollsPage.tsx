@@ -84,9 +84,9 @@ export function PollsPage() {
 
       {livePoll && <PollActive poll={livePoll} />}
 
-      <PollAnnouncementTemplates />
-
       <PollHistory items={history ?? []} />
+
+      <PollAnnouncementTemplates />
     </div>
   );
 }

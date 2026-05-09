@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.2] — 2026-05-09
+
+### Fixed
+- **Watchtime Tracking:** Users who are in chat but not actively sending messages now correctly receive watchtime and points. The bot polls the Twitch Helix "Get Chatters" endpoint every 60 seconds to detect all viewers, not just message senders. Requires the `moderator:read:chatters` scope — re-connect your Bot account in Settings to grant this scope.
+- **Performance:** Eliminated redundant Twitch Helix API calls. Three separate services were independently polling stream status (4+ API calls/minute for the same data). A new centralized StreamStatusProvider reduces this to exactly 1 call/minute.
+- **Performance:** Per-message database writes for user stats (message count, last seen, role sync) are now batched every 30 seconds instead of written individually for each chat message. In active chats, this reduces database writes from 50+/minute to ~2/minute.
+
+### Added
+- **Diagnostic Logging:** Structured log files are now written to the Wrkzg data directory with 7-day rolling retention (50 MB per day). A "Download Diagnostic Log" button on the Settings page enables easy log file sharing for bug reports.
+- **Diagnostics API:** `GET /api/diagnostics/log` returns the current log file as a download. `GET /api/diagnostics/log/entries?count=100` returns the last N log lines as JSON.
+- **StreamStatusProvider:** New centralized singleton service that caches stream live status. All background services consume from this cache instead of making independent Helix API calls.
+- **UserStatsBatcher:** Batches per-message user stat updates and flushes them to the database every 30 seconds.
+
 ## [2.4.0] — 2026-04-11
 
 ### Added

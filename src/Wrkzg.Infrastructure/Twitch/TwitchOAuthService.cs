@@ -35,6 +35,7 @@ public class TwitchOAuthService : ITwitchOAuthService
         "chat:read chat:edit user:write:chat " +
         "moderator:manage:announcements " +
         "moderator:manage:banned_users " +
+        "moderator:read:chatters " +
         "user:read:emotes";
 
     private const string BroadcasterScopes =

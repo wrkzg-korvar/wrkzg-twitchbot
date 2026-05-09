@@ -66,6 +66,7 @@
     -->
     <ItemGroup Label="Cryptography">
         <PackageReference Include="System.Security.Cryptography.ProtectedData" />
+        <PackageReference Include="System.Security.Cryptography.Xml" />
     </ItemGroup>
 
 

@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Search } from "lucide-react";
 import { usersApi } from "../api/users";
 import { PageHeader } from "../components/ui/PageHeader";
 import { SmartDataTable } from "../components/ui/DataTable";
+import { Pagination } from "../components/ui/Pagination";
 import { UserDetailModal } from "../components/features/users/UserDetailModal";
 import { LockBanner } from "../components/ui/LockBanner";
 import { useModuleLock } from "../hooks/useModuleLock";
@@ -10,13 +12,48 @@ import type { SmartColumn } from "../components/ui/DataTable";
 import type { PaginatedUsers } from "../api/users";
 import type { User } from "../types/users";
 
+// Frontend column keys → backend sort keys understood by IUserRepository.GetPaginatedAsync
+const SORT_KEY_MAP: Record<string, string> = {
+  displayName: "username",
+  watchedMinutes: "watchtime",
+  messageCount: "messages",
+  points: "points",
+};
+
 export function UsersPage() {
   const { isLocked, lockReason } = useModuleLock("/users");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
+  // Server-side pagination state
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [sortBy, setSortBy] = useState("points");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  // Debounce search input by 300ms before triggering a query
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Reset to first page whenever the underlying query parameters change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, sortBy, sortDir, pageSize]);
+
   const { data, isLoading, isError } = useQuery<PaginatedUsers>({
-    queryKey: ["users"],
-    queryFn: () => usersApi.getPaginated({ sortBy: "points", order: "desc", pageSize: 10000 }),
+    queryKey: ["users", debouncedSearch, sortBy, sortDir, page, pageSize],
+    queryFn: () =>
+      usersApi.getPaginated({
+        search: debouncedSearch || undefined,
+        sortBy: SORT_KEY_MAP[sortBy] ?? sortBy,
+        order: sortDir,
+        page,
+        pageSize,
+      }),
+    placeholderData: (prev) => prev,
   });
 
   const users = data?.items ?? [];
@@ -26,7 +63,6 @@ export function UsersPage() {
       key: "displayName",
       header: "User",
       sortable: true,
-      searchable: true,
       render: (_, row) => (
         <span>
           <span className="font-medium text-[var(--color-text)]">{row.displayName}</span>
@@ -52,13 +88,6 @@ export function UsersPage() {
           )}
         </span>
       ),
-    },
-    {
-      key: "username",
-      header: "Username",
-      searchable: true,
-      className: "hidden",
-      render: () => null,
     },
     {
       key: "points",
@@ -90,7 +119,6 @@ export function UsersPage() {
     {
       key: "lastSeenAt",
       header: "Last Seen",
-      sortable: true,
       className: "text-right text-xs text-[var(--color-text-muted)]",
       render: (v) => formatRelativeTime(v as string),
     },
@@ -128,16 +156,51 @@ export function UsersPage() {
         }
       />
 
-      <SmartDataTable<User>
-        data={users}
-        columns={columns}
-        pageSize={50}
-        searchPlaceholder="Search users..."
-        emptyMessage="No users tracked yet. Users appear here when they send messages in your chat."
-        isLoading={isLoading}
-        getRowKey={(row) => row.id}
-        onRowClick={isLocked ? undefined : (row) => setSelectedUser(row)}
-      />
+      <div className="rounded-lg border border-[var(--color-border)] overflow-hidden">
+        {/* Server-driven search */}
+        <div className="flex items-center gap-3 border-b border-[var(--color-border)] px-4 py-3">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search users..."
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] pl-9 pr-3 py-1.5 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-brand)]"
+            />
+          </div>
+        </div>
+
+        <SmartDataTable<User>
+          data={users}
+          columns={columns}
+          pageSize={0}
+          isLoading={isLoading && !data}
+          getRowKey={(row) => row.id}
+          onRowClick={isLocked ? undefined : (row) => setSelectedUser(row)}
+          onSortChange={(key, dir) => {
+            setSortBy(key);
+            setSortDir(dir);
+          }}
+          emptyMessage={
+            debouncedSearch
+              ? `No users matching "${debouncedSearch}".`
+              : "No users tracked yet. Users appear here when they send messages in your chat."
+          }
+          containerClassName=""
+        />
+
+        {data && data.totalCount > 0 && (
+          <Pagination
+            currentPage={page}
+            totalPages={data.totalPages}
+            totalItems={data.totalCount}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+        )}
+      </div>
 
       {selectedUser && (
         <UserDetailModal

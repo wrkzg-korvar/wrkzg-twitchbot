@@ -50,7 +50,8 @@
   </ItemGroup>
 
   <ItemGroup Label="Cryptography">
-    <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="9.0.0" />
+    <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.7" />
+    <PackageVersion Include="System.Security.Cryptography.Xml"           Version="10.0.7" />
   </ItemGroup>
 
 
@@ -60,7 +61,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Source Link">
-    <PackageVersion Include="Microsoft.SourceLink.GitHub"              Version="8.0.0" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub"              Version="10.0.203" />
   </ItemGroup>
 
   <ItemGroup Label="Logging">

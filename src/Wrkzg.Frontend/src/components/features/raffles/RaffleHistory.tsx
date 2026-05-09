@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Trophy, ChevronDown, ChevronRight, RotateCcw } from "lucide-react";
+import { Trophy, ChevronDown, ChevronRight, RotateCcw, Gift } from "lucide-react";
 import { rafflesApi } from "../../../api/raffles";
 import { SmartDataTable } from "../../../components/ui/DataTable";
+import { EmptyState } from "../../../components/ui/EmptyState";
 import { showToast } from "../../../hooks/useToast";
 import { DrawHistoryList } from "./RaffleActive";
 import type { SmartColumn } from "../../../components/ui/DataTable";
@@ -102,16 +103,22 @@ export function RaffleHistory({ items }: RaffleHistoryProps) {
 
   if (closedItems.length === 0) {
     return (
-      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-        <h2 className="text-sm font-semibold text-[var(--color-text)] mb-2">Raffle History</h2>
-        <p className="text-sm text-[var(--color-text-muted)]">No raffles yet.</p>
+      <div className="rounded-lg border border-[var(--color-border)] overflow-hidden">
+        <div className="bg-[var(--color-surface)] px-4 py-3 border-b border-[var(--color-border)]">
+          <h2 className="text-sm font-semibold text-[var(--color-text)]">Raffle History</h2>
+        </div>
+        <EmptyState
+          icon={Gift}
+          title="No raffle history yet"
+          description="Completed raffles will appear here."
+        />
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="rounded-t-lg border border-b-0 border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3">
+    <div className="rounded-lg border border-[var(--color-border)] overflow-hidden">
+      <div className="bg-[var(--color-surface)] px-4 py-3 border-b border-[var(--color-border)]">
         <h2 className="text-sm font-semibold text-[var(--color-text)]">Raffle History</h2>
       </div>
       <SmartDataTable<RaffleHistoryItem>
@@ -125,10 +132,11 @@ export function RaffleHistory({ items }: RaffleHistoryProps) {
         rowClassName={(row) =>
           expandedId === row.id ? "bg-[var(--color-elevated)]" : ""
         }
+        containerClassName=""
       />
 
       {expandedId !== null && (
-        <div className="border border-t-0 border-[var(--color-border)] rounded-b-lg bg-[var(--color-elevated)] px-4 py-3">
+        <div className="bg-[var(--color-elevated)] px-4 py-3 border-t border-[var(--color-border)]">
           {loadingExpanded ? (
             <p className="text-xs text-[var(--color-text-muted)]">Loading draw history...</p>
           ) : expandedRaffle && expandedRaffle.draws && expandedRaffle.draws.length > 0 ? (

@@ -11,30 +11,33 @@ using Wrkzg.Core.Models;
 namespace Wrkzg.Infrastructure.Services;
 
 /// <summary>
-/// Background service that polls the Twitch Helix API every 60 seconds
-/// to track stream sessions, viewer counts, and category changes.
+/// Background service that polls the cached <see cref="IStreamStatusProvider"/>
+/// every 60 seconds to track stream sessions, viewer counts, and category changes.
 /// </summary>
 public class StreamAnalyticsService : IHostedService, IDisposable
 {
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IStreamStatusProvider _streamStatus;
     private readonly ILogger<StreamAnalyticsService> _logger;
 
     private Timer? _timer;
     private StreamSession? _currentSession;
     private CategorySegment? _currentSegment;
-    private string? _channelLogin;
     private bool _isPolling;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StreamAnalyticsService"/> class.
     /// </summary>
     /// <param name="scopeFactory">Factory for creating scoped service providers to access repositories.</param>
+    /// <param name="streamStatus">Cached stream live status provider — replaces direct Helix polling.</param>
     /// <param name="logger">The logger for analytics polling diagnostics.</param>
     public StreamAnalyticsService(
         IServiceScopeFactory scopeFactory,
+        IStreamStatusProvider streamStatus,
         ILogger<StreamAnalyticsService> logger)
     {
         _scopeFactory = scopeFactory;
+        _streamStatus = streamStatus;
         _logger = logger;
     }
 
@@ -43,14 +46,9 @@ public class StreamAnalyticsService : IHostedService, IDisposable
     {
         _logger.LogInformation("StreamAnalyticsService starting");
 
-        // Load channel name from settings
         try
         {
             using IServiceScope scope = _scopeFactory.CreateScope();
-            ISettingsRepository settings = scope.ServiceProvider.GetRequiredService<ISettingsRepository>();
-            _channelLogin = await settings.GetAsync("Bot.Channel", ct);
-
-            // Check for any unclosed session from a previous crash
             IStreamAnalyticsRepository repo = scope.ServiceProvider.GetRequiredService<IStreamAnalyticsRepository>();
             StreamSession? activeSession = await repo.GetActiveSessionAsync(ct);
             if (activeSession is not null)
@@ -66,8 +64,7 @@ public class StreamAnalyticsService : IHostedService, IDisposable
             _logger.LogWarning(ex, "Failed to initialize StreamAnalyticsService");
         }
 
-        // Poll every 60 seconds
-        _timer = new Timer(OnTimerTick, null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(60));
+        _timer = new Timer(OnTimerTick, null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(60));
     }
 
     /// <summary>Stops the analytics polling timer.</summary>
@@ -108,24 +105,11 @@ public class StreamAnalyticsService : IHostedService, IDisposable
 
     private async Task PollStreamAsync()
     {
-        if (string.IsNullOrWhiteSpace(_channelLogin))
-        {
-            // Try to load channel name (may have been set after startup)
-            using IServiceScope settingsScope = _scopeFactory.CreateScope();
-            ISettingsRepository settingsRepo = settingsScope.ServiceProvider
-                .GetRequiredService<ISettingsRepository>();
-            _channelLogin = await settingsRepo.GetAsync("Bot.Channel");
-            if (string.IsNullOrWhiteSpace(_channelLogin))
-            {
-                return;
-            }
-        }
+        // StreamStatusProvider handles channel resolution and Helix polling.
+        StreamInfo? stream = _streamStatus.CurrentStream;
 
         using IServiceScope scope = _scopeFactory.CreateScope();
-        IBroadcasterHelixClient helix = scope.ServiceProvider.GetRequiredService<IBroadcasterHelixClient>();
         IStreamAnalyticsRepository repo = scope.ServiceProvider.GetRequiredService<IStreamAnalyticsRepository>();
-
-        StreamInfo? stream = await helix.GetStreamAsync(_channelLogin);
 
         if (stream is not null)
         {
@@ -139,7 +123,6 @@ public class StreamAnalyticsService : IHostedService, IDisposable
 
     private async Task HandleStreamLiveAsync(StreamInfo stream, IStreamAnalyticsRepository repo)
     {
-        // Create session if not exists
         if (_currentSession is null)
         {
             _currentSession = await repo.CreateSessionAsync(new StreamSession
@@ -151,7 +134,6 @@ public class StreamAnalyticsService : IHostedService, IDisposable
             _logger.LogInformation("Stream session started: {Title}", stream.Title);
         }
 
-        // Add viewer snapshot
         await repo.AddSnapshotAsync(new ViewerSnapshot
         {
             StreamSessionId = _currentSession.Id,
@@ -159,21 +141,18 @@ public class StreamAnalyticsService : IHostedService, IDisposable
             Timestamp = DateTimeOffset.UtcNow
         });
 
-        // Update peak viewers
         if (stream.ViewerCount > _currentSession.PeakViewers)
         {
             _currentSession.PeakViewers = stream.ViewerCount;
             await repo.UpdateSessionAsync(_currentSession);
         }
 
-        // Check for category change
         string currentCategory = !string.IsNullOrWhiteSpace(stream.GameName)
             ? stream.GameName
             : "Unknown";
 
         if (_currentSegment is null || !string.Equals(_currentSegment.CategoryName, currentCategory, StringComparison.Ordinal))
         {
-            // Close old segment
             if (_currentSegment is not null)
             {
                 _currentSegment.EndedAt = DateTimeOffset.UtcNow;
@@ -183,7 +162,6 @@ public class StreamAnalyticsService : IHostedService, IDisposable
                     _currentSegment.CategoryName, _currentSegment.DurationMinutes);
             }
 
-            // Open new segment
             _currentSegment = await repo.CreateSegmentAsync(new CategorySegment
             {
                 StreamSessionId = _currentSession.Id,
@@ -197,7 +175,6 @@ public class StreamAnalyticsService : IHostedService, IDisposable
 
     private async Task HandleStreamOfflineAsync(IStreamAnalyticsRepository repo)
     {
-        // Close current segment
         if (_currentSegment is not null)
         {
             _currentSegment.EndedAt = DateTimeOffset.UtcNow;
@@ -205,11 +182,9 @@ public class StreamAnalyticsService : IHostedService, IDisposable
             await repo.UpdateSegmentAsync(_currentSegment);
         }
 
-        // Close session
         _currentSession!.EndedAt = DateTimeOffset.UtcNow;
         _currentSession.DurationMinutes = (int)(DateTimeOffset.UtcNow - _currentSession.StartedAt).TotalMinutes;
 
-        // Calculate average viewers from snapshots
         System.Collections.Generic.IReadOnlyList<ViewerSnapshot> snapshots =
             await repo.GetSnapshotsForSessionAsync(_currentSession.Id);
         if (snapshots.Count > 0)

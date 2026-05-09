@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Wrkzg.Core.Interfaces;
+using Wrkzg.Core.Models;
 
 namespace Wrkzg.Infrastructure.Twitch;
 
@@ -20,7 +21,12 @@ namespace Wrkzg.Infrastructure.Twitch;
 public class BroadcasterHelixClient : IBroadcasterHelixClient
 {
     private readonly HttpClient _http;
+    private readonly ISecureStorage _storage;
+    private readonly ITwitchOAuthService _oauth;
     private readonly ILogger<BroadcasterHelixClient> _logger;
+
+    private string? _cachedBroadcasterId;
+    private readonly SemaphoreSlim _broadcasterIdLock = new(1, 1);
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
@@ -32,11 +38,72 @@ public class BroadcasterHelixClient : IBroadcasterHelixClient
     /// Initializes a new instance of the <see cref="BroadcasterHelixClient"/> class.
     /// </summary>
     /// <param name="http">The typed HTTP client with TwitchAuthHandler configured for the Broadcaster token.</param>
+    /// <param name="storage">Secure storage for loading the Broadcaster token.</param>
+    /// <param name="oauth">OAuth service for token validation and refresh.</param>
     /// <param name="logger">The logger for Helix API diagnostics.</param>
-    public BroadcasterHelixClient(HttpClient http, ILogger<BroadcasterHelixClient> logger)
+    public BroadcasterHelixClient(
+        HttpClient http,
+        ISecureStorage storage,
+        ITwitchOAuthService oauth,
+        ILogger<BroadcasterHelixClient> logger)
     {
         _http = http;
+        _storage = storage;
+        _oauth = oauth;
         _logger = logger;
+    }
+
+    /// <summary>
+    /// Resolves the broadcaster's Twitch user ID from the Broadcaster OAuth token.
+    /// Thread-safe with caching — only validates the token once until invalidated.
+    /// </summary>
+    private async Task<string?> ResolveBroadcasterIdAsync(CancellationToken ct)
+    {
+        if (_cachedBroadcasterId is not null)
+        {
+            return _cachedBroadcasterId;
+        }
+
+        await _broadcasterIdLock.WaitAsync(ct);
+        try
+        {
+            if (_cachedBroadcasterId is not null)
+            {
+                return _cachedBroadcasterId;
+            }
+
+            TwitchTokens? token = await _storage.LoadTokensAsync(TokenType.Broadcaster, ct);
+            if (token is null)
+            {
+                _logger.LogWarning("No Broadcaster token available — cannot resolve broadcaster user ID");
+                return null;
+            }
+
+            TwitchTokenValidation? validation = await _oauth.ValidateTokenAsync(token.AccessToken, ct);
+            if (validation is null)
+            {
+                _logger.LogInformation("Broadcaster token expired — refreshing for ID resolution");
+                TwitchTokens refreshed = await _oauth.RefreshTokenAsync(token.RefreshToken, ct);
+                await _storage.SaveTokensAsync(TokenType.Broadcaster, refreshed, ct);
+                validation = await _oauth.ValidateTokenAsync(refreshed.AccessToken, ct);
+            }
+
+            _cachedBroadcasterId = validation?.UserId;
+            if (_cachedBroadcasterId is not null)
+            {
+                _logger.LogDebug("Resolved broadcaster user ID: {BroadcasterId}", _cachedBroadcasterId);
+            }
+            return _cachedBroadcasterId;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to resolve broadcaster user ID");
+            return null;
+        }
+        finally
+        {
+            _broadcasterIdLock.Release();
+        }
     }
 
     /// <summary>Gets the current stream information for a channel, or null if the channel is offline.</summary>
@@ -323,12 +390,24 @@ public class BroadcasterHelixClient : IBroadcasterHelixClient
     /// <summary>Gets all custom channel point rewards configured for the broadcaster's channel.</summary>
     public async Task<IReadOnlyList<TwitchCustomReward>> GetCustomRewardsAsync(CancellationToken ct = default)
     {
+        string? broadcasterId = await ResolveBroadcasterIdAsync(ct);
+        if (broadcasterId is null)
+        {
+            _logger.LogWarning("Cannot get custom rewards — failed to resolve broadcaster user ID");
+            return Array.Empty<TwitchCustomReward>();
+        }
+
         try
         {
-            HttpResponseMessage response = await _http.GetAsync("channel_points/custom_rewards", ct);
+            HttpResponseMessage response = await _http.GetAsync(
+                $"channel_points/custom_rewards?broadcaster_id={Uri.EscapeDataString(broadcasterId)}", ct);
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("Failed to get custom rewards: {Status}", response.StatusCode);
+                string body = await response.Content.ReadAsStringAsync(ct);
+                _logger.LogWarning(
+                    "Failed to get custom rewards: {Status} — {Body}. " +
+                    "Custom channel point rewards require Affiliate or Partner status.",
+                    response.StatusCode, body);
                 return Array.Empty<TwitchCustomReward>();
             }
 

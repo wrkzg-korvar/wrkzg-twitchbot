@@ -131,3 +131,18 @@ public sealed class TwitchGameInfo
     /// <summary>URL to the box art image template.</summary>
     public string BoxArtUrl { get; init; } = string.Empty;
 }
+
+/// <summary>
+/// A single chatter entry from the Helix "Get Chatters" endpoint.
+/// </summary>
+public sealed class TwitchChatter
+{
+    /// <summary>The Twitch user ID of the chatter.</summary>
+    public string UserId { get; init; } = string.Empty;
+
+    /// <summary>The login name of the chatter (lowercase).</summary>
+    public string UserLogin { get; init; } = string.Empty;
+
+    /// <summary>The display name of the chatter.</summary>
+    public string UserName { get; init; } = string.Empty;
+}
