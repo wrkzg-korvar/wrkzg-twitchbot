@@ -1,16 +1,16 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <!--
       ============================================================
       Wrkzg.Core
       ============================================================
-      Typ      : Class Library (Standard-SDK)
-      Aufgabe  : Business Logic, Domain Models, Interfaces,
-                 Chat Games, Services – KEIN Framework-Coupling.
-      Regel    : Dieses Projekt darf NUR folgende Abhängigkeiten haben:
-                 - Microsoft.Extensions.* (Abstractions, kein konkretes Framework)
-                 - Kein EF Core, kein ASP.NET Core, kein Photino
-                 Alles andere gehört in Infrastructure oder Api.
+      Type     : Class library (standard SDK)
+      Purpose  : Business logic, domain models, interfaces,
+                 chat games, services – NO framework coupling.
+      Rule     : This project may ONLY take the following dependencies:
+                 - Microsoft.Extensions.* (abstractions, no concrete framework)
+                 - No EF Core, no ASP.NET Core, no Photino
+                 Everything else belongs in Infrastructure or Api.
       ============================================================
     -->
 
@@ -18,26 +18,26 @@
         <AssemblyName>Wrkzg.Core</AssemblyName>
         <RootNamespace>Wrkzg.Core</RootNamespace>
 
-        <!-- Core soll die öffentlichste und stabilste API haben → strenge Doku-Pflicht -->
+        <!-- Core should expose the most public and most stable API → strict doc requirement -->
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
     </PropertyGroup>
 
     <PropertyGroup Label="Analyzer Strictness">
         <!--
-          Nullable auf dem strengsten Level – Core ist das Herzstück,
-          hier darf kein NullReferenceException-Risiko schlummern.
+          Nullable at the strictest level – Core is the heart of the system,
+          there must be no latent NullReferenceException risk here.
         -->
         <Nullable>enable</Nullable>
 
         <!--
-          Code-Analyse mit dem .NET-Analyzer-Ruleset aktivieren.
-          Empfehlung: Ruleset auf "Recommended" oder eigenes .editorconfig.
+          Enable code analysis with the .NET analyzer ruleset.
+          Recommendation: ruleset set to "Recommended" or a custom .editorconfig.
         -->
         <AnalysisLevel>latest-recommended</AnalysisLevel>
     </PropertyGroup>
 
-    <ItemGroup Label="Project References"><!-- Core hat KEINE Projekt-Referenzen → keine Abhängigkeiten nach außen -->
-    
+    <ItemGroup Label="Project References"><!-- Core has NO project references → no outward dependencies -->
+
       <Folder Include="ChatGames\" />
       <Folder Include="Interfaces\" />
       <Folder Include="Models\" />
@@ -46,8 +46,8 @@
 
     <ItemGroup Label="NuGet Packages">
         <!--
-          Nur Abstractions – keine konkreten Implementierungen.
-          Die konkreten Implementierungen (z.B. ServiceProvider) kommen von Infrastructure/Host.
+          Abstractions only – no concrete implementations.
+          Concrete implementations (e.g. ServiceProvider) come from Infrastructure/Host.
         -->
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
         <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
@@ -59,7 +59,7 @@
     </ItemGroup>
 
     <!--
-      Implizit verfügbar durch .NET 10 SDK (keine explizite PackageReference nötig):
+      Implicitly available via the .NET 10 SDK (no explicit PackageReference needed):
         - Microsoft.Extensions.DependencyInjection.Abstractions
         - Microsoft.Extensions.Logging.Abstractions
         - Microsoft.Extensions.Options

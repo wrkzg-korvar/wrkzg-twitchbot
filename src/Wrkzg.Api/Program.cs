@@ -1,14 +1,14 @@
 // ============================================================
-// Wrkzg.Api – Keine eigenständige Anwendung!
-// Diese Datei registriert nur Services und Middleware.
-// Der eigentliche Entry Point ist Wrkzg.Host/Program.cs.
+// Wrkzg.Api – not a stand-alone application!
+// This file only registers services and middleware.
+// The actual entry point is Wrkzg.Host/Program.cs.
 //
-// Diese Datei ist bewusst LEER – die Registrierungen erfolgen
-// über Extension Methods in den jeweiligen Unterordnern:
+// This file is intentionally EMPTY – registrations happen
+// through extension methods in the respective subfolders:
 //
-//   builder.Services.AddApiServices()  → wird von Host aufgerufen
-//   app.UseApiMiddleware()             → wird von Host aufgerufen
+//   builder.Services.AddApiServices()  → invoked from Host
+//   app.UseApiMiddleware()             → invoked from Host
 //
-// Rider/VS zeigt dieses Projekt als "nicht startbar" an –
-// das ist korrekt und gewollt.
+// Rider/VS marks this project as "not runnable" –
+// that is correct and intended.
 // ============================================================

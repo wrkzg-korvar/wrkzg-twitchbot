@@ -4,22 +4,22 @@
       ============================================================
       Wrkzg.Updater
       ============================================================
-      Typ      : Executable – VOLLSTÄNDIG EIGENSTÄNDIG
-      Aufgabe  : Wird als separater Prozess gestartet, wenn ein Update
-                 heruntergeladen wurde. Wartet auf Beendigung des
-                 Hauptprozesses, ersetzt die Anwendungsdateien und
-                 startet die Anwendung neu.
-      Wichtig  : KEINE Referenz zu Core, Api oder Infrastructure.
-                 Der Updater muss auch dann funktionieren, wenn die
-                 Hauptanwendung defekt ist.
+      Type     : Executable – FULLY STAND-ALONE
+      Purpose  : Started as a separate process once an update has
+                 been downloaded. Waits for the main process to exit,
+                 replaces the application files, and restarts the
+                 application.
+      Important: NO reference to Core, Api, or Infrastructure.
+                 The updater must keep working even when the main
+                 application is broken.
       ============================================================
     -->
 
     <PropertyGroup Label="Output">
         <OutputType>Exe</OutputType>
         <!--
-          Konsolenfenster ist hier bewusst erlaubt (kein WinExe).
-          Der Updater soll sichtbar sein und dem Nutzer Status anzeigen.
+          A console window is intentionally allowed here (no WinExe).
+          The updater should be visible and show progress to the user.
         -->
         <AssemblyName>Wrkzg.Updater</AssemblyName>
         <RootNamespace>Wrkzg.Updater</RootNamespace>
@@ -31,7 +31,7 @@
     </PropertyGroup>
 
     <ItemGroup Label="Project References">
-        <!-- Absichtlich leer – keine Abhängigkeiten zur Hauptanwendung -->
+        <!-- Intentionally empty – no dependencies on the main application -->
     </ItemGroup>
 
     <ItemGroup Label="NuGet Packages">
@@ -42,11 +42,11 @@
     </ItemGroup>
 
     <!--
-      Der Updater nutzt ausschließlich BCL (Base Class Library):
-        - System.IO.Compression (ZipFile) → im .NET SDK enthalten
-        - System.Diagnostics.Process      → im .NET SDK enthalten
-        - System.Security.Cryptography    → im .NET SDK enthalten
-      Keine weiteren NuGet-Pakete nötig.
+      The updater uses the BCL (Base Class Library) exclusively:
+        - System.IO.Compression (ZipFile) → ships with the .NET SDK
+        - System.Diagnostics.Process      → ships with the .NET SDK
+        - System.Security.Cryptography    → ships with the .NET SDK
+      No additional NuGet packages required.
     -->
 
 </Project>

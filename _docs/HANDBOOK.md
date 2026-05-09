@@ -50,7 +50,7 @@
 9. [Settings & Configuration](#9-settings--configuration)
 10. [Data Management](#10-data-management)
     - [10.1 Import Data from Another Bot](#101-import-data-from-another-bot)
-11. [Berechtigungsmatrix](#11-berechtigungsmatrix)
+11. [Permissions Matrix](#11-permissions-matrix)
 12. [Troubleshooting & FAQ](#12-troubleshooting--faq)
 
 ---
@@ -93,7 +93,7 @@ Your command center. The dashboard shows:
 - **Live Chat** — Messages appear in real-time with emote rendering and role badges
 - **Event Feed** — Recent follows, subscriptions, raids, and gift subs
 
-Use the chat input at the bottom to send messages as your bot account. Klicke auf das Smiley-Icon um den Emote-Picker zu oeffnen.
+Use the chat input at the bottom to send messages as your bot account. Click the smiley icon to open the emote picker.
 
 ---
 
@@ -442,8 +442,8 @@ Map keyboard shortcuts to bot actions. Each hotkey has a unique ID that can be u
 4. Choose an action and configure the payload:
    - **Send Chat Message** — enter the message text
    - **Counter +1 / -1 / Reset** — select a counter from the dropdown
-   - **OBS Scene Switch** — wechselt eine OBS-Scene (erfordert OBS WebSocket Verbindung)
-   - **OBS Source Toggle** — blendet eine OBS-Quelle ein/aus
+   - **OBS Scene Switch** — switches an OBS scene (requires an OBS WebSocket connection)
+   - **OBS Source Toggle** — shows or hides an OBS source
 5. Optionally add a description
 6. Click **Create**
 
@@ -480,50 +480,50 @@ Global keyboard hotkeys on macOS require Accessibility permission. If the permis
 
 ### 5.4 Automations (Effect System)
 
-Automations lassen dich individuelle Reaktionen auf Events einrichten. Jede Automation folgt dem Muster:
+Automations let you build custom reactions to events. Every automation follows the pattern:
 
-**Trigger** -> **Bedingungen** -> **Aktionen**
+**Trigger** -> **Conditions** -> **Actions**
 
 #### Visual Builder
 
-Der Visual Builder ist der Standard-Modus. Alle Felder werden als Formulare angezeigt mit Beschreibungen und Hilfetext.
+The Visual Builder is the default mode. All fields are shown as forms with descriptions and helper text.
 
-**Trigger-Typen:**
+**Trigger types:**
 
-| Trigger | Beschreibung | Variablen |
+| Trigger | Description | Variables |
 |---|---|---|
-| Chat Command | Reagiert auf einen Chat-Befehl (z.B. !welcome) | {user}, {args}, {target}, {points}, {hours} |
-| Twitch Event | Reagiert auf Follow, Sub, Raid, etc. | {user}, {viewers}, {tier}, {months}, {count}, {message} |
-| Chat Keyword | Reagiert wenn ein Wort im Chat vorkommt | {user} |
-| Channel Point | Reagiert auf Channel-Point-Einloesungen | {user}, {reward}, {input}, {cost} |
-| Hotkey | Reagiert auf Tastenkombination | {hotkey}, {description} |
+| Chat Command | Reacts to a chat command (e.g. !welcome) | {user}, {args}, {target}, {points}, {hours} |
+| Twitch Event | Reacts to follow, sub, raid, etc. | {user}, {viewers}, {tier}, {months}, {count}, {message} |
+| Chat Keyword | Reacts when a word appears in chat | {user} |
+| Channel Point | Reacts to Channel Point redemptions | {user}, {reward}, {input}, {cost} |
+| Hotkey | Reacts to a key combination | {hotkey}, {description} |
 
-**Bedingungen (optional, UND-verknuepft):**
+**Conditions (optional, AND-combined):**
 
-| Bedingung | Beschreibung |
+| Condition | Description |
 |---|---|
-| Benutzerrolle | Mindest-Rolle: Viewer -> Follower -> Subscriber -> Moderator -> Broadcaster |
-| Mindestpunkte | User muss mindestens X Punkte haben (werden nicht abgezogen) |
-| Zufallschance | Ausfuehrung mit X% Wahrscheinlichkeit |
-| Stream Status | Nur wenn Stream live/offline ist |
+| User Role | Minimum role: Viewer -> Follower -> Subscriber -> Moderator -> Broadcaster |
+| Minimum Points | User must have at least X points (NOT deducted) |
+| Random Chance | Runs with X% probability |
+| Stream Status | Only while the stream is live/offline |
 
-**Aktionen (sequenziell ausgefuehrt):**
+**Actions (executed sequentially):**
 
-| Aktion | Beschreibung | Parameter |
+| Action | Description | Parameters |
 |---|---|---|
-| Chat-Nachricht | Sendet Text in den Chat | message (mit Variablen) |
-| Warten | Pausiert X Sekunden (max 60) | seconds |
-| Counter aendern | +1, -1 oder Reset | counter_id, action |
-| Alert anzeigen | OBS Overlay Alert | message |
-| Variable setzen | Fuer spaetere Aktionen | name, value |
-| OBS: Scene wechseln | Wechselt die aktive OBS Scene (erfordert OBS WebSocket Verbindung) | scene_name |
-| OBS: Quelle ein-/ausblenden | Blendet eine Quelle in der aktuellen Scene ein oder aus | scene_name, source_name |
-| Discord-Nachricht | Webhook-Nachricht | message |
-| Discord Embed | Formatierte Embed-Nachricht | title, description, color |
+| Chat Message | Sends text to chat | message (with variables) |
+| Wait | Pauses for X seconds (max 60) | seconds |
+| Modify Counter | +1, -1, or reset | counter_id, action |
+| Show Alert | OBS overlay alert | message |
+| Set Variable | For subsequent actions | name, value |
+| OBS: Switch Scene | Switches the active OBS scene (requires an OBS WebSocket connection) | scene_name |
+| OBS: Show/Hide Source | Shows or hides a source in the current scene | scene_name, source_name |
+| Discord Message | Webhook message | message |
+| Discord Embed | Formatted embed message | title, description, color |
 
-**JSON-Modus:** Fuer Power-User — klicke auf "JSON" um die rohe JSON-Konfiguration zu bearbeiten.
+**JSON mode:** for power users — click "JSON" to edit the raw JSON configuration.
 
-**Testen:** Der "Test" Button fuehrt NUR diese eine Automation aus (Bedingungen werden geprueft, Trigger-Matching uebersprungen).
+**Testing:** the "Test" button runs ONLY this one automation (conditions are checked, trigger matching is skipped).
 
 #### Quick-Start Examples
 
@@ -604,31 +604,31 @@ Click the trash icon on the Integrations page to remove the webhook URL. The web
 
 #### OBS WebSocket
 
-Wrkzg kann OBS Studio ueber das WebSocket 5.x Protokoll steuern.
+Wrkzg can control OBS Studio via the WebSocket 5.x protocol.
 
-**Einrichtung:**
-1. In OBS: Menue -> Tools -> WebSocket Server Settings -> "Enable WebSocket Server" aktivieren
-2. Optional: Passwort setzen
-3. In Wrkzg: Integrations -> OBS WebSocket -> Host, Port, Passwort eingeben -> Connect
+**Setup:**
+1. In OBS: menu -> Tools -> WebSocket Server Settings -> enable "Enable WebSocket Server"
+2. Optional: set a password
+3. In Wrkzg: Integrations -> OBS WebSocket -> enter host, port, password -> Connect
 
-**Verfuegbare Aktionen:**
-- **OBS: Scene wechseln** — Wechselt zur angegebenen Scene
-- **OBS: Quelle ein-/ausblenden** — Blendet eine Quelle in einer Scene ein oder aus
+**Available actions:**
+- **OBS: Switch Scene** — switches to the given scene
+- **OBS: Show/Hide Source** — shows or hides a source in a scene
 
-Diese Aktionen sind verfuegbar als:
-- Hotkey-Actions auf der Hotkeys-Seite
-- Automation-Effects im Visual Builder
+These actions are available as:
+- Hotkey actions on the Hotkeys page
+- Automation effects in the Visual Builder
 
 ### 5.7 Mod Commands
 
-Chat-Befehle fuer Moderatoren und Broadcaster um den Stream direkt aus dem Chat zu steuern.
+Chat commands for moderators and the broadcaster to control the stream directly from chat.
 
-| Command | Aliases | Beschreibung | Mindest-Rolle |
+| Command | Aliases | Description | Minimum Role |
 |---|---|---|---|
-| `!titel Neuer Titel` | `!title` | Aendert den Stream-Titel | Moderator |
-| `!game Kategoriename` | `!category` | Aendert die Stream-Kategorie | Moderator |
+| `!title New title` | `!titel` | Changes the stream title | Moderator |
+| `!game Category name` | `!category` | Changes the stream category | Moderator |
 
-**Voraussetzung:** Der Broadcaster-Account muss mit dem Scope `channel:manage:broadcast` verbunden sein. Bei Scope-Aenderungen ist eine Neu-Autorisierung noetig.
+**Requirement:** The broadcaster account must be connected with the `channel:manage:broadcast` scope. Scope changes require a re-authorization.
 
 ---
 
@@ -1048,7 +1048,7 @@ Wrkzg can import your community data from other Twitch bots so your viewers keep
 5. Choose a conflict strategy for existing users
 6. Click **Import** to start the migration
 
-Imports laufen im Hintergrund — du kannst die Seite verlassen und weiterarbeiten. Der Fortschritt wird in der Notification-Glocke (Sidebar) angezeigt. Waehrend ein Import laeuft, sind die betroffenen Seiten (Users, Commands, etc.) read-only (Lock-Banner).
+Imports run in the background — you can leave the page and keep working. Progress is shown in the notification bell (sidebar). While an import is running, the affected pages (Users, Commands, etc.) are read-only (lock banner).
 
 #### Conflict Strategies
 
@@ -1086,41 +1086,41 @@ Imported users don't have a Twitch ID yet (Deepbot CSV/JSON only stores username
 
 ---
 
-## 11. Berechtigungsmatrix
+## 11. Permissions Matrix
 
 ### System Commands
 
-| Command | Mindest-Rolle | Beschreibung |
+| Command | Minimum Role | Description |
 |---|---|---|
-| `!commands` / `!help` | Viewer | Zeigt verfuegbare Befehle |
-| `!points` / `!punkte` | Viewer | Zeigt eigene Punkte |
-| `!watchtime` | Viewer | Zeigt eigene Watchtime |
-| `!followage` | Viewer | Zeigt Follow-Alter |
-| `!uptime` | Viewer | Zeigt Stream-Uptime |
-| `!quote` | Viewer | Zeigt ein zufaelliges Zitat |
-| `!poll` | Moderator | Erstellt eine Umfrage |
-| `!vote` | Viewer | Stimmt in einer Umfrage ab |
-| `!endpoll` | Moderator | Beendet eine Umfrage |
-| `!pollresult` | Viewer | Zeigt Umfrage-Ergebnis |
-| `!raffle` | Moderator | Startet ein Gewinnspiel |
-| `!join` | Viewer | Nimmt am Gewinnspiel teil |
-| `!draw` | Moderator | Zieht einen Gewinner |
-| `!cancelraffle` | Moderator | Bricht Gewinnspiel ab |
-| `!editcmd` | Moderator | Bearbeitet Custom Commands |
-| `!titel` / `!title` | Moderator | Aendert Stream-Titel |
-| `!game` / `!category` | Moderator | Aendert Stream-Kategorie |
-| `!shoutout` / `!so` | Moderator | Shoutout an einen User |
+| `!commands` / `!help` | Viewer | Lists available commands |
+| `!points` / `!punkte` | Viewer | Shows the user's points |
+| `!watchtime` | Viewer | Shows the user's watch time |
+| `!followage` | Viewer | Shows follow age |
+| `!uptime` | Viewer | Shows stream uptime |
+| `!quote` | Viewer | Shows a random quote |
+| `!poll` | Moderator | Creates a poll |
+| `!vote` | Viewer | Votes in a poll |
+| `!endpoll` | Moderator | Ends a poll |
+| `!pollresult` | Viewer | Shows poll results |
+| `!raffle` | Moderator | Starts a raffle |
+| `!join` | Viewer | Enters the raffle |
+| `!draw` | Moderator | Draws a winner |
+| `!cancelraffle` | Moderator | Cancels the raffle |
+| `!editcmd` | Moderator | Edits custom commands |
+| `!titel` / `!title` | Moderator | Changes the stream title |
+| `!game` / `!category` | Moderator | Changes the stream category |
+| `!shoutout` / `!so` | Moderator | Shouts out another user |
 
 ### Custom Commands
 
-Custom Commands sind standardmaessig fuer alle Viewer verfuegbar.
-Einschraenkungen koennen ueber die Automations konfiguriert werden
-(Bedingung: "Benutzerrolle pruefen" mit gewuenschter Mindest-Rolle).
+Custom commands are available to all viewers by default.
+Restrictions can be configured via Automations
+(condition: "Check User Role" with the desired minimum role).
 
-### Dashboard-Zugriff
+### Dashboard Access
 
-Das Dashboard ist localhost-only — nur wer am Computer sitzt hat Zugriff.
-Es gibt kein Berechtigungssystem innerhalb des Dashboards.
+The dashboard is localhost-only — only the person at the computer has access.
+There is no permission system inside the dashboard itself.
 
 ---
 

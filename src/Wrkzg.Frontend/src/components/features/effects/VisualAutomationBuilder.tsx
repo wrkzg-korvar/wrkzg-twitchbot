@@ -290,7 +290,7 @@ export function VisualAutomationBuilder({
           <div className="space-y-2">
             {conditionItems.length === 0 && (
               <p className="text-xs text-[var(--color-text-muted)] italic">
-                Keine Bedingungen -- wird immer ausgeführt wenn der Trigger feuert.
+                No conditions -- runs every time the trigger fires.
               </p>
             )}
             {conditionItems.map((cond, idx) => {

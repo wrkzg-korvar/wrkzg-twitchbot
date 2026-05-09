@@ -18,7 +18,7 @@ public class ObsSceneSwitchEffect : IEffectType
     public string Id => "obs.scene_switch";
 
     /// <inheritdoc />
-    public string DisplayName => "OBS: Scene wechseln";
+    public string DisplayName => "OBS: Switch Scene";
 
     /// <inheritdoc />
     public string[] ParameterKeys => new[] { "scene_name" };
@@ -64,7 +64,7 @@ public class ObsSourceToggleEffect : IEffectType
     public string Id => "obs.source_toggle";
 
     /// <inheritdoc />
-    public string DisplayName => "OBS: Quelle ein-/ausblenden";
+    public string DisplayName => "OBS: Show/Hide Source";
 
     /// <inheritdoc />
     public string[] ParameterKeys => new[] { "scene_name", "source_name", "visible" };
