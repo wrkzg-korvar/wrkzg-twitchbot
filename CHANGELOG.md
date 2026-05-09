@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.3] — 2026-05-09
+
+### Added
+- **Bot Requirements Panel:** New section on the Settings page showing whether the bot account meets feature-gated requirements. Displays green/red status indicators for Moderator and Follower status with actionable fix instructions (e.g. "Type /mod YOUR_BOT_NAME in your Twitch chat"). Polls every 30 seconds.
+- **{target} Command Variable:** Custom commands can now address other users. `!hug krinlin` with template `{user} gives {target} a big hug!` produces "Chuck gives krinlin a big hug!". The `@` prefix is stripped automatically. Works in both custom commands and system command overrides.
+- **Bot Follower Status Check:** `IsBotFollower` property on `ITwitchChatClient`, checked once via Helix API (`GET /channels/followers`) after IRC connect. Cached for the session — no repeated API calls. Displayed in the Bot Requirements panel.
+
+### Changed
+- **Command Trigger Editing:** Triggers and aliases on existing commands are now editable at any time. Previously the trigger input was read-only after creation. Backend validates trigger uniqueness on update to prevent duplicates.
+- **Bot Emote Separation:** Emotes are now tagged with an `owner` field (`bot`, `broadcaster`, or `shared`). The EmotePicker filters available emotes based on the selected "Send as" account — selecting Bot shows only emotes the bot can actually use. Global emotes are available to both accounts.
+
 ## [2.4.2] — 2026-05-09
 
 ### Added
