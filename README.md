@@ -63,7 +63,6 @@ Wrkzg is different:
 | **Spam filter** | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **Timed messages** | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **Chat games** | ✅ 5 games | ❌ | ✅ | ✅ | ❌ |
-| **Song requests** | ✅ YouTube | ❌ | ✅ | ✅ | ✅ |
 | **Automation system** | ✅ Visual | ❌ | ✅ | ❌ | ❌ |
 | **Discord integration** | ✅ Webhooks | ❌ | ❌ | ✅ | ❌ |
 | **Stream analytics** | ✅ | ❌ | ✅ | ✅ | ❌ |
@@ -205,8 +204,8 @@ Some features require the **Bot Account** to be a **Moderator** in the Broadcast
 ### ✅ Implemented
 
 **Chat & Commands**
-- **Custom Commands** — Create commands like `!discord`, `!socials` with variables: `{user}`, `{points}`, `{random:1:6}`
-- **16 System Commands** — Built-in `!poll`, `!vote`, `!raffle`, `!join`, `!draw`, `!editcmd`, `!quote`, `!so`, `!uptime` and more — all with enable/disable toggle and custom response templates
+- **Custom Commands** — Create commands like `!discord`, `!socials` with variables: `{user}`, `{target}`, `{points}`, `{watchtime}`, `{random:1:6}`. Triggers and aliases can be edited at any time — even while live.
+- **18 System Commands** — Built-in `!poll`, `!vote`, `!raffle`, `!join`, `!draw`, `!editcmd`, `!quote`, `!so`, `!uptime`, `!title`, `!game` and more — all with enable/disable toggle and custom response templates
 - **Command Aliases** — Multiple triggers per command with badge display
 
 **Community Engagement**
@@ -225,7 +224,7 @@ Some features require the **Bot Account** to be a **Moderator** in the Broadcast
 - **Uptime Command** — `!uptime` / `!live` with smart time formatting
 
 **OBS Overlays**
-- **7 Built-in Overlays** — Alert Box, Chat Box, Poll, Raffle, Counter, Event List, Song Player — all real-time via SignalR
+- **6 Built-in Overlays** — Alert Box, Chat Box, Poll, Raffle, Counter, Event List — all real-time via SignalR
 - **Full Overlay Editor** — Visual editor with live preview, per-event customization, 14 animations, 30+ Google Fonts, Custom CSS
 - **Custom Sounds & Images** — Upload your own alert sounds (.mp3/.wav/.ogg) and images (.png/.gif/.webp) — stored locally, no cloud
 - **Per-Event Alerts** — Individual image, sound, message, and animation for each event type (follow, sub, raid, etc.)
@@ -242,13 +241,14 @@ Some features require the **Bot Account** to be a **Moderator** in the Broadcast
 
 **Dashboard & UX**
 - **Live Dashboard** — Real-time chat feed, bot status, viewer count, activity feed, command management
-- **Live Chat** — Send messages as bot or broadcaster, auto-scroll, message history, Twitch emote rendering with EmotePicker
+- **Live Chat** — Send messages as bot or broadcaster, auto-scroll, message history, Twitch emote rendering with account-aware EmotePicker (bot sees only its own emotes, broadcaster sees theirs)
 - **Notification Center** — Sidebar bell with notification drawer, replaces ephemeral toasts for import progress and system events
 - **User Tracking** — Message count, watch time, points, mod/sub/broadcaster status sync
 - **Setup Wizard** — Guided first-time setup with direct links to Twitch Developer Console
 - **Design System** — Light and Dark theme with consistent CSS custom properties
 - **Cross-Platform** — Native desktop app on Windows 10/11 and macOS 12+ with platform-specific title bars
 - **Update Check** — Automatic check for new releases with dismissable banner
+- - **Bot Requirements Panel** — Settings page shows whether the bot is a moderator and follower of the broadcaster, with feature-gated status checks and fix instructions
 
 ### 🚧 Coming Soon
 
@@ -530,13 +530,14 @@ For questions or ideas, open a **[GitHub Discussion](https://github.com/wrkzg-ko
 </details>
 
 <details>
-<summary><strong>v1.8.0 — Song Requests ✅</strong></summary>
+<summary><strong>v1.8.0 — Song Requests ✅ (removed in v2.4.2)</strong></summary>
 
 - YouTube song requests via `!sr <URL>`
-- Queue management (open/close, skip, clear)
+- Queue management with skip, clear, open/close
 - OBS Song Player overlay (full and slim mode)
-- Points cost, max duration, per-user limits
-- Customizable bot messages
+- System commands: `!sr`, `!skip`, `!queue`, `!currentsong`
+- Queue settings: max duration, max per user, points cost
+- ⚠️ **Removed in v2.4.2** — no satisfactory audio playback solution within the current architecture. Will be redesigned in a future version.
 
 </details>
 
@@ -614,6 +615,40 @@ For questions or ideas, open a **[GitHub Discussion](https://github.com/wrkzg-ko
 - Server-side paginated user list with user detail modal (points editing, ban/unban)
 - Channel Point redemptions now trigger automations
 - ISecureStorage extended with generic secret storage for integration credentials
+
+</details>
+
+<details>
+<summary><strong>v2.4.1 — Performance & Diagnostics ✅</strong></summary>
+
+- StreamStatusProvider — centralized stream status cache, reduces Helix API calls from 4+/min to 1/min
+- UserStatsBatcher — batches per-message DB writes (50+/min → 2/min in active chats)
+- Diagnostic Logging — structured log files with 7-day rolling retention, export button on Settings page
+- Watchtime tracking for silent viewers via Helix "Get Chatters" polling (requires `moderator:read:chatters`)
+
+</details>
+
+<details>
+<summary><strong>v2.4.2 — UI Polish & Cleanup ✅</strong></summary>
+
+- Users page: true server-side pagination (was loading all 10,000 users client-side)
+- SmartDataTable: `containerClassName` + `onSortChange` props for parent-controlled styling and server-side sort
+- Raffle form: proper labels, duration preset buttons (None / 1 min / 2 min / 5 min)
+- Poll form: proper labels, removed confusing disabled "Start Twitch Poll" button
+- Raffles & Polls history: EmptyState component, standardized section order
+- NuGet security fix: `System.Security.Cryptography.Xml` updated to 10.0.7 (CVE-2026-26171, CVE-2026-33116)
+- **Removed:** Song Request feature (no satisfactory audio playback solution in Photino WebView; will be redesigned in a future version)
+
+</details>
+
+<details>
+<summary><strong>v2.4.3 — Bot Permissions & Command Improvements ✅</strong></summary>
+
+- Bot Requirements panel on Settings page (moderator/follower status checks with fix instructions)
+- `{target}` command variable for user-addressing (e.g. `!hug @user` → "{user} hugs {target}!")
+- Command triggers and aliases now editable on existing commands (previously read-only after creation)
+- Bot emote separation — EmotePicker filters by account (bot sees only bot + shared emotes)
+- `IsBotFollower` property on ITwitchChatClient — checked once via Helix API after IRC connect
 
 </details>
 
