@@ -146,8 +146,6 @@ public class UserRepository : IUserRepository
             "username" => desc ? query.OrderByDescending(u => u.Username) : query.OrderBy(u => u.Username),
             "watchtime" => desc ? query.OrderByDescending(u => u.WatchedMinutes) : query.OrderBy(u => u.WatchedMinutes),
             "messages" => desc ? query.OrderByDescending(u => u.MessageCount) : query.OrderBy(u => u.MessageCount),
-            "lastseen" => desc ? query.OrderByDescending(u => u.LastSeenAt) : query.OrderBy(u => u.LastSeenAt),
-            "firstseen" => desc ? query.OrderByDescending(u => u.FirstSeenAt) : query.OrderBy(u => u.FirstSeenAt),
             _ => desc ? query.OrderByDescending(u => u.Points) : query.OrderBy(u => u.Points),
         };
 

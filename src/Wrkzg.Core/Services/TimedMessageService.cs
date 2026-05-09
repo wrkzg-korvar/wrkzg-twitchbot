@@ -18,6 +18,7 @@ namespace Wrkzg.Core.Services;
 public class TimedMessageService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IStreamStatusProvider _streamStatus;
     private readonly ITwitchChatClient _chat;
     private readonly ILogger<TimedMessageService> _logger;
     private int _chatLinesSinceLastCheck;
@@ -29,14 +30,17 @@ public class TimedMessageService : BackgroundService
     /// Initializes a new instance of <see cref="TimedMessageService"/>.
     /// </summary>
     /// <param name="scopeFactory">Factory for creating DI scopes to resolve scoped repositories.</param>
+    /// <param name="streamStatus">Cached stream live status provider — replaces direct Helix polling.</param>
     /// <param name="chat">The Twitch IRC chat client for sending timed messages.</param>
     /// <param name="logger">Logger instance for diagnostics.</param>
     public TimedMessageService(
         IServiceScopeFactory scopeFactory,
+        IStreamStatusProvider streamStatus,
         ITwitchChatClient chat,
         ILogger<TimedMessageService> logger)
     {
         _scopeFactory = scopeFactory;
+        _streamStatus = streamStatus;
         _chat = chat;
         _logger = logger;
     }
@@ -74,42 +78,26 @@ public class TimedMessageService : BackgroundService
     {
         using IServiceScope scope = _scopeFactory.CreateScope();
         ITimedMessageRepository repo = scope.ServiceProvider.GetRequiredService<ITimedMessageRepository>();
-        ISettingsRepository settings = scope.ServiceProvider.GetRequiredService<ISettingsRepository>();
-        IBroadcasterHelixClient broadcasterHelix = scope.ServiceProvider.GetRequiredService<IBroadcasterHelixClient>();
         IBotHelixClient botHelix = scope.ServiceProvider.GetRequiredService<IBotHelixClient>();
 
-        string? channelName = await settings.GetAsync("Bot.Channel", ct);
-        bool isLive = false;
+        bool isLive = _streamStatus.IsLive;
         string? broadcasterId = null;
 
-        if (!string.IsNullOrWhiteSpace(channelName))
+        // Resolve broadcaster ID from token (cached, thread-safe) — only needed for announcements
+        try
         {
-            try
-            {
-                StreamInfo? stream = await broadcasterHelix.GetStreamAsync(channelName, ct);
-                isLive = stream is not null;
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                _logger.LogWarning(ex, "Failed to check stream status for timed messages");
-            }
-
-            // Resolve broadcaster ID from token (cached, thread-safe)
-            try
-            {
-                broadcasterId = await ResolveBroadcasterIdAsync(scope.ServiceProvider, ct);
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                _logger.LogWarning(ex, "Failed to resolve broadcaster ID for announcements");
-            }
+            broadcasterId = await ResolveBroadcasterIdAsync(scope.ServiceProvider, ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Failed to resolve broadcaster ID for announcements");
         }
 
-        IReadOnlyList<Models.TimedMessage> timers = await repo.GetEnabledAsync(ct);
+        IReadOnlyList<TimedMessage> timers = await repo.GetEnabledAsync(ct);
         DateTimeOffset now = DateTimeOffset.UtcNow;
         int chatLines = Interlocked.Exchange(ref _chatLinesSinceLastCheck, 0);
 
-        foreach (Models.TimedMessage timer in timers)
+        foreach (TimedMessage timer in timers)
         {
             if (isLive && !timer.RunWhenOnline)
             {
@@ -176,7 +164,7 @@ public class TimedMessageService : BackgroundService
             await repo.UpdateAsync(timer, ct);
 
             _logger.LogInformation("Fired timed message '{Name}': {Message}",
-                timer.Name, message.Length > 60 ? message[..60] + "\u2026" : message);
+                timer.Name, message.Length > 60 ? message[..60] + "…" : message);
         }
     }
 

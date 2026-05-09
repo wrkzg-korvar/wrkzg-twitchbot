@@ -36,6 +36,17 @@ public interface IBotHelixClient
     /// <returns>True if the timeout was applied successfully.</returns>
     Task<bool> TimeoutUserAsync(string broadcasterId, string userId, int durationSeconds, string reason, CancellationToken ct = default);
 
+    /// <summary>
+    /// Gets all users currently in the broadcaster's chat room.
+    /// Requires the moderator:read:chatters scope on the Bot token.
+    /// Helix API: GET /chat/chatters?broadcaster_id={id}&amp;moderator_id={botId}
+    /// Returns user IDs (not usernames) for all current chatters, handling pagination.
+    /// </summary>
+    /// <param name="broadcasterId">The broadcaster's Twitch user ID.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>List of Twitch user IDs currently in chat.</returns>
+    Task<IReadOnlyList<string>> GetChattersAsync(string broadcasterId, CancellationToken ct = default);
+
     /// <summary>Gets global Twitch emotes. Only requires a valid app/user token + Client-Id.</summary>
     Task<IReadOnlyList<TwitchEmote>> GetGlobalEmotesAsync(CancellationToken ct = default);
 

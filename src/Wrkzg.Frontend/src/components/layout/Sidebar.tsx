@@ -16,7 +16,6 @@ import {
   Gem,
   Crown,
   Gamepad2,
-  Music,
   Keyboard,
   Workflow,
   Plug,
@@ -56,7 +55,6 @@ const NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
       { to: "/counters", label: "Counters", icon: Hash },
       { to: "/channel-points", label: "Channel Points", icon: Gem },
       { to: "/games", label: "Chat Games", icon: Gamepad2 },
-      { to: "/song-requests", label: "Song Requests", icon: Music },
     ],
   },
   {

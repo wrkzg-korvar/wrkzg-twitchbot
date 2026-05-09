@@ -92,9 +92,6 @@ public interface IChatEventBroadcaster
     /// <summary>Notifies dashboard and overlay of a channel point redemption.</summary>
     Task BroadcastChannelPointRedemptionAsync(string username, string rewardTitle, int cost, string? userInput, CancellationToken ct = default);
 
-    /// <summary>Notifies dashboard and overlay that the song queue changed.</summary>
-    Task BroadcastSongQueueUpdatedAsync(CancellationToken ct = default);
-
     /// <summary>Notifies dashboard that the stream went online.</summary>
     Task BroadcastStreamOnlineAsync(string broadcasterName, CancellationToken ct = default);
 

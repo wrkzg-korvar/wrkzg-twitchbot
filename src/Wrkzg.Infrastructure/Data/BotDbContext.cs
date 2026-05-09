@@ -70,9 +70,6 @@ public class BotDbContext : DbContext
     /// <summary>Gets the set of viewer count snapshots.</summary>
     public DbSet<ViewerSnapshot> ViewerSnapshots => Set<ViewerSnapshot>();
 
-    /// <summary>Gets the set of song requests.</summary>
-    public DbSet<SongRequest> SongRequests => Set<SongRequest>();
-
     /// <summary>Gets the set of hotkey bindings.</summary>
     public DbSet<HotkeyBinding> HotkeyBindings => Set<HotkeyBinding>();
 

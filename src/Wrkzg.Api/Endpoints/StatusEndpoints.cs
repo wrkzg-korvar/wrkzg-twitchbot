@@ -25,7 +25,7 @@ public static class StatusEndpoints
 
         group.MapGet("/", async (
             ITwitchChatClient chatClient,
-            IBroadcasterHelixClient helix,
+            IStreamStatusProvider streamStatus,
             ISecureStorage storage,
             CancellationToken ct) =>
         {
@@ -36,22 +36,19 @@ public static class StatusEndpoints
                 channel = chatClient.JoinedChannel
             };
 
-            // Stream info (if bot is connected and we have a channel)
+            // Stream info from cached provider (no API call — StreamStatusProvider polls once per minute)
             object? stream = null;
-            if (chatClient.JoinedChannel is not null)
+            if (streamStatus.IsLive && streamStatus.CurrentStream is not null)
             {
-                StreamInfo? streamInfo = await helix.GetStreamAsync(chatClient.JoinedChannel, ct);
-                if (streamInfo is not null)
+                StreamInfo si = streamStatus.CurrentStream;
+                stream = new
                 {
-                    stream = new
-                    {
-                        isLive = true,
-                        viewerCount = streamInfo.ViewerCount,
-                        title = streamInfo.Title,
-                        game = streamInfo.GameName,
-                        startedAt = streamInfo.StartedAt
-                    };
-                }
+                    isLive = true,
+                    viewerCount = si.ViewerCount,
+                    title = si.Title,
+                    game = si.GameName,
+                    startedAt = si.StartedAt
+                };
             }
 
             // Auth state

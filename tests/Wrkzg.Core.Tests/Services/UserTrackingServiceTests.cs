@@ -15,7 +15,8 @@ namespace Wrkzg.Core.Tests.Services;
 /// <summary>Tests for the UserTrackingService background service.</summary>
 public class UserTrackingServiceTests
 {
-    private readonly IBroadcasterHelixClient _helix;
+    private readonly IStreamStatusProvider _streamStatus;
+    private readonly IBotHelixClient _botHelix;
     private readonly ITwitchChatClient _chatClient;
     private readonly IChatEventBroadcaster _broadcaster;
     private readonly IUserRepository _userRepo;
@@ -26,7 +27,8 @@ public class UserTrackingServiceTests
     /// <summary>Initializes test dependencies with NSubstitute mocks and a real service scope factory.</summary>
     public UserTrackingServiceTests()
     {
-        _helix = Substitute.For<IBroadcasterHelixClient>();
+        _streamStatus = Substitute.For<IStreamStatusProvider>();
+        _botHelix = Substitute.For<IBotHelixClient>();
         _chatClient = Substitute.For<ITwitchChatClient>();
         _broadcaster = Substitute.For<IChatEventBroadcaster>();
         _userRepo = Substitute.For<IUserRepository>();
@@ -36,10 +38,12 @@ public class UserTrackingServiceTests
         ServiceCollection services = new();
         services.AddScoped(_ => _userRepo);
         services.AddScoped(_ => _settingsRepo);
+        services.AddScoped(_ => Substitute.For<ISecureStorage>());
+        services.AddScoped(_ => Substitute.For<ITwitchOAuthService>());
         ServiceProvider provider = services.BuildServiceProvider();
         IServiceScopeFactory scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
 
-        _sut = new UserTrackingService(_helix, _chatClient, _broadcaster, scopeFactory, _logger);
+        _sut = new UserTrackingService(_streamStatus, _botHelix, _chatClient, _broadcaster, scopeFactory, _logger);
     }
 
     /// <summary>Verifies that marking a user active does not throw.</summary>
@@ -48,9 +52,6 @@ public class UserTrackingServiceTests
     {
         _sut.MarkUserActive("user123");
         _sut.MarkUserActive("user456");
-
-        // Marking should not throw
-        // The actual verification happens in TickAsync tests
     }
 
     /// <summary>Verifies that marking the same user active twice does not cause an error.</summary>
@@ -59,8 +60,6 @@ public class UserTrackingServiceTests
     {
         _sut.MarkUserActive("user123");
         _sut.MarkUserActive("user123");
-
-        // Should not throw — dictionary overwrites the timestamp
     }
 
     /// <summary>Verifies that the service starts without errors.</summary>
@@ -68,9 +67,6 @@ public class UserTrackingServiceTests
     public async Task StartAsync_DoesNotThrow()
     {
         await _sut.StartAsync(CancellationToken.None);
-
-        // Service should start without errors
-        // Timer is created internally
         _sut.Dispose();
     }
 
@@ -80,7 +76,5 @@ public class UserTrackingServiceTests
     {
         await _sut.StartAsync(CancellationToken.None);
         await _sut.StopAsync(CancellationToken.None);
-
-        // Clean shutdown
     }
 }

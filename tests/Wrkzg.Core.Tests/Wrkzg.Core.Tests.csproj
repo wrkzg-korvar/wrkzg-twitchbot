@@ -4,11 +4,11 @@
       ============================================================
       Wrkzg.Core.Tests
       ============================================================
-      Typ      : Test Project (xUnit)
-      Aufgabe  : Unit-Tests für die gesamte Business Logic in Core.
-                 Mocking via NSubstitute, Assertions via FluentAssertions.
-      Regel    : Kein Test darf externe Ressourcen benötigen
-                 (keine DB, kein Netzwerk) – alles wird gemockt.
+      Type     : Test project (xUnit)
+      Purpose  : Unit tests for all business logic in Core.
+                 Mocking via NSubstitute, assertions via FluentAssertions.
+      Rule     : No test may require external resources
+                 (no DB, no network) – everything is mocked.
       ============================================================
     -->
 
@@ -21,8 +21,8 @@
 
     <PropertyGroup Label="Test Settings">
         <!--
-          Parallele Test-Ausführung aktivieren – Unit-Tests haben
-          keinen geteilten State und können parallel laufen.
+          Enable parallel test execution – unit tests have no
+          shared state and can run in parallel.
         -->
         <ParallelizeTestCollections>true</ParallelizeTestCollections>
     </PropertyGroup>
@@ -44,10 +44,10 @@
         <!-- DI Container (concrete) needed for IServiceScopeFactory in tests -->
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
 
-        <!-- NSubstitute: Interface-Mocking ohne manuelle Mock-Klassen -->
+        <!-- NSubstitute: interface mocking without hand-written mock classes -->
         <PackageReference Include="NSubstitute" />
 
-        <!-- FluentAssertions: lesbare Assertions (should.Be, should.Contain, etc.) -->
+        <!-- FluentAssertions: readable assertions (should.Be, should.Contain, etc.) -->
         <PackageReference Include="FluentAssertions" />
     </ItemGroup>
 

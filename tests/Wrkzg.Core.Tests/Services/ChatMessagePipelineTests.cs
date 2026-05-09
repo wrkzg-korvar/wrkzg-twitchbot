@@ -1,11 +1,9 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using Wrkzg.Core.Interfaces;
 using Wrkzg.Core.Models;
 using Wrkzg.Core.Services;
@@ -13,12 +11,13 @@ using Xunit;
 
 namespace Wrkzg.Core.Tests.Services;
 
-/// <summary>Tests for the ChatMessagePipeline including user stats, command processing, and resilience.</summary>
+/// <summary>Tests for the ChatMessagePipeline including command processing and resilience.</summary>
 public class ChatMessagePipelineTests
 {
     private readonly ICommandProcessor _commandProcessor;
     private readonly IUserTrackingService _trackingService;
     private readonly IUserRepository _userRepo;
+    private readonly UserStatsBatcher _statsBatcher;
     private readonly ILogger<ChatMessagePipeline> _logger;
     private readonly ChatMessagePipeline _sut;
 
@@ -34,6 +33,7 @@ public class ChatMessagePipelineTests
         ISettingsRepository settingsRepo = Substitute.For<ISettingsRepository>();
         IChatEventBroadcaster broadcaster = Substitute.For<IChatEventBroadcaster>();
         ITwitchChatClient chatClient = Substitute.For<ITwitchChatClient>();
+        IStreamStatusProvider streamStatus = Substitute.For<IStreamStatusProvider>();
 
         ServiceCollection services = new();
         services.AddScoped(_ => _userRepo);
@@ -53,16 +53,14 @@ public class ChatMessagePipelineTests
         ServiceProvider provider = services.BuildServiceProvider();
         IServiceScopeFactory scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
 
-        TimedMessageService timedService = new(scopeFactory, chatClient, Substitute.For<ILogger<TimedMessageService>>());
+        TimedMessageService timedService = new(scopeFactory, streamStatus, chatClient, Substitute.For<ILogger<TimedMessageService>>());
 
-        // ChatGameManager with no games registered (empty list)
         ChatGameManager gameManager = new(
             System.Array.Empty<IChatGame>(),
             scopeFactory,
             chatClient,
             Substitute.For<ILogger<ChatGameManager>>());
 
-        // EffectEngine with no types registered (empty lists)
         Wrkzg.Core.Effects.EffectEngine effectEngine = new(
             System.Array.Empty<Wrkzg.Core.Effects.ITriggerType>(),
             System.Array.Empty<Wrkzg.Core.Effects.IConditionType>(),
@@ -70,7 +68,18 @@ public class ChatMessagePipelineTests
             scopeFactory,
             Substitute.For<ILogger<Wrkzg.Core.Effects.EffectEngine>>());
 
-        _sut = new ChatMessagePipeline(_commandProcessor, _trackingService, timedService, gameManager, effectEngine, broadcaster, scopeFactory, _logger);
+        _statsBatcher = new UserStatsBatcher(scopeFactory, Substitute.For<ILogger<UserStatsBatcher>>());
+
+        _sut = new ChatMessagePipeline(
+            _commandProcessor,
+            _trackingService,
+            timedService,
+            gameManager,
+            effectEngine,
+            broadcaster,
+            _statsBatcher,
+            scopeFactory,
+            _logger);
     }
 
     private static ChatMessage CreateMessage(
@@ -87,29 +96,11 @@ public class ChatMessagePipelineTests
         };
     }
 
-    /// <summary>Verifies that processing a message increments the user's message count and updates the display name.</summary>
-    [Fact]
-    public async Task ProcessAsync_UpdatesUserStats()
-    {
-        ChatMessage msg = CreateMessage();
-        User user = new() { TwitchId = "12345", Username = "testuser", DisplayName = "TestUser", MessageCount = 5 };
-        _userRepo.GetOrCreateAsync("12345", "testuser", Arg.Any<CancellationToken>()).Returns(user);
-        _commandProcessor.HandleMessageAsync(msg, Arg.Any<CancellationToken>()).Returns(false);
-
-        await _sut.ProcessAsync(msg);
-
-        user.MessageCount.Should().Be(6);
-        user.DisplayName.Should().Be("TestUser");
-        await _userRepo.Received(1).UpdateAsync(user, Arg.Any<CancellationToken>());
-    }
-
     /// <summary>Verifies that processing a message marks the user as active for watch time tracking.</summary>
     [Fact]
     public async Task ProcessAsync_MarksUserActive()
     {
         ChatMessage msg = CreateMessage(userId: "99999");
-        User user = new() { TwitchId = "99999", Username = "testuser" };
-        _userRepo.GetOrCreateAsync("99999", "testuser", Arg.Any<CancellationToken>()).Returns(user);
         _commandProcessor.HandleMessageAsync(msg, Arg.Any<CancellationToken>()).Returns(false);
 
         await _sut.ProcessAsync(msg);
@@ -122,8 +113,6 @@ public class ChatMessagePipelineTests
     public async Task ProcessAsync_CallsCommandProcessor()
     {
         ChatMessage msg = CreateMessage("!test");
-        User user = new() { TwitchId = "12345", Username = "testuser" };
-        _userRepo.GetOrCreateAsync("12345", "testuser", Arg.Any<CancellationToken>()).Returns(user);
         _commandProcessor.HandleMessageAsync(msg, Arg.Any<CancellationToken>()).Returns(true);
 
         await _sut.ProcessAsync(msg);
@@ -131,47 +120,13 @@ public class ChatMessagePipelineTests
         await _commandProcessor.Received(1).HandleMessageAsync(msg, Arg.Any<CancellationToken>());
     }
 
-    /// <summary>Verifies that the pipeline syncs moderator status from the chat message to the user record.</summary>
+    /// <summary>Verifies that the pipeline does not throw when the message has no command prefix.</summary>
     [Fact]
-    public async Task ProcessAsync_SyncsModStatus()
+    public async Task ProcessAsync_RegularMessage_DoesNotThrow()
     {
-        ChatMessage msg = CreateMessage(isMod: true);
-        User user = new() { TwitchId = "12345", Username = "testuser", IsMod = false };
-        _userRepo.GetOrCreateAsync("12345", "testuser", Arg.Any<CancellationToken>()).Returns(user);
+        ChatMessage msg = CreateMessage("hello world");
         _commandProcessor.HandleMessageAsync(msg, Arg.Any<CancellationToken>()).Returns(false);
 
         await _sut.ProcessAsync(msg);
-
-        user.IsMod.Should().BeTrue();
-    }
-
-    /// <summary>Verifies that the pipeline syncs subscriber status from the chat message to the user record.</summary>
-    [Fact]
-    public async Task ProcessAsync_SyncsSubscriberStatus()
-    {
-        ChatMessage msg = CreateMessage(isSub: true);
-        User user = new() { TwitchId = "12345", Username = "testuser", IsSubscriber = false };
-        _userRepo.GetOrCreateAsync("12345", "testuser", Arg.Any<CancellationToken>()).Returns(user);
-        _commandProcessor.HandleMessageAsync(msg, Arg.Any<CancellationToken>()).Returns(false);
-
-        await _sut.ProcessAsync(msg);
-
-        user.IsSubscriber.Should().BeTrue();
-    }
-
-    /// <summary>Verifies that a database failure during stats update does not prevent command processing.</summary>
-    [Fact]
-    public async Task ProcessAsync_StatsFailure_DoesNotBreakCommandProcessing()
-    {
-        ChatMessage msg = CreateMessage("!test");
-        _userRepo.GetOrCreateAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .ThrowsAsync(new Exception("DB connection failed"));
-        _commandProcessor.HandleMessageAsync(msg, Arg.Any<CancellationToken>()).Returns(true);
-
-        // Should not throw — stats failure is caught internally
-        await _sut.ProcessAsync(msg);
-
-        // Command processing should still have been attempted
-        await _commandProcessor.Received(1).HandleMessageAsync(msg, Arg.Any<CancellationToken>());
     }
 }

@@ -7,16 +7,16 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api': 'http://localhost:5050',      // zur Kestrel API
+      '/api': 'http://localhost:5050',      // to the Kestrel API
       '/auth': 'http://localhost:5050',     // OAuth + setup endpoints
       '/hubs': {
         target: 'http://localhost:5050',
-        ws: true                            // WebSocket für SignalR
+        ws: true                            // WebSocket for SignalR
       }
     }
   },
   build: {
-    outDir: '../Wrkzg.Api/wwwroot',     // Build-Artefakt direkt in wwwroot
+    outDir: '../Wrkzg.Api/wwwroot',     // build artifact directly into wwwroot
     emptyOutDir: true
   }
 })

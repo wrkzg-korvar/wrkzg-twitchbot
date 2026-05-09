@@ -37,10 +37,6 @@ public static class DependencyInjection
         services.AddSingleton<ISystemCommand, UptimeCommand>();
         services.AddSingleton<ISystemCommand, ShoutoutCommand>();
         services.AddSingleton<ISystemCommand, QuoteCommand>();
-        services.AddSingleton<ISystemCommand, SongRequestCommand>();
-        services.AddSingleton<ISystemCommand, SkipSongCommand>();
-        services.AddSingleton<ISystemCommand, QueueCommand>();
-        services.AddSingleton<ISystemCommand, CurrentSongCommand>();
         services.AddSingleton<ISystemCommand, TitleCommand>();
         services.AddSingleton<ISystemCommand, GameCommand>();
 
@@ -103,9 +99,6 @@ public static class DependencyInjection
         // Effect Engine (Singleton — evaluates Trigger → Condition → Effect chains)
         services.AddSingleton<EffectEngine>();
 
-        // Song Request Service (Singleton — manages song queue)
-        services.AddSingleton<SongRequestService>();
-
         // Chat Game Manager (Singleton — manages all chat games)
         services.AddSingleton<ChatGameManager>();
 
@@ -115,11 +108,23 @@ public static class DependencyInjection
         // Chat Message Buffer (Singleton — holds last N messages for dashboard reload)
         services.AddSingleton<ChatMessageBuffer>();
 
+        // Stream Status Provider (Singleton + IHostedService — cached stream live status)
+        // Polls Helix once per minute, replaces redundant GetStreamAsync() calls in
+        // UserTrackingService, StreamAnalyticsService, and TimedMessageService.
+        services.AddSingleton<StreamStatusProvider>();
+        services.AddSingleton<IStreamStatusProvider>(sp => sp.GetRequiredService<StreamStatusProvider>());
+        services.AddHostedService(sp => sp.GetRequiredService<StreamStatusProvider>());
+
         // UserTrackingService (Singleton + IHostedService)
         // Triple registration: same instance as IUserTrackingService, IHostedService, and concrete type
         services.AddSingleton<UserTrackingService>();
         services.AddSingleton<IUserTrackingService>(sp => sp.GetRequiredService<UserTrackingService>());
         services.AddHostedService(sp => sp.GetRequiredService<UserTrackingService>());
+
+        // User Stats Batcher (Singleton + BackgroundService — batches per-message DB writes)
+        // Replaces per-message DB write in ChatMessagePipeline with a 30s flush interval.
+        services.AddSingleton<UserStatsBatcher>();
+        services.AddHostedService(sp => sp.GetRequiredService<UserStatsBatcher>());
 
         return services;
     }

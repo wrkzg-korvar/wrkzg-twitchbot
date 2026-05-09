@@ -5,6 +5,11 @@ export interface EmoteDto {
   name: string;
   url: string;
   source: "global" | "channel" | "subscriber" | "bits" | "follower";
+  /**
+   * Which account loaded this emote. "shared" = available to both bot and broadcaster
+   * (e.g. global emotes or emotes both accounts subscribe to).
+   */
+  owner: "bot" | "broadcaster" | "shared";
 }
 
 export const emotesApi = {

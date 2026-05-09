@@ -4,16 +4,16 @@
       ============================================================
       Wrkzg.Infrastructure
       ============================================================
-      Typ      : Class Library (Standard-SDK)
-      Aufgabe  : Konkrete Implementierungen aller Core-Interfaces:
-                 - Datenbankzugriff (EF Core + SQLite)
-                 - Twitch IRC Client (TwitchLib)
-                 - Twitch Helix HTTP Client
-                 - Twitch EventSub WebSocket Client
-                 - Sichere Token-Speicherung (DPAPI / Keychain)
-                 - Repository-Implementierungen
-      Regel    : Infrastructure implementiert Core-Interfaces.
-                 Infrastructure kennt Core, aber nicht Api oder Host.
+      Type     : Class library (standard SDK)
+      Purpose  : Concrete implementations of all Core interfaces:
+                 - Database access (EF Core + SQLite)
+                 - Twitch IRC client (TwitchLib)
+                 - Twitch Helix HTTP client
+                 - Twitch EventSub WebSocket client
+                 - Secure token storage (DPAPI / Keychain)
+                 - Repository implementations
+      Rule     : Infrastructure implements Core interfaces.
+                 Infrastructure knows Core, but neither Api nor Host.
       ============================================================
     -->
 
@@ -30,9 +30,9 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
         <!--
-          Design-Package nur für Entwicklung (EF Migrations CLI).
-          PrivateAssets=all → wird NICHT an abhängige Projekte weitergegeben
-          und landet NICHT im Publish-Artefakt.
+          Design package for development only (EF Migrations CLI).
+          PrivateAssets=all → NOT propagated to dependent projects
+          and does NOT end up in the publish artifact.
         -->
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
             <PrivateAssets>all</PrivateAssets>
@@ -59,14 +59,14 @@
     </ItemGroup>
 
     <!--
-      DPAPI (Token-Verschlüsselung) — Paket wird auf allen Plattformen
-      referenziert damit der Code kompiliert. Zur Laufzeit wählt die DI
-      über OperatingSystem.IsWindows() die richtige ISecureStorage-
-      Implementierung; DPAPI-Aufrufe in WindowsSecureStorage werden
-      nur auf Windows ausgeführt.
+      DPAPI (token encryption) — package is referenced on every
+      platform so the code compiles. At runtime DI picks the right
+      ISecureStorage implementation via OperatingSystem.IsWindows();
+      DPAPI calls in WindowsSecureStorage only run on Windows.
     -->
     <ItemGroup Label="Cryptography">
         <PackageReference Include="System.Security.Cryptography.ProtectedData" />
+        <PackageReference Include="System.Security.Cryptography.Xml" />
     </ItemGroup>
 
 

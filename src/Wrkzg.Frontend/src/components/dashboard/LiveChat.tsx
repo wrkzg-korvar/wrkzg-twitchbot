@@ -175,6 +175,7 @@ export function LiveChat({
         <EmotePicker
           emotes={emotes ?? []}
           onSelect={handleEmoteSelect}
+          sendAs={sendAs}
         />
 
         <button

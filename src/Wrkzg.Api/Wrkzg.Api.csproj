@@ -4,31 +4,30 @@
       ============================================================
       Wrkzg.Api
       ============================================================
-      Typ      : Class Library mit Web-SDK
-      Aufgabe  : REST-Endpunkte (Minimal API), SignalR Hubs,
-                 statische Dateiauslieferung (React SPA aus wwwroot).
-                 Kein eigener Entry Point – wird von Host eingebettet.
-      SDK      : Microsoft.NET.Sdk.Web bringt ASP.NET Core, Kestrel
-                 und alle Web-Middleware mit.
+      Type     : Class library with the Web SDK
+      Purpose  : REST endpoints (Minimal API), SignalR hubs,
+                 static file serving (React SPA from wwwroot).
+                 No own entry point – embedded by Host.
+      SDK      : Microsoft.NET.Sdk.Web ships ASP.NET Core, Kestrel,
+                 and all web middleware.
       ============================================================
     -->
 
     <PropertyGroup Label="Output">
         <!--
-          Kein <OutputType> → beim Web-SDK defaultet dies zu einer Library.
-          Der Host referenziert dieses Projekt und stellt den Entry Point.
+          No <OutputType> → with the Web SDK this defaults to a library.
+          Host references this project and provides the entry point.
         -->
         <AssemblyName>Wrkzg.Api</AssemblyName>
         <RootNamespace>Wrkzg.Api</RootNamespace>
-        <!-- Explizit als Library deklarieren – kein Entry Point -->
+        <!-- Declare explicitly as a library – no entry point -->
         <OutputType>Library</OutputType>
     </PropertyGroup>
 
     <PropertyGroup Label="Dev Proxy">
         <!--
-          Im Debug-Modus: Kestrel-Port fest auf 5050 setzen,
-          damit der Vite-Proxy (vite.config.ts) immer die richtige
-          Zieladresse hat.
+          In Debug mode: pin the Kestrel port to 5050 so the Vite proxy
+          (vite.config.ts) always has the correct target address.
         -->
         <SpaProxyLaunchCommand Condition="'$(Configuration)' == 'Debug'">npm run dev</SpaProxyLaunchCommand>
         <SpaProxyServerUrl Condition="'$(Configuration)' == 'Debug'">http://localhost:5173</SpaProxyServerUrl>
@@ -49,9 +48,9 @@
 
     <ItemGroup Label="wwwroot">
         <!--
-          wwwroot wird vom Web-SDK automatisch als Static Files Root behandelt.
-          Die React-Build-Artefakte landen hier via vite.config.ts (outDir).
-          Im Repository ist dieser Ordner leer / gitignored.
+          wwwroot is automatically treated as the static-files root by the Web SDK.
+          The React build artifacts land here via vite.config.ts (outDir).
+          In the repository this folder is empty / gitignored.
         -->
         <Content Update="wwwroot\**" CopyToPublishDirectory="PreserveNewest" />
     </ItemGroup>

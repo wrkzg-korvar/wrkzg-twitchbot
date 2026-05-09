@@ -381,7 +381,7 @@ Returns the current bot, stream, auth, and platform status.
 
 ```json
 {
-  "bot": { "isConnected": true, "channel": "krinlin" },
+  "bot": { "isConnected": true, "channel": "username" },
   "stream": { "isLive": false, "viewerCount": 0, "title": null, "game": null, "startedAt": null },
   "auth": { "botTokenPresent": true, "broadcasterTokenPresent": true },
   "platform": "macos"
@@ -957,7 +957,7 @@ Returns all cached Twitch emotes (global + user emotes from subscribed channels,
   },
   {
     "id": "emotesv2_abc123",
-    "name": "krinlinHype",
+    "name": "testingHype",
     "url": "https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_abc123/default/dark/2.0",
     "source": "subscriber"
   }

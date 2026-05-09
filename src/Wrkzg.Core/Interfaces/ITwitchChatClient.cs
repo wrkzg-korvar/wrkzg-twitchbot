@@ -30,6 +30,20 @@ public interface ITwitchChatClient : IAsyncDisposable
     /// <summary>The channel the bot is currently joined to (lowercase, without #). Null if not connected.</summary>
     string? JoinedChannel { get; }
 
+    /// <summary>
+    /// Whether the bot account is a moderator in the joined channel. Updated when the
+    /// bot's USERSTATE arrives from IRC after connect or when its mod status changes.
+    /// False until the first USERSTATE has been observed.
+    /// </summary>
+    bool IsBotMod { get; }
+
+    /// <summary>
+    /// Whether the bot account follows the broadcaster's channel. Resolved via a single
+    /// Helix API call after the bot connects (follower status is not exposed via IRC).
+    /// False until the check has completed.
+    /// </summary>
+    bool IsBotFollower { get; }
+
     /// <summary>Connects to Twitch IRC using the stored Bot token and joins the specified channel.</summary>
     Task ConnectAsync(string channel, CancellationToken ct = default);
 

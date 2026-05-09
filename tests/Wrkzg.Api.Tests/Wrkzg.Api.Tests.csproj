@@ -4,10 +4,10 @@
       ============================================================
       Wrkzg.Api.Tests
       ============================================================
-      Typ      : Test Project (xUnit)
-      Aufgabe  : Integrations- und Unit-Tests für API-Endpunkte
-                 und SignalR Hubs. Verwendet WebApplicationFactory
-                 für In-Process-HTTP-Tests ohne echten Server.
+      Type     : Test project (xUnit)
+      Purpose  : Integration and unit tests for API endpoints and
+                 SignalR hubs. Uses WebApplicationFactory for
+                 in-process HTTP tests without a real server.
       ============================================================
     -->
 
@@ -39,9 +39,9 @@
         <PackageReference Include="FluentAssertions" />
 
         <!--
-          WebApplicationFactory: Startet die gesamte ASP.NET Core Pipeline
-          in-memory für realistische HTTP-Tests ohne echten Server.
-          Keine Netzwerkports werden geöffnet.
+          WebApplicationFactory: spins up the full ASP.NET Core pipeline
+          in-memory for realistic HTTP tests without a real server.
+          No network ports are opened.
         -->
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     </ItemGroup>

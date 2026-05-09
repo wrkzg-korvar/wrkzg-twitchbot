@@ -4,18 +4,18 @@
       ============================================================
       Wrkzg.Host
       ============================================================
-      Typ      : Executable (Entry Point der gesamten Anwendung)
-      Aufgabe  : Startet Kestrel + Photino-Fenster, bootstrapt DI,
-                 verwaltet Systemtray und Application-Lifecycle.
-      Plattform: Windows (win-x64) und macOS (osx-x64, osx-arm64)
+      Type     : Executable (entry point of the entire application)
+      Purpose  : Starts Kestrel + the Photino window, bootstraps DI,
+                 manages the system tray and the application lifecycle.
+      Platform : Windows (win-x64) and macOS (osx-x64, osx-arm64)
       ============================================================
     -->
 
     <PropertyGroup Label="Output">
         <!--
-          WinExe  → kein Konsolenfenster auf Windows.
-          Auf macOS hat diese Einstellung keinen Effekt –
-          dort verhält sich Exe und WinExe identisch.
+          WinExe  → no console window on Windows.
+          On macOS this setting has no effect –
+          there Exe and WinExe behave identically.
         -->
         <OutputType>WinExe</OutputType>
         <AssemblyName>Wrkzg</AssemblyName>
@@ -38,7 +38,7 @@
     </PropertyGroup>
 
     <PropertyGroup Label="Application Metadata">
-        <!-- Angezeigt im Windows Task-Manager und macOS Activity Monitor -->
+        <!-- Shown in the Windows Task Manager and macOS Activity Monitor -->
         <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
         <Description>Wrkzg – Local Twitch Community Bot</Description>
     </PropertyGroup>
@@ -48,7 +48,7 @@
     </PropertyGroup>
 
     <ItemGroup Label="Project References">
-        <!-- Host kennt nur die API-Schicht – niemals direkt Core oder Infrastructure -->
+        <!-- Host only knows the API layer – never Core or Infrastructure directly -->
         <ProjectReference Include="..\Wrkzg.Api\Wrkzg.Api.csproj" />
     </ItemGroup>
 
@@ -68,8 +68,8 @@
     </ItemGroup>
 
     <ItemGroup Label="Assets">
-        <!-- Icon als Content kopieren — ApplicationIcon embedded nur in die .exe-Metadaten,
-             kopiert die Datei aber nicht in den Output für SetWindowIcon zur Laufzeit -->
+        <!-- Copy the icon as content — ApplicationIcon only embeds it in the .exe metadata,
+             but does not copy the file to the output for SetWindowIcon at runtime -->
         <Content Include="Assets\icon.ico" CopyToOutputDirectory="PreserveNewest" />
         <None Update="version.json" CopyToOutputDirectory="PreserveNewest" />
         <!-- macOS App Bundle metadata -->
@@ -78,8 +78,8 @@
     </ItemGroup>
 
     <!--
-      Beim Release-Build: Frontend automatisch bauen und in wwwroot kopieren.
-      Im Debug-Build läuft Vite separat auf Port 5173.
+      On Release builds: build the frontend automatically and copy it into wwwroot.
+      On Debug builds, Vite runs separately on port 5173.
     -->
     <Target Name="BuildFrontend"
             BeforeTargets="Build"

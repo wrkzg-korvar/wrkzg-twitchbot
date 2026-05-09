@@ -5,9 +5,14 @@ import type { EmoteDto } from "../../api/emotes";
 interface EmotePickerProps {
   emotes: EmoteDto[];
   onSelect: (emoteName: string) => void;
+  /**
+   * The account that will send the message. The picker filters out emotes the
+   * other account owns — only "shared" and emotes matching `sendAs` remain.
+   */
+  sendAs?: "bot" | "broadcaster";
 }
 
-export function EmotePicker({ emotes, onSelect }: EmotePickerProps) {
+export function EmotePicker({ emotes, onSelect, sendAs = "bot" }: EmotePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const panelRef = useRef<HTMLDivElement>(null);
@@ -25,11 +30,16 @@ export function EmotePicker({ emotes, onSelect }: EmotePickerProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
+  // Only show emotes the sending account can actually use.
+  const ownedByAccount = emotes.filter(
+    (e) => e.owner === "shared" || e.owner === sendAs,
+  );
+
   const filtered = search.trim()
-    ? emotes.filter((e) =>
+    ? ownedByAccount.filter((e) =>
         e.name.toLowerCase().includes(search.toLowerCase()),
       )
-    : emotes;
+    : ownedByAccount;
 
   const subscriberEmotes = filtered.filter((e) => e.source === "subscriber");
   const bitsEmotes = filtered.filter((e) => e.source === "bits");

@@ -1,24 +1,24 @@
 namespace Wrkzg.Core.Models;
 
 /// <summary>
-/// User-Overrides für System Commands.
-/// Speichert angepassten Response-Text und Enabled-Status.
-/// Der Trigger ist immutable und dient als Primary Key.
+/// User overrides for system commands.
+/// Stores a customized response template and enabled status.
+/// The trigger is immutable and serves as the primary key.
 /// </summary>
 public class SystemCommandOverride
 {
     /// <summary>
-    /// Der Command-Trigger (z.B. "!points"). Nicht änderbar.
+    /// The command trigger (e.g. "!points"). Not modifiable.
     /// </summary>
     public string Trigger { get; set; } = string.Empty;
 
     /// <summary>
-    /// Benutzerdefinierter Response-Text. Null = Standard-Response der C#-Klasse verwenden.
+    /// User-defined response template. Null = use the default response of the C# class.
     /// </summary>
     public string? CustomResponseTemplate { get; set; }
 
     /// <summary>
-    /// Ob der Command aktiv ist. Default: true.
+    /// Whether the command is active. Default: true.
     /// </summary>
     public bool IsEnabled { get; set; } = true;
 }

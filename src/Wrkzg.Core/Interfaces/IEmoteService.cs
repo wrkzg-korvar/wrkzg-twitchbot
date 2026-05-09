@@ -28,4 +28,11 @@ public sealed class EmoteDto
 
     /// <summary>The emote source category (e.g. "global", "channel", "subscriber").</summary>
     public string Source { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Which account loaded this emote: "bot", "broadcaster", or "shared"
+    /// (available to both accounts — global emotes or emotes both accounts subscribe to).
+    /// The dashboard EmotePicker filters by this when the streamer toggles "Send as".
+    /// </summary>
+    public string Owner { get; init; } = "shared";
 }

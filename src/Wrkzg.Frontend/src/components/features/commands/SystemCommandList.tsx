@@ -158,8 +158,8 @@ export function SystemCommandList({ commands }: SystemCommandListProps) {
 
   return (
     <>
-      <div>
-        <div className="rounded-t-lg border border-b-0 border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2">
+      <div className="rounded-lg border border-[var(--color-border)] overflow-hidden">
+        <div className="bg-[var(--color-surface)] px-4 py-2 border-b border-[var(--color-border)]">
           <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
             System Commands
           </h3>
@@ -171,10 +171,11 @@ export function SystemCommandList({ commands }: SystemCommandListProps) {
           searchPlaceholder="Search system commands..."
           getRowKey={(row) => row.trigger}
           maxHeight="400px"
+          containerClassName=""
         />
 
         {editingCmd && (
-          <div className="border border-t-0 border-[var(--color-border)] rounded-b-lg bg-[var(--color-elevated)] px-4 py-3">
+          <div className="bg-[var(--color-elevated)] px-4 py-3 border-t border-[var(--color-border)]">
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-[var(--color-text)] shrink-0">
                 {editingCmd.trigger}:

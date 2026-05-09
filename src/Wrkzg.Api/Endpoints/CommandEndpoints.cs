@@ -156,7 +156,20 @@ public static class CommandEndpoints
             // Apply partial updates
             if (request.Trigger is not null)
             {
-                command.Trigger = request.Trigger.ToLowerInvariant();
+                string newTrigger = request.Trigger.ToLowerInvariant();
+                if (string.IsNullOrWhiteSpace(newTrigger) || !newTrigger.StartsWith('!'))
+                {
+                    return TypedResults.Problem(detail: "Trigger must start with '!' and be non-empty.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
+                }
+                if (!string.Equals(command.Trigger, newTrigger, System.StringComparison.Ordinal))
+                {
+                    Command? existing = await repo.GetByTriggerOrAliasAsync(newTrigger, ct);
+                    if (existing is not null && existing.Id != id)
+                    {
+                        return TypedResults.Problem(detail: $"A command with trigger '{newTrigger}' already exists.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
+                    }
+                    command.Trigger = newTrigger;
+                }
             }
 
             if (request.Aliases is not null)

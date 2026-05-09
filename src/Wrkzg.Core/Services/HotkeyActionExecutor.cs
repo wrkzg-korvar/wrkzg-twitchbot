@@ -22,7 +22,6 @@ public class HotkeyActionExecutor
     private readonly ITwitchChatClient _chatClient;
     private readonly IChatEventBroadcaster _broadcaster;
     private readonly EffectEngine _effectEngine;
-    private readonly SongRequestService _songRequestService;
     private readonly ILogger<HotkeyActionExecutor> _logger;
 
     private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
@@ -34,21 +33,18 @@ public class HotkeyActionExecutor
     /// <param name="chatClient">The Twitch IRC chat client for sending chat messages.</param>
     /// <param name="broadcaster">Broadcasts real-time events to dashboard and overlays.</param>
     /// <param name="effectEngine">The automation engine for running effect chains.</param>
-    /// <param name="songRequestService">Song request queue management.</param>
     /// <param name="logger">Logger instance for diagnostics.</param>
     public HotkeyActionExecutor(
         IServiceScopeFactory scopeFactory,
         ITwitchChatClient chatClient,
         IChatEventBroadcaster broadcaster,
         EffectEngine effectEngine,
-        SongRequestService songRequestService,
         ILogger<HotkeyActionExecutor> logger)
     {
         _scopeFactory = scopeFactory;
         _chatClient = chatClient;
         _broadcaster = broadcaster;
         _effectEngine = effectEngine;
-        _songRequestService = songRequestService;
         _logger = logger;
     }
 
@@ -180,14 +176,6 @@ public class HotkeyActionExecutor
                     catch (JsonException ex)
                     {
                         _logger.LogWarning(ex, "Invalid RaffleStart payload: {Payload}", binding.ActionPayload);
-                    }
-                    break;
-
-                case "SongSkip":
-                    string skipResult = await _songRequestService.SkipCurrentAsync(ct);
-                    if (_chatClient.IsConnected && !string.IsNullOrWhiteSpace(skipResult))
-                    {
-                        await _chatClient.SendMessageAsync(skipResult, ct);
                     }
                     break;
 

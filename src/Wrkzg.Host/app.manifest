@@ -2,7 +2,7 @@
 <assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
 
   <assemblyIdentity
-    version="2.4.0.0"
+    version="2.4.3.0"
     processorArchitecture="AMD64"
     name="Wrkzg"
     type="win32" />
@@ -11,9 +11,9 @@
 
   <!--
     requestedExecutionLevel: asInvoker
-    → Kein UAC-Prompt beim Start. Der Bot benötigt keine Admin-Rechte.
-    Wichtig: Nie "requireAdministrator" setzen – das würde Nutzer
-    unnötig mit einem UAC-Dialog konfrontieren.
+    → No UAC prompt at startup. The bot does not require admin rights.
+    Important: never set "requireAdministrator" – that would needlessly
+    confront the user with a UAC dialog.
   -->
   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
     <security>
@@ -24,9 +24,9 @@
   </trustInfo>
 
   <!--
-    Windows-Kompatibilitäts-Deklaration.
-    Ohne diesen Block behandelt Windows die App wie ein Vista-Programm
-    und aktiviert diverse Kompatibilitäts-Shims.
+    Windows compatibility declaration.
+    Without this block, Windows treats the app like a Vista program
+    and enables various compatibility shims.
   -->
   <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
     <application>
@@ -35,8 +35,8 @@
   </compatibility>
 
   <!--
-    DPI-Awareness: Schärfe auf hochauflösenden Displays (HiDPI / Retina).
-    PerMonitorV2 ist der modernste Modus und wird von Photino.NET genutzt.
+    DPI awareness: sharpness on high-resolution displays (HiDPI / Retina).
+    PerMonitorV2 is the most modern mode and is used by Photino.NET.
   -->
   <application xmlns="urn:schemas-microsoft-com:asm.v3">
     <windowsSettings>

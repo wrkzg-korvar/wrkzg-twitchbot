@@ -14,7 +14,6 @@ const OVERLAY_TITLES: Record<string, string> = {
   raffle: "Raffle",
   counter: "Counter",
   events: "Event List",
-  "song-player": "Song Player",
 };
 
 const ANIMATIONS = [

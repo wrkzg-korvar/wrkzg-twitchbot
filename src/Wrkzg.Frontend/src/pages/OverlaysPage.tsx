@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Bell, MessageSquare, BarChart3, Gift, Hash, List, Music, Plus, Code, Copy, Trash2 } from "lucide-react";
+import { Bell, MessageSquare, BarChart3, Gift, Hash, List, Plus, Code, Copy, Trash2 } from "lucide-react";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Card } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
@@ -62,14 +62,6 @@ const OVERLAYS: OverlayDefinition[] = [
     width: 350,
     height: 400,
     testEvents: ["follow", "subscribe", "raid"],
-  },
-  {
-    type: "song-player",
-    title: "Song Player",
-    description: "Now-playing overlay for song requests. Add ?mode=slim for compact.",
-    icon: Music,
-    width: 440,
-    height: 100,
   },
 ];
 

@@ -12,15 +12,15 @@ using Wrkzg.Api.Security;
 namespace Wrkzg.Host;
 
 /// <summary>
-/// Startet das Photino-Fenster nachdem Kestrel hochgefahren ist.
+/// Starts the Photino window once Kestrel is up.
 ///
-/// Dev-Modus:
-///   - Versucht den Vite Dev Server auf :5173 zu erreichen (für HMR)
-///   - Falls Vite nicht läuft, fällt es auf Kestrel zurück
-///     (statische Dateien aus wwwroot/)
+/// Dev mode:
+///   - Tries to reach the Vite dev server on :5173 (for HMR)
+///   - Falls back to Kestrel if Vite is not running
+///     (static files from wwwroot/)
 ///
-/// Production-Modus:
-///   - Zeigt immer auf Kestrel
+/// Production mode:
+///   - Always points at Kestrel
 /// </summary>
 public static class PhotinoHosting
 {
@@ -31,11 +31,11 @@ public static class PhotinoHosting
     {
         try
         {
-            // Kestrel asynchron im Hintergrund starten
+            // Start Kestrel asynchronously in the background
             var serverTask = app.StartAsync();
             serverTask.Wait();
 
-            // URL bestimmen
+            // Determine URL
             string kestrelUrl = app.Urls.First();
             string baseUrl;
 
@@ -92,10 +92,10 @@ public static class PhotinoHosting
 
             windowController.SetWindow(window);
 
-            // Blockiert bis das Fenster geschlossen wird
+            // Blocks until the window is closed
             window.WaitForClose();
 
-            // Sauber herunterfahren
+            // Shut down cleanly
             app.StopAsync().GetAwaiter().GetResult();
         }
         catch (Exception ex)
@@ -123,7 +123,7 @@ public static class PhotinoHosting
     }
 
     /// <summary>
-    /// Prüft ob der Vite Dev Server erreichbar ist (1s Timeout).
+    /// Checks whether the Vite dev server is reachable (1s timeout).
     /// </summary>
     private static bool IsViteRunning()
     {

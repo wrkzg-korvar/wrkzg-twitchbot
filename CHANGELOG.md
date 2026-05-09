@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.3] — 2026-05-09
+
+### Added
+- **Bot Requirements Panel:** New section on the Settings page showing whether the bot account meets feature-gated requirements. Displays green/red status indicators for Moderator and Follower status with actionable fix instructions (e.g. "Type /mod YOUR_BOT_NAME in your Twitch chat"). Polls every 30 seconds.
+- **{target} Command Variable:** Custom commands can now address other users. `!hug krinlin` with template `{user} gives {target} a big hug!` produces "Chuck gives krinlin a big hug!". The `@` prefix is stripped automatically. Works in both custom commands and system command overrides.
+- **Bot Follower Status Check:** `IsBotFollower` property on `ITwitchChatClient`, checked once via Helix API (`GET /channels/followers`) after IRC connect. Cached for the session — no repeated API calls. Displayed in the Bot Requirements panel.
+
+### Changed
+- **Command Trigger Editing:** Triggers and aliases on existing commands are now editable at any time. Previously the trigger input was read-only after creation. Backend validates trigger uniqueness on update to prevent duplicates.
+- **Bot Emote Separation:** Emotes are now tagged with an `owner` field (`bot`, `broadcaster`, or `shared`). The EmotePicker filters available emotes based on the selected "Send as" account — selecting Bot shows only emotes the bot can actually use. Global emotes are available to both accounts.
+
+## [2.4.2] — 2026-05-09
+
+### Added
+- **Diagnostic Logging:** Structured log files are now written to the Wrkzg data directory with 7-day rolling retention (50 MB per day). A "Download Diagnostic Log" button on the Settings page enables easy log file sharing for bug reports.
+- **Diagnostics API:** `GET /api/diagnostics/log` returns the current log file as a download. `GET /api/diagnostics/log/entries?count=100` returns the last N log lines as JSON.
+- **StreamStatusProvider:** New centralized singleton service that caches stream live status. All background services consume from this cache instead of making independent Helix API calls.
+- **UserStatsBatcher:** Batches per-message user stat updates and flushes them to the database every 30 seconds.
+
+### Fixed
+- **Watchtime Tracking:** Users who are in chat but not actively sending messages now correctly receive watchtime and points. The bot polls the Twitch Helix "Get Chatters" endpoint every 60 seconds to detect all viewers, not just message senders. Requires the `moderator:read:chatters` scope — re-connect your Bot account in Settings to grant this scope.
+- **Performance:** Eliminated redundant Twitch Helix API calls. Three separate services were independently polling stream status (4+ API calls/minute for the same data). A centralized StreamStatusProvider reduces this to exactly 1 call/minute.
+- **Performance:** Per-message database writes for user stats (message count, last seen, role sync) are now batched every 30 seconds instead of written individually for each chat message. In active chats, this reduces database writes from 50+/minute to ~2/minute.
+- **Users Page:** Server-side pagination now works correctly. Previously, the frontend loaded all users at once (pageSize: 10000) and paginated client-side. Search, sort, and page changes now query the backend API directly.
+- **SmartDataTable Headers:** Section headers above SmartDataTable (System Commands, Raffle History, Poll History) no longer produce double borders and misaligned rounding. Components are wrapped in a single `overflow-hidden` container with the new `containerClassName` prop.
+- **Raffle Form:** Added proper visible labels, duration preset buttons (None / 1 min / 2 min / 5 min), and helper text. Raw seconds input replaced with intuitive button selection.
+- **Poll Form:** Added proper visible labels. Removed the permanently disabled "Start Twitch Poll" button that confused users.
+- **Raffles & Polls History:** Empty states now use the consistent EmptyState component. Section order standardized: Create → Active → History → Settings.
+- **NuGet Security:** Updated `System.Security.Cryptography.Xml` to 10.0.7 (fixes CVE-2026-26171, CVE-2026-33116). Updated `Microsoft.SourceLink.GitHub` from 8.0.0 to 10.0.203 to eliminate vulnerable transitive dependency.
+
+### Changed
+- **SmartDataTable:** New `containerClassName` prop allows parent-controlled border and rounding styles. New `onSortChange` callback enables external (server-side) sort control.
+- **Users Page:** Sort by "Last Seen" and "First Seen" columns removed due to a SQLite limitation (`DateTimeOffset` cannot be used in `ORDER BY` clauses). All other sort columns work via server-side sorting.
+
+### Removed
+- **Song Request Feature:** Removed entirely — service, API endpoints, system commands (`!sr`, `!skip`, `!queue`, `!currentsong`), dashboard page, OBS overlay, and mini-player. No satisfactory audio playback solution exists within the current architecture constraints. The database table is preserved for future use. The feature will be redesigned in a future version.
+
 ## [2.4.0] — 2026-04-11
 
 ### Added

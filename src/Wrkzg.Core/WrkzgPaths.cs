@@ -30,6 +30,9 @@ public static class WrkzgPaths
     /// <summary>Gets the path to the directory storing user-created custom overlay HTML files.</summary>
     public static string CustomOverlaysDirectory => Path.Combine(AssetsDirectory, "custom-overlays");
 
+    /// <summary>Gets the path to the directory storing diagnostic log files.</summary>
+    public static string LogsDirectory => Path.Combine(DataDirectory, "logs");
+
     /// <summary>
     /// Ensures all asset directories exist. Call once at app startup.
     /// </summary>
@@ -38,5 +41,6 @@ public static class WrkzgPaths
         Directory.CreateDirectory(SoundsDirectory);
         Directory.CreateDirectory(ImagesDirectory);
         Directory.CreateDirectory(CustomOverlaysDirectory);
+        Directory.CreateDirectory(LogsDirectory);
     }
 }

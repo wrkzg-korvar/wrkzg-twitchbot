@@ -36,6 +36,7 @@ public class ChatMessagePipeline
     private readonly ChatGameManager _chatGameManager;
     private readonly EffectEngine _effectEngine;
     private readonly IChatEventBroadcaster _broadcaster;
+    private readonly UserStatsBatcher _statsBatcher;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ChatMessagePipeline> _logger;
 
@@ -48,6 +49,7 @@ public class ChatMessagePipeline
     /// <param name="chatGameManager">Manages chat game triggers and active rounds.</param>
     /// <param name="effectEngine">Evaluates effect lists against chat message events.</param>
     /// <param name="broadcaster">Broadcasts real-time events to the dashboard via SignalR.</param>
+    /// <param name="statsBatcher">Batches user stat updates for periodic DB flush.</param>
     /// <param name="scopeFactory">Factory for creating DI scopes to resolve scoped services.</param>
     /// <param name="logger">Logger instance for diagnostics.</param>
     public ChatMessagePipeline(
@@ -57,6 +59,7 @@ public class ChatMessagePipeline
         ChatGameManager chatGameManager,
         EffectEngine effectEngine,
         IChatEventBroadcaster broadcaster,
+        UserStatsBatcher statsBatcher,
         IServiceScopeFactory scopeFactory,
         ILogger<ChatMessagePipeline> logger)
     {
@@ -66,6 +69,7 @@ public class ChatMessagePipeline
         _chatGameManager = chatGameManager;
         _effectEngine = effectEngine;
         _broadcaster = broadcaster;
+        _statsBatcher = statsBatcher;
         _scopeFactory = scopeFactory;
         _logger = logger;
     }
@@ -77,8 +81,8 @@ public class ChatMessagePipeline
     {
         try
         {
-            // 1. Update user stats (scoped — needs DB access)
-            await UpdateUserStatsAsync(message, ct);
+            // 1. Enqueue user stats for batched DB write (was: per-message scope + write)
+            _statsBatcher.Enqueue(message);
 
             // Mark user active for watch time tracking
             _tracking.MarkUserActive(message.UserId);
@@ -220,37 +224,6 @@ public class ChatMessagePipeline
             _logger.LogError(ex,
                 "Error processing message from {User}: {Content}",
                 message.Username, TruncateForLog(message.Content));
-        }
-    }
-
-    /// <summary>
-    /// Increments the user's message count and updates LastSeenAt.
-    /// Uses a scoped service provider for DB access.
-    /// </summary>
-    private async Task UpdateUserStatsAsync(ChatMessage message, CancellationToken ct)
-    {
-        try
-        {
-            using IServiceScope scope = _scopeFactory.CreateScope();
-            IUserRepository users = scope.ServiceProvider.GetRequiredService<IUserRepository>();
-
-            // GetOrCreateAsync automatically resolves imported user placeholder IDs
-            // (imported users have TwitchId "imported_{username}" until they chat)
-            User user = await users.GetOrCreateAsync(message.UserId, message.Username, ct);
-
-            user.MessageCount++;
-            user.LastSeenAt = DateTimeOffset.UtcNow;
-            user.DisplayName = message.DisplayName; // Keep display name in sync
-            user.IsMod = message.IsModerator;
-            user.IsSubscriber = message.IsSubscriber;
-            user.IsBroadcaster = message.IsBroadcaster;
-
-            await users.UpdateAsync(user, ct);
-        }
-        catch (Exception ex)
-        {
-            // Don't let stats tracking failure break the command pipeline
-            _logger.LogWarning(ex, "Failed to update stats for user {User}", message.Username);
         }
     }
 

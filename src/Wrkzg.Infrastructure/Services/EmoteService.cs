@@ -23,6 +23,7 @@ public class EmoteService : IHostedService, IEmoteService, IDisposable
 
     private volatile IReadOnlyList<EmoteDto> _cachedEmotes = Array.Empty<EmoteDto>();
     private Timer? _timer;
+    private bool _initialLoadDone;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="EmoteService"/> class.
@@ -45,6 +46,38 @@ public class EmoteService : IHostedService, IEmoteService, IDisposable
 
     /// <inheritdoc />
     public async Task RefreshAsync(CancellationToken ct = default)
+    {
+        if (!await _refreshLock.WaitAsync(TimeSpan.FromSeconds(5), ct))
+        {
+            _logger.LogDebug("Emote refresh already in progress, skipping");
+            return;
+        }
+
+        try
+        {
+            // If another caller already populated the cache while we were waiting
+            // for the semaphore, skip the expensive Helix API calls.
+            if (_cachedEmotes.Count > 0)
+            {
+                _logger.LogDebug(
+                    "Emote cache already populated ({Count} emotes), skipping redundant refresh",
+                    _cachedEmotes.Count);
+                return;
+            }
+
+            await LoadEmotesAsync(ct);
+        }
+        finally
+        {
+            _refreshLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// Forces a full reload of the emote cache, even if already populated.
+    /// Used by the 30-minute periodic timer to pick up newly added emotes.
+    /// </summary>
+    private async Task ForceRefreshAsync(CancellationToken ct = default)
     {
         if (!await _refreshLock.WaitAsync(TimeSpan.FromSeconds(5), ct))
         {
@@ -89,7 +122,18 @@ public class EmoteService : IHostedService, IEmoteService, IDisposable
     {
         try
         {
-            await RefreshAsync();
+            // First tick after startup: defer to RefreshAsync (skips when the
+            // frontend has already populated the cache via /api/emotes/refresh).
+            // Subsequent 30-min ticks force-reload to pick up newly added emotes.
+            if (!_initialLoadDone)
+            {
+                _initialLoadDone = true;
+                await RefreshAsync();
+            }
+            else
+            {
+                await ForceRefreshAsync();
+            }
 
             // Retry after 30s if cache is still empty (typical at startup when tokens aren't ready yet)
             if (_cachedEmotes.Count == 0)
@@ -99,7 +143,7 @@ public class EmoteService : IHostedService, IEmoteService, IDisposable
                 {
                     try
                     {
-                        await RefreshAsync();
+                        await ForceRefreshAsync();
                         if (_cachedEmotes.Count > 0)
                         {
                             _logger.LogInformation("Emote retry successful — {Count} emotes loaded", _cachedEmotes.Count);
@@ -128,8 +172,10 @@ public class EmoteService : IHostedService, IEmoteService, IDisposable
         ISecureStorage secureStorage = scope.ServiceProvider.GetRequiredService<ISecureStorage>();
         ITwitchOAuthService oauthService = scope.ServiceProvider.GetRequiredService<ITwitchOAuthService>();
 
-        List<EmoteDto> emotes = new();
-        HashSet<string> seenIds = new();
+        // Dedup by emote ID. When the same emote is loaded by both bot and broadcaster
+        // (e.g. both subscribe to the same channel), the entry is upgraded to Owner="shared"
+        // so the EmotePicker shows it regardless of which account is selected.
+        Dictionary<string, EmoteDto> emoteMap = new(System.StringComparer.Ordinal);
 
         TwitchTokens? botTokens = await secureStorage.LoadTokensAsync(TokenType.Bot, ct);
         TwitchTokens? broadcasterTokens = await secureStorage.LoadTokensAsync(TokenType.Broadcaster, ct);
@@ -140,7 +186,6 @@ public class EmoteService : IHostedService, IEmoteService, IDisposable
         bool userEmotesLoaded = false;
 
         // === Strategy 1: User Emotes API (preferred — returns ALL emotes a user can use) ===
-        // Try Bot user first, then Broadcaster
         if (botTokens is not null)
         {
             try
@@ -155,16 +200,7 @@ public class EmoteService : IHostedService, IEmoteService, IDisposable
                     {
                         foreach (TwitchEmote emote in botUserEmotes)
                         {
-                            if (seenIds.Add(emote.Id))
-                            {
-                                emotes.Add(new EmoteDto
-                                {
-                                    Id = emote.Id,
-                                    Name = emote.Name,
-                                    Url = $"https://static-cdn.jtvnw.net/emoticons/v2/{emote.Id}/default/dark/2.0",
-                                    Source = MapEmoteTypeToSource(emote.EmoteType)
-                                });
-                            }
+                            UpsertEmote(emoteMap, emote, MapEmoteTypeToSource(emote.EmoteType), owner: "bot");
                         }
                         _logger.LogDebug("Loaded {Count} user emotes via Bot client", botUserEmotes.Count);
                         userEmotesLoaded = true;
@@ -177,7 +213,6 @@ public class EmoteService : IHostedService, IEmoteService, IDisposable
             }
         }
 
-        // Add Broadcaster user emotes (may have different subscriptions)
         if (broadcasterTokens is not null)
         {
             try
@@ -190,23 +225,11 @@ public class EmoteService : IHostedService, IEmoteService, IDisposable
 
                     if (broadcasterUserEmotes.Count > 0)
                     {
-                        int added = 0;
                         foreach (TwitchEmote emote in broadcasterUserEmotes)
                         {
-                            if (seenIds.Add(emote.Id))
-                            {
-                                emotes.Add(new EmoteDto
-                                {
-                                    Id = emote.Id,
-                                    Name = emote.Name,
-                                    Url = $"https://static-cdn.jtvnw.net/emoticons/v2/{emote.Id}/default/dark/2.0",
-                                    Source = MapEmoteTypeToSource(emote.EmoteType)
-                                });
-                                added++;
-                            }
+                            UpsertEmote(emoteMap, emote, MapEmoteTypeToSource(emote.EmoteType), owner: "broadcaster");
                         }
-                        _logger.LogDebug("Loaded {Count} additional emotes via Broadcaster client ({Total} total from broadcaster, {Added} new)",
-                            broadcasterUserEmotes.Count, broadcasterUserEmotes.Count, added);
+                        _logger.LogDebug("Loaded {Count} emotes via Broadcaster client", broadcasterUserEmotes.Count);
                         userEmotesLoaded = true;
                     }
                 }
@@ -223,7 +246,6 @@ public class EmoteService : IHostedService, IEmoteService, IDisposable
             _logger.LogInformation("User emotes API unavailable — falling back to global + channel emotes. " +
                                    "Re-connect Bot and Broadcaster accounts in Settings to enable user:read:emotes scope.");
 
-            // Global emotes via Bot or Broadcaster
             bool globalLoaded = false;
 
             if (botTokens is not null)
@@ -234,16 +256,8 @@ public class EmoteService : IHostedService, IEmoteService, IDisposable
                     IReadOnlyList<TwitchEmote> globalEmotes = await botHelix.GetGlobalEmotesAsync(ct);
                     foreach (TwitchEmote emote in globalEmotes)
                     {
-                        if (seenIds.Add(emote.Id))
-                        {
-                            emotes.Add(new EmoteDto
-                            {
-                                Id = emote.Id,
-                                Name = emote.Name,
-                                Url = $"https://static-cdn.jtvnw.net/emoticons/v2/{emote.Id}/default/dark/2.0",
-                                Source = "global"
-                            });
-                        }
+                        // Global emotes are usable by every account → always shared.
+                        UpsertEmote(emoteMap, emote, "global", owner: "shared");
                     }
                     _logger.LogDebug("Fallback: Loaded {Count} global emotes via Bot client", globalEmotes.Count);
                     globalLoaded = true;
@@ -262,16 +276,7 @@ public class EmoteService : IHostedService, IEmoteService, IDisposable
                     IReadOnlyList<TwitchEmote> globalEmotes = await broadcasterHelix.GetGlobalEmotesAsync(ct);
                     foreach (TwitchEmote emote in globalEmotes)
                     {
-                        if (seenIds.Add(emote.Id))
-                        {
-                            emotes.Add(new EmoteDto
-                            {
-                                Id = emote.Id,
-                                Name = emote.Name,
-                                Url = $"https://static-cdn.jtvnw.net/emoticons/v2/{emote.Id}/default/dark/2.0",
-                                Source = "global"
-                            });
-                        }
+                        UpsertEmote(emoteMap, emote, "global", owner: "shared");
                     }
                     _logger.LogDebug("Fallback: Loaded {Count} global emotes via Broadcaster client", globalEmotes.Count);
                 }
@@ -281,7 +286,6 @@ public class EmoteService : IHostedService, IEmoteService, IDisposable
                 }
             }
 
-            // Channel emotes
             if (broadcasterTokens is not null)
             {
                 try
@@ -293,16 +297,7 @@ public class EmoteService : IHostedService, IEmoteService, IDisposable
                         IReadOnlyList<TwitchEmote> channelEmotes = await broadcasterHelix.GetChannelEmotesAsync(validation.UserId, ct);
                         foreach (TwitchEmote emote in channelEmotes)
                         {
-                            if (seenIds.Add(emote.Id))
-                            {
-                                emotes.Add(new EmoteDto
-                                {
-                                    Id = emote.Id,
-                                    Name = emote.Name,
-                                    Url = $"https://static-cdn.jtvnw.net/emoticons/v2/{emote.Id}/default/dark/2.0",
-                                    Source = MapEmoteTypeToSource(emote.EmoteType)
-                                });
-                            }
+                            UpsertEmote(emoteMap, emote, MapEmoteTypeToSource(emote.EmoteType), owner: "broadcaster");
                         }
                         _logger.LogDebug("Fallback: Loaded {Count} channel emotes", channelEmotes.Count);
                     }
@@ -314,11 +309,12 @@ public class EmoteService : IHostedService, IEmoteService, IDisposable
             }
         }
 
-        if (emotes.Count == 0 && botTokens is null && broadcasterTokens is null)
+        if (emoteMap.Count == 0 && botTokens is null && broadcasterTokens is null)
         {
             _logger.LogWarning("No authenticated client available for emotes — skipping");
         }
 
+        List<EmoteDto> emotes = emoteMap.Values.ToList();
         _cachedEmotes = emotes;
 
         int globalCount = emotes.Count(e => e.Source == "global");
@@ -326,9 +322,54 @@ public class EmoteService : IHostedService, IEmoteService, IDisposable
         int bitsCount = emotes.Count(e => e.Source == "bits");
         int followerCount = emotes.Count(e => e.Source == "follower");
         int otherCount = emotes.Count - globalCount - subCount - bitsCount - followerCount;
+        int botOwned = emotes.Count(e => e.Owner == "bot");
+        int broadcasterOwned = emotes.Count(e => e.Owner == "broadcaster");
+        int sharedOwned = emotes.Count(e => e.Owner == "shared");
 
-        _logger.LogInformation("Emote cache refreshed: {Total} total emotes (global: {Global}, subscriber: {Sub}, bits: {Bits}, follower: {Follower}, other: {Other})",
-            emotes.Count, globalCount, subCount, bitsCount, followerCount, otherCount);
+        _logger.LogInformation(
+            "Emote cache refreshed: {Total} total (global: {Global}, sub: {Sub}, bits: {Bits}, follower: {Follower}, other: {Other}) | owners — bot: {Bot}, broadcaster: {Broadcaster}, shared: {Shared}",
+            emotes.Count, globalCount, subCount, bitsCount, followerCount, otherCount, botOwned, broadcasterOwned, sharedOwned);
+    }
+
+    /// <summary>
+    /// Inserts an emote into the dedup map, or upgrades an existing entry's Owner to "shared"
+    /// when the same emote is loaded by both bot and broadcaster (or as a global).
+    /// </summary>
+    private static void UpsertEmote(Dictionary<string, EmoteDto> map, TwitchEmote emote, string source, string owner)
+    {
+        if (string.IsNullOrEmpty(emote.Id))
+        {
+            return;
+        }
+
+        string url = $"https://static-cdn.jtvnw.net/emoticons/v2/{emote.Id}/default/dark/2.0";
+
+        if (map.TryGetValue(emote.Id, out EmoteDto? existing))
+        {
+            // If the existing owner differs from the incoming one, the emote is usable by
+            // both accounts → upgrade to shared. "shared" beats everything else.
+            if (existing.Owner != owner && existing.Owner != "shared")
+            {
+                map[emote.Id] = new EmoteDto
+                {
+                    Id = existing.Id,
+                    Name = existing.Name,
+                    Url = existing.Url,
+                    Source = existing.Source,
+                    Owner = "shared",
+                };
+            }
+            return;
+        }
+
+        map[emote.Id] = new EmoteDto
+        {
+            Id = emote.Id,
+            Name = emote.Name,
+            Url = url,
+            Source = source,
+            Owner = owner,
+        };
     }
 
     private static string MapEmoteTypeToSource(string emoteType)

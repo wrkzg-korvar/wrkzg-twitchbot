@@ -55,6 +55,7 @@ public class StreamAnalyticsRepository : IStreamAnalyticsRepository
         return await _db.StreamSessions
             .Include(s => s.CategorySegments)
             .Include(s => s.ViewerSnapshots)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(s => s.Id == id, ct);
     }
 
@@ -64,6 +65,7 @@ public class StreamAnalyticsRepository : IStreamAnalyticsRepository
         return await _db.StreamSessions
             .Include(s => s.CategorySegments)
             .Include(s => s.ViewerSnapshots)
+            .AsSplitQuery()
             .OrderByDescending(s => s.Id)
             .FirstOrDefaultAsync(ct);
     }

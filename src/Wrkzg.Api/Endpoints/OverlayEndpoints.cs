@@ -350,11 +350,5 @@ public static class OverlayEndpoints
             }
         });
 
-        // Song request queue for overlay (no auth needed)
-        group.MapGet("/data/song-queue", async (ISongRequestRepository repo, CancellationToken ct) =>
-        {
-            IReadOnlyList<SongRequest> queue = await repo.GetQueueAsync(ct);
-            return Results.Ok(queue);
-        });
     }
 }
