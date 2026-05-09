@@ -23,11 +23,15 @@ public class TwitchChatClient : ITwitchChatClient
 {
     private readonly ISecureStorage _storage;
     private readonly ITwitchOAuthService _oauth;
+    private readonly IBroadcasterHelixClient _broadcasterHelix;
     private readonly ILogger<TwitchChatClient> _logger;
 
     private TwitchClient? _client;
     private string? _joinedChannel;
     private string? _botUsername;
+    private volatile bool _isBotMod;
+    private volatile bool _isBotFollower;
+    private volatile bool _followerCheckDone;
 
     /// <summary>Raised when a chat message is received from a user (excludes bot's own messages).</summary>
     public event Func<ChatMessage, Task>? OnMessageReceived;
@@ -47,19 +51,28 @@ public class TwitchChatClient : ITwitchChatClient
     /// <summary>Gets the channel the bot is currently joined to, or null if not connected.</summary>
     public string? JoinedChannel => _joinedChannel;
 
+    /// <inheritdoc />
+    public bool IsBotMod => _isBotMod;
+
+    /// <inheritdoc />
+    public bool IsBotFollower => _isBotFollower;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="TwitchChatClient"/> class.
     /// </summary>
     /// <param name="storage">Secure storage for loading OAuth tokens.</param>
     /// <param name="oauth">OAuth service for token validation and refresh.</param>
+    /// <param name="broadcasterHelix">Broadcaster Helix client used for the one-shot follower-status lookup after connect.</param>
     /// <param name="logger">The logger for IRC diagnostics.</param>
     public TwitchChatClient(
         ISecureStorage storage,
         ITwitchOAuthService oauth,
+        IBroadcasterHelixClient broadcasterHelix,
         ILogger<TwitchChatClient> logger)
     {
         _storage = storage;
         _oauth = oauth;
+        _broadcasterHelix = broadcasterHelix;
         _logger = logger;
     }
 
@@ -110,6 +123,11 @@ public class TwitchChatClient : ITwitchChatClient
         _client.OnLog += HandleLog;
         _client.OnConnectionError += HandleConnectionError;
         _client.OnReconnected += HandleReconnected;
+        _client.OnUserStateChanged += HandleUserStateChanged;
+
+        // Reset per-connect state — follower status will be re-checked once USERSTATE arrives.
+        _followerCheckDone = false;
+        _isBotFollower = false;
 
         _client.Connect();
         _joinedChannel = channel;
@@ -185,7 +203,10 @@ public class TwitchChatClient : ITwitchChatClient
             _client.OnLog -= HandleLog;
             _client.OnConnectionError -= HandleConnectionError;
             _client.OnReconnected -= HandleReconnected;
+            _client.OnUserStateChanged -= HandleUserStateChanged;
         }
+
+        _isBotMod = false;
 
         _client = null;
         GC.SuppressFinalize(this);
@@ -259,6 +280,62 @@ public class TwitchChatClient : ITwitchChatClient
     private void HandleReconnected(object? sender, OnReconnectedEventArgs e)
     {
         _logger.LogInformation("Reconnected to Twitch IRC");
+    }
+
+    private void HandleUserStateChanged(object? sender, OnUserStateChangedArgs e)
+    {
+        // The bot's own USERSTATE includes its mod flag for the joined channel.
+        // Twitch sends this on connect and whenever the bot's state changes.
+        bool wasMod = _isBotMod;
+        // Broadcasters are implicit moderators in their own channel — when the bot account
+        // happens to also be the broadcaster (e.g. solo streamers using a single account),
+        // we treat IsBroadcaster as moderator-equivalent for UI purposes.
+        bool isBroadcaster = !string.IsNullOrWhiteSpace(_joinedChannel)
+            && string.Equals(_botUsername, _joinedChannel, StringComparison.OrdinalIgnoreCase);
+        _isBotMod = e.UserState.IsModerator || isBroadcaster;
+        if (wasMod != _isBotMod)
+        {
+            _logger.LogInformation("Bot moderator status updated: {IsMod}", _isBotMod);
+        }
+
+        // Trigger follower check exactly once per connection — Helix call is fire-and-forget.
+        if (!_followerCheckDone)
+        {
+            _followerCheckDone = true;
+            _ = CheckFollowerStatusAsync();
+        }
+    }
+
+    /// <summary>
+    /// One-shot Helix lookup to verify whether the bot follows the broadcaster.
+    /// Called once after the first USERSTATE arrives. Result cached in <see cref="_isBotFollower"/>.
+    /// </summary>
+    private async Task CheckFollowerStatusAsync()
+    {
+        try
+        {
+            TwitchTokens? botTokens = await _storage.LoadTokensAsync(TokenType.Bot);
+            if (botTokens is null) { return; }
+
+            TwitchTokenValidation? botValidation = await _oauth.ValidateTokenAsync(botTokens.AccessToken);
+            if (botValidation is null) { return; }
+
+            TwitchTokens? broadcasterTokens = await _storage.LoadTokensAsync(TokenType.Broadcaster);
+            if (broadcasterTokens is null) { return; }
+
+            TwitchTokenValidation? broadcasterValidation = await _oauth.ValidateTokenAsync(broadcasterTokens.AccessToken);
+            if (broadcasterValidation is null) { return; }
+
+            _isBotFollower = await _broadcasterHelix.IsUserFollowingAsync(
+                broadcasterValidation.UserId, botValidation.UserId);
+
+            _logger.LogInformation("Bot follower status: {IsFollower}", _isBotFollower);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to check bot follower status");
+            _isBotFollower = false;
+        }
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────

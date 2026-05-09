@@ -36,6 +36,38 @@ public static class AuthEndpoints
         group.MapPost("/credentials", SaveCredentials);
         group.MapPost("/open-browser/{type}", OpenBrowserForOAuth);
         group.MapGet("/setup-status", GetSetupStatus);
+        group.MapGet("/bot-requirements", GetBotRequirements);
+    }
+
+    /// <summary>
+    /// Reports whether the bot account meets each feature-gated requirement
+    /// (moderator status in the broadcaster's channel, follower of the channel).
+    /// Used by the Settings page to surface why announcements/timeouts/etc. fail.
+    /// </summary>
+    private static async Task<IResult> GetBotRequirements(
+        ISecureStorage storage,
+        ITwitchChatClient chatClient,
+        CancellationToken ct)
+    {
+        TwitchTokens? botTokens = await storage.LoadTokensAsync(TokenType.Bot, ct);
+        TwitchTokens? broadcasterTokens = await storage.LoadTokensAsync(TokenType.Broadcaster, ct);
+
+        bool botConnected = botTokens is not null;
+        bool broadcasterConnected = broadcasterTokens is not null;
+
+        // Mod status comes from the IRC USERSTATE message — only meaningful while connected.
+        bool isMod = chatClient.IsConnected && chatClient.IsBotMod;
+        // Follower status is resolved via Helix once per connect; cached on the chat client.
+        bool isFollower = chatClient.IsConnected && chatClient.IsBotFollower;
+
+        return Results.Ok(new
+        {
+            botConnected,
+            broadcasterConnected,
+            ircConnected = chatClient.IsConnected,
+            isMod,
+            isFollower,
+        });
     }
 
     private static IResult StartOAuthFlow(

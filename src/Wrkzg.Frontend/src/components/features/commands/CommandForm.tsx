@@ -29,6 +29,7 @@ export function CommandForm({ onClose, initial }: CommandFormProps) {
 
       if (isEdit) {
         return commandsApi.update(initial.id, {
+          trigger: trigger.trim().toLowerCase(),
           responseTemplate: response.trim(),
           aliases: parsedAliases,
           permissionLevel: permission,
@@ -68,8 +69,7 @@ export function CommandForm({ onClose, initial }: CommandFormProps) {
             value={trigger}
             onChange={(e) => setTrigger(e.target.value)}
             placeholder="!command"
-            disabled={isEdit}
-            className={inputClass + (isEdit ? " opacity-50 cursor-not-allowed" : "")}
+            className={inputClass}
           />
         </div>
         <div>
@@ -145,7 +145,7 @@ export function CommandForm({ onClose, initial }: CommandFormProps) {
       </div>
 
       <p className="text-xs text-[var(--color-text-muted)]">
-        Available variables: {"{user}"}, {"{count}"}, {"{points}"}, {"{watchtime}"}, {"{random:min:max}"}
+        Available variables: {"{user}"}, {"{target}"}, {"{count}"}, {"{points}"}, {"{watchtime}"}, {"{random:min:max}"}
       </p>
 
       <div className="flex gap-2">

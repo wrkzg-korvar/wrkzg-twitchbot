@@ -67,4 +67,15 @@ public interface IBroadcasterHelixClient
         string pollId,
         string status,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// Checks whether a specific user follows the broadcaster's channel.
+    /// Helix API: GET /channels/followers?broadcaster_id={broadcasterId}&amp;user_id={userId}
+    /// Requires the moderator:read:followers scope on the Broadcaster token.
+    /// </summary>
+    /// <param name="broadcasterId">The broadcaster's Twitch user ID.</param>
+    /// <param name="userId">The user ID to check for follow status.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>True if the user follows the broadcaster; false otherwise (or on error).</returns>
+    Task<bool> IsUserFollowingAsync(string broadcasterId, string userId, CancellationToken ct = default);
 }

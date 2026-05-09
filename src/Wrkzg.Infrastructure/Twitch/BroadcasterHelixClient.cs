@@ -439,6 +439,35 @@ public class BroadcasterHelixClient : IBroadcasterHelixClient
     /// <summary>
     /// Generic Helix API response wrapper. Twitch wraps all responses in { "data": [...] }.
     /// </summary>
+    /// <inheritdoc />
+    public async Task<bool> IsUserFollowingAsync(string broadcasterId, string userId, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(broadcasterId) || string.IsNullOrWhiteSpace(userId))
+        {
+            return false;
+        }
+
+        try
+        {
+            string url = $"channels/followers?broadcaster_id={Uri.EscapeDataString(broadcasterId)}&user_id={Uri.EscapeDataString(userId)}";
+            HelixResponse<FollowerEntry>? response = await _http.GetFromJsonAsync<HelixResponse<FollowerEntry>>(
+                url, _jsonOptions, ct);
+
+            return response?.Data is not null && response.Data.Length > 0;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "Failed to check follower status for user {UserId}", userId);
+            return false;
+        }
+    }
+
+    private sealed class FollowerEntry
+    {
+        [JsonPropertyName("user_id")]
+        public string? UserId { get; init; }
+    }
+
     private sealed class HelixResponse<T>
     {
         [JsonPropertyName("data")]

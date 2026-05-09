@@ -16,7 +16,7 @@ public class Command
     /// <summary>Alternative triggers stored as JSON array in SQLite.</summary>
     public string[] Aliases { get; set; } = Array.Empty<string>();
 
-    /// <summary>Response template with variables: {user}, {count}, {uptime}, {random:min:max}.</summary>
+    /// <summary>Response template with variables: {user}, {target}, {count}, {points}, {watchtime}, {random:min:max}.</summary>
     public string ResponseTemplate { get; set; } = string.Empty;
 
     /// <summary>Minimum permission level required to use this command.</summary>

@@ -108,7 +108,8 @@ public class CommandProcessor : ICommandProcessor
                 {
                     IUserRepository usersForSys = scope.ServiceProvider.GetRequiredService<IUserRepository>();
                     User sysUser = await usersForSys.GetOrCreateAsync(message.UserId, message.Username, ct);
-                    string customResponse = ResolveTemplate(ovr.CustomResponseTemplate, message, sysUser);
+                    string sysTarget = ExtractTarget(message.Content, sysCmd.Trigger);
+                    string customResponse = ResolveTemplate(ovr.CustomResponseTemplate, message, sysUser, sysTarget);
 
                     // Resolve system-command-specific variables
                     if (customResponse.Contains("{followage}", StringComparison.OrdinalIgnoreCase)
@@ -228,7 +229,8 @@ public class CommandProcessor : ICommandProcessor
         }
 
         // 7. Resolve template
-        string response = ResolveTemplate(command.ResponseTemplate, message, user);
+        string target = ExtractTarget(message.Content, command.Trigger);
+        string response = ResolveTemplate(command.ResponseTemplate, message, user, target);
 
         // 8. Send response
         await _chat.SendMessageAsync(response, ct);
@@ -344,15 +346,17 @@ public class CommandProcessor : ICommandProcessor
     /// <summary>
     /// Resolves template variables in the command response:
     ///   {user}           → display name of the invoking user
+    ///   {target}         → first word after the trigger (e.g. !hug username → "username"); empty when omitted
     ///   {count}          → how many times this command has been used
     ///   {points}         → user's current point balance
     ///   {watchtime}      → user's watched time in hours and minutes
     ///   {random:min:max} → random integer between min and max (inclusive)
     /// </summary>
-    private static string ResolveTemplate(string template, ChatMessage message, User user)
+    private static string ResolveTemplate(string template, ChatMessage message, User user, string target)
     {
         string result = template
             .Replace("{user}", message.DisplayName, StringComparison.OrdinalIgnoreCase)
+            .Replace("{target}", target, StringComparison.OrdinalIgnoreCase)
             .Replace("{count}", user.MessageCount.ToString(CultureInfo.InvariantCulture), StringComparison.OrdinalIgnoreCase)
             .Replace("{points}", user.Points.ToString(CultureInfo.InvariantCulture), StringComparison.OrdinalIgnoreCase)
             .Replace("{watchtime}", FormatWatchTime(user.WatchedMinutes), StringComparison.OrdinalIgnoreCase);
@@ -371,6 +375,32 @@ public class CommandProcessor : ICommandProcessor
         });
 
         return result;
+    }
+
+    /// <summary>
+    /// Extracts the first word after the command trigger as the target.
+    ///   "!hug username"           → "username"
+    ///   "!hug @username"          → "username" (leading @ stripped)
+    ///   "!hug username with love" → "username"
+    ///   "!hug"                   → "" (empty)
+    /// </summary>
+    private static string ExtractTarget(string messageContent, string trigger)
+    {
+        int triggerIndex = messageContent.IndexOf(trigger, StringComparison.OrdinalIgnoreCase);
+        if (triggerIndex < 0)
+        {
+            return string.Empty;
+        }
+
+        string remainder = messageContent[(triggerIndex + trigger.Length)..].TrimStart();
+        if (string.IsNullOrWhiteSpace(remainder))
+        {
+            return string.Empty;
+        }
+
+        int spaceIndex = remainder.IndexOf(' ');
+        string firstWord = spaceIndex >= 0 ? remainder[..spaceIndex] : remainder;
+        return firstWord.TrimStart('@');
     }
 
     /// <summary>
