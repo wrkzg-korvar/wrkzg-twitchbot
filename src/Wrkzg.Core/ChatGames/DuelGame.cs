@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -45,10 +46,13 @@ public class DuelGame : IChatGame
     private int _minBet = 10;
     private int _maxBet = 10000;
     private int _cooldown = 60;
+    private int _userCooldown = 30;
+    private readonly ConcurrentDictionary<string, DateTimeOffset> _userCooldowns = new();
 
     private static readonly Dictionary<string, string> DefaultMessages = new()
     {
         ["Cooldown"] = "Duel is on cooldown! Try again in {remaining}s.",
+        ["UserCooldown"] = "{game} is on cooldown for you! Try again in {remaining}s.",
         ["Pending"] = "A duel is already pending! Wait for it to resolve.",
         ["Usage"] = "Usage: !duel @username <amount>",
         ["BetRange"] = "Bet must be between {min} and {max} points.",
@@ -83,6 +87,14 @@ public class DuelGame : IChatGame
     public async Task<string?> HandleAsync(ChatMessage message, CancellationToken ct = default)
     {
         await LoadSettingsAsync(ct);
+
+        // Per-user cooldown check (checked first — more specific message)
+        if (_userCooldowns.TryGetValue(message.UserId, out DateTimeOffset userExpiry)
+            && DateTimeOffset.UtcNow < userExpiry)
+        {
+            int remaining = (int)(userExpiry - DateTimeOffset.UtcNow).TotalSeconds;
+            return _msg.Get("UserCooldown", ("game", Name), ("remaining", remaining.ToString()));
+        }
 
         double secondsSinceLast = (DateTimeOffset.UtcNow - _lastDuelEnd).TotalSeconds;
         if (secondsSinceLast < _cooldown && _pendingDuel is null)
@@ -124,6 +136,9 @@ public class DuelGame : IChatGame
         _pendingDuel = new DuelChallenge(
             message.UserId, message.DisplayName, challenger.Id,
             targetName, bet, DateTimeOffset.UtcNow);
+
+        // Set per-user cooldown
+        _userCooldowns[message.UserId] = DateTimeOffset.UtcNow.AddSeconds(_userCooldown);
 
         _ = Task.Run(async () =>
         {
@@ -263,6 +278,9 @@ public class DuelGame : IChatGame
 
             val = await settings.GetAsync("Games.Duel.Cooldown", ct);
             if (val is not null && int.TryParse(val, out int cd)) { _cooldown = cd; }
+
+            val = await settings.GetAsync($"Games.{Name}.UserCooldown", ct);
+            if (val is not null && int.TryParse(val, out int ucd)) { _userCooldown = ucd; }
 
             val = await settings.GetAsync("Games.Duel.Enabled", ct);
             if (val is not null) { IsEnabled = !string.Equals(val, "false", StringComparison.OrdinalIgnoreCase); }

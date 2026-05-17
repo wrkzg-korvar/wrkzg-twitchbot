@@ -52,6 +52,11 @@ public class CommandProcessor : ICommandProcessor
         @"\{random:(\d+):(\d+)\}",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+    /// <summary>Regex for {counter:name} template variable.</summary>
+    private static readonly Regex CounterPattern = new(
+        @"\{counter:([^}]+)\}",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
     /// <summary>
     /// Initializes a new instance of <see cref="CommandProcessor"/> with the required dependencies.
     /// </summary>
@@ -228,9 +233,32 @@ public class CommandProcessor : ICommandProcessor
             return false;
         }
 
-        // 7. Resolve template
+        // 7. Resolve template (pick random response if multiple are defined)
         string target = ExtractTarget(message.Content, command.Trigger);
-        string response = ResolveTemplate(command.ResponseTemplate, message, user, target);
+        string template = command.ResponseTemplate;
+
+        if (template.Contains("|||", StringComparison.Ordinal))
+        {
+            string[] templates = template.Split(
+                "|||",
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (templates.Length > 0)
+            {
+                template = templates[Random.Shared.Next(templates.Length)];
+            }
+        }
+
+        string response = ResolveTemplate(template, message, user, target);
+
+        // Resolve {counter:name} variables — auto-increment each referenced counter
+        if (CounterPattern.IsMatch(response))
+        {
+            ICounterRepository counterRepo = scope.ServiceProvider.GetRequiredService<ICounterRepository>();
+            IChatEventBroadcaster eventBroadcaster =
+                scope.ServiceProvider.GetRequiredService<IChatEventBroadcaster>();
+
+            response = await ResolveCounterVariablesAsync(response, counterRepo, eventBroadcaster, ct);
+        }
 
         // 8. Send response
         await _chat.SendMessageAsync(response, ct);
@@ -439,6 +467,44 @@ public class CommandProcessor : ICommandProcessor
         }
 
         return $"{(int)duration.TotalDays}d";
+    }
+
+    /// <summary>
+    /// Resolves {counter:name} variables in the response template.
+    /// Each referenced counter is incremented by 1 and the new value is substituted.
+    /// </summary>
+    private static async Task<string> ResolveCounterVariablesAsync(
+        string response,
+        ICounterRepository counters,
+        IChatEventBroadcaster broadcaster,
+        CancellationToken ct)
+    {
+        MatchCollection matches = CounterPattern.Matches(response);
+        // Process in reverse to preserve string positions
+        for (int i = matches.Count - 1; i >= 0; i--)
+        {
+            Match match = matches[i];
+            string counterName = match.Groups[1].Value.Trim();
+
+            IReadOnlyList<Counter> allCounters = await counters.GetAllAsync(ct);
+            Counter? counter = allCounters.FirstOrDefault(c =>
+                string.Equals(c.Name, counterName, StringComparison.OrdinalIgnoreCase));
+
+            if (counter is not null)
+            {
+                counter.Value++;
+                await counters.UpdateAsync(counter, ct);
+                await broadcaster.BroadcastCounterUpdatedAsync(counter.Id, counter.Name, counter.Value, ct);
+
+                response = string.Concat(
+                    response.AsSpan(0, match.Index),
+                    counter.Value.ToString(CultureInfo.InvariantCulture),
+                    response.AsSpan(match.Index + match.Length));
+            }
+            // If counter not found, leave the placeholder as-is
+        }
+
+        return response;
     }
 
     /// <summary>

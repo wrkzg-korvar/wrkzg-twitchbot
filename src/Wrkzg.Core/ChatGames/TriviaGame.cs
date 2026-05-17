@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -45,11 +46,14 @@ public class TriviaGame : IChatGame
     private int _answerDuration = 30;
     private int _reward = 50;
     private int _cooldown = 30;
+    private int _userCooldown = 30;
+    private readonly ConcurrentDictionary<string, DateTimeOffset> _userCooldowns = new();
 
     private static readonly Dictionary<string, string> DefaultMessages = new()
     {
         ["Active"] = "A trivia question is already active! Answer in chat.",
         ["Cooldown"] = "Trivia is on cooldown! Try again in {remaining}s.",
+        ["UserCooldown"] = "{game} is on cooldown for you! Try again in {remaining}s.",
         ["NoQuestions"] = "No trivia questions available! Add some in the dashboard.",
         ["Question"] = "Trivia: {category}{question} ({duration}s)",
         ["TimesUp"] = "Time's up! The answer was: {answer}",
@@ -89,6 +93,14 @@ public class TriviaGame : IChatGame
             return _msg.Get("Active");
         }
 
+        // Per-user cooldown check (checked first — more specific message)
+        if (_userCooldowns.TryGetValue(message.UserId, out DateTimeOffset userExpiry)
+            && DateTimeOffset.UtcNow < userExpiry)
+        {
+            int remaining = (int)(userExpiry - DateTimeOffset.UtcNow).TotalSeconds;
+            return _msg.Get("UserCooldown", ("game", Name), ("remaining", remaining.ToString()));
+        }
+
         double secondsSinceLast = (DateTimeOffset.UtcNow - _lastRoundEnd).TotalSeconds;
         if (secondsSinceLast < _cooldown)
         {
@@ -106,6 +118,9 @@ public class TriviaGame : IChatGame
         }
 
         _activeRound = new TriviaRound(question.Answer, question.AcceptedAnswers.ToArray());
+
+        // Set per-user cooldown
+        _userCooldowns[message.UserId] = DateTimeOffset.UtcNow.AddSeconds(_userCooldown);
 
         _ = Task.Run(async () =>
         {
@@ -203,6 +218,9 @@ public class TriviaGame : IChatGame
 
             val = await settings.GetAsync("Games.Trivia.Cooldown", ct);
             if (val is not null && int.TryParse(val, out int cd)) { _cooldown = cd; }
+
+            val = await settings.GetAsync($"Games.{Name}.UserCooldown", ct);
+            if (val is not null && int.TryParse(val, out int ucd)) { _userCooldown = ucd; }
 
             val = await settings.GetAsync("Games.Trivia.Enabled", ct);
             if (val is not null) { IsEnabled = !string.Equals(val, "false", StringComparison.OrdinalIgnoreCase); }

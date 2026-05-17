@@ -52,10 +52,13 @@ public class HeistGame : IChatGame
     private int _maxBet = 10000;
     private int _cooldown = 300;
     private int _minPlayers = 1;
+    private int _userCooldown = 30;
+    private readonly ConcurrentDictionary<string, DateTimeOffset> _userCooldowns = new();
 
     private static readonly Dictionary<string, string> DefaultMessages = new()
     {
         ["Cooldown"] = "Heist is on cooldown! Try again in {remaining}s.",
+        ["UserCooldown"] = "{game} is on cooldown for you! Try again in {remaining}s.",
         ["Usage"] = "Usage: !heist <amount> (min: {min}, max: {max})",
         ["BetRange"] = "Bet must be between {min} and {max} points.",
         ["NotEnoughPoints"] = "You don't have enough points!",
@@ -91,6 +94,14 @@ public class HeistGame : IChatGame
     {
         await LoadSettingsAsync(ct);
 
+        // Per-user cooldown check (checked first — more specific message)
+        if (_userCooldowns.TryGetValue(message.UserId, out DateTimeOffset userExpiry)
+            && DateTimeOffset.UtcNow < userExpiry)
+        {
+            int remaining = (int)(userExpiry - DateTimeOffset.UtcNow).TotalSeconds;
+            return _msg.Get("UserCooldown", ("game", Name), ("remaining", remaining.ToString()));
+        }
+
         double secondsSinceLastHeist = (DateTimeOffset.UtcNow - _lastHeistEnd).TotalSeconds;
         if (secondsSinceLastHeist < _cooldown && _activeRound is null)
         {
@@ -125,6 +136,9 @@ public class HeistGame : IChatGame
             user.Points -= bet;
             await users.UpdateAsync(user, ct);
 
+            // Set per-user cooldown
+            _userCooldowns[message.UserId] = DateTimeOffset.UtcNow.AddSeconds(_userCooldown);
+
             _ = Task.Run(async () =>
             {
                 try
@@ -153,6 +167,9 @@ public class HeistGame : IChatGame
 
         user.Points -= bet;
         await users.UpdateAsync(user, ct);
+
+        // Set per-user cooldown
+        _userCooldowns[message.UserId] = DateTimeOffset.UtcNow.AddSeconds(_userCooldown);
 
         return _msg.Get("Joined",
             ("user", message.DisplayName),
@@ -283,6 +300,9 @@ public class HeistGame : IChatGame
 
             val = await settings.GetAsync("Games.Heist.Cooldown", ct);
             if (val is not null && int.TryParse(val, out int cd)) { _cooldown = cd; }
+
+            val = await settings.GetAsync($"Games.{Name}.UserCooldown", ct);
+            if (val is not null && int.TryParse(val, out int ucd)) { _userCooldown = ucd; }
 
             val = await settings.GetAsync("Games.Heist.MinPlayers", ct);
             if (val is not null && int.TryParse(val, out int mp)) { _minPlayers = mp; }

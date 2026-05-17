@@ -33,6 +33,12 @@ public class UserStatsBatcher : BackgroundService
     private readonly ConcurrentDictionary<string, PendingUserUpdate> _pending = new();
 
     /// <summary>
+    /// Tracks which users have had their follower status checked this session.
+    /// Reset on bot restart. Prevents redundant Helix API calls.
+    /// </summary>
+    private readonly ConcurrentDictionary<string, bool> _followerChecked = new();
+
+    /// <summary>
     /// Initializes a new instance of <see cref="UserStatsBatcher"/>.
     /// </summary>
     /// <param name="scopeFactory">Factory for creating DI scopes to resolve scoped repositories.</param>
@@ -152,6 +158,39 @@ public class UserStatsBatcher : BackgroundService
                 user.IsBroadcaster = update.IsBroadcaster;
                 await users.UpdateAsync(user, ct);
                 processed++;
+
+                // Check follower status once per session for users without FollowDate
+                if (!user.FollowDate.HasValue && _followerChecked.TryAdd(user.TwitchId, true))
+                {
+                    try
+                    {
+                        IBroadcasterHelixClient broadcasterHelix =
+                            scope.ServiceProvider.GetRequiredService<IBroadcasterHelixClient>();
+                        ISecureStorage storage = scope.ServiceProvider.GetRequiredService<ISecureStorage>();
+                        ITwitchOAuthService oauth = scope.ServiceProvider.GetRequiredService<ITwitchOAuthService>();
+
+                        TwitchTokens? broadcasterTokens = await storage.LoadTokensAsync(TokenType.Broadcaster, ct);
+                        if (broadcasterTokens is not null)
+                        {
+                            TwitchTokenValidation? validation = await oauth.ValidateTokenAsync(
+                                broadcasterTokens.AccessToken, ct);
+                            if (validation is not null)
+                            {
+                                bool isFollowing = await broadcasterHelix.IsUserFollowingAsync(
+                                    validation.UserId, user.TwitchId, ct);
+                                if (isFollowing)
+                                {
+                                    user.FollowDate = DateTimeOffset.UtcNow;
+                                    await users.UpdateAsync(user, ct);
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, "Follower check failed for {TwitchId}", user.TwitchId);
+                    }
+                }
             }
             catch (Exception ex)
             {

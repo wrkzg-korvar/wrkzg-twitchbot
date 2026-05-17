@@ -83,6 +83,44 @@ export function ChatGamesPage() {
                   <span> (also: {game.aliases.join(", ")})</span>
                 )}
               </div>
+              <div className="grid grid-cols-2 gap-2 pt-2">
+                {game.name !== "Slots" && (
+                  <CooldownInput
+                    label="Global CD"
+                    value={game.settings?.Cooldown ?? ""}
+                    gameName={game.name}
+                    settingKey="Cooldown"
+                    placeholder="60"
+                    suffix="s"
+                  />
+                )}
+                <CooldownInput
+                  label={game.name === "Slots" ? "Cooldown" : "User CD"}
+                  value={game.settings?.UserCooldown ?? ""}
+                  gameName={game.name}
+                  settingKey="UserCooldown"
+                  placeholder={game.name === "Slots" ? "10" : "30"}
+                  suffix="s"
+                />
+                {(game.name === "Slots" || game.name === "Roulette" || game.name === "Heist") && (
+                  <>
+                    <CooldownInput
+                      label="Min Bet"
+                      value={game.settings?.MinBet ?? ""}
+                      gameName={game.name}
+                      settingKey="MinBet"
+                      placeholder="10"
+                    />
+                    <CooldownInput
+                      label="Max Bet"
+                      value={game.settings?.MaxBet ?? ""}
+                      gameName={game.name}
+                      settingKey="MaxBet"
+                      placeholder="5000"
+                    />
+                  </>
+                )}
+              </div>
               <div className="flex items-center justify-between pt-2 border-t border-[var(--color-border)]">
                 <Toggle
                   checked={game.isEnabled}
@@ -259,6 +297,75 @@ function GameMessagesModal({ gameName, onClose }: { gameName: string; onClose: (
         </button>
       </div>
     </Modal>
+  );
+}
+
+// ─── Cooldown / Bet Input ────────────────────────────────────
+
+function CooldownInput({
+  label,
+  value,
+  gameName,
+  settingKey,
+  placeholder,
+  suffix,
+}: {
+  label: string;
+  value: string;
+  gameName: string;
+  settingKey: string;
+  placeholder: string;
+  suffix?: string;
+}) {
+  const queryClient = useQueryClient();
+  const [localValue, setLocalValue] = useState(value);
+  const [dirty, setDirty] = useState(false);
+
+  const saveMutation = useMutation({
+    mutationFn: () =>
+      gamesApi.updateSettings(gameName, { [settingKey]: localValue }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["games"] });
+      setDirty(false);
+      showToast("success", `${gameName} ${label} updated.`);
+    },
+    onError: () => showToast("error", `Failed to update ${label}.`),
+  });
+
+  return (
+    <div>
+      <label className="block text-[10px] font-medium text-[var(--color-text-muted)] mb-0.5">
+        {label}
+      </label>
+      <div className="flex gap-1">
+        <input
+          type="number"
+          min={0}
+          value={localValue}
+          onChange={(e) => {
+            setLocalValue(e.target.value);
+            setDirty(true);
+          }}
+          onBlur={() => {
+            if (dirty) {
+              saveMutation.mutate();
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && dirty) {
+              saveMutation.mutate();
+            }
+          }}
+          placeholder={placeholder}
+          className="w-full rounded border border-[var(--color-border)] bg-[var(--color-bg)] px-2 py-1 text-xs text-[var(--color-text)]"
+        />
+        {suffix && (
+          <span className="text-[10px] text-[var(--color-text-muted)] self-center">
+            {suffix}
+          </span>
+        )}
+      </div>
+    </div>
   );
 }
 

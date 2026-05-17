@@ -37,11 +37,13 @@ export const helpContent: Record<string, HelpEntry> = {
   // --- Commands ---
   "commands": {
     title: "Custom Commands",
-    description: "Create chat commands that your bot responds to automatically. Commands support dynamic variables, permission levels, cooldowns, and aliases.",
+    description: "Create chat commands that your bot responds to automatically. Commands support dynamic variables, permission levels, cooldowns, aliases, multi-line responses, and random response selection.",
     howToUse: [
       "Click 'Create Command' to add a new command",
       "Set a trigger (e.g. !discord) — must start with !",
       "Write a response template using variables like {user} or {points}",
+      "Separate multiple responses with ||| for random selection (e.g. 'Hi! ||| Hello! ||| Hey!')",
+      "Reference counters with {counter:name} — each invocation auto-increments the counter",
       "Set permission levels to restrict who can use the command",
       "Add cooldowns to prevent spam (global and per-user)",
       "Add aliases so one command responds to multiple triggers (e.g. !dc, !disc)",
@@ -52,10 +54,13 @@ export const helpContent: Record<string, HelpEntry> = {
     ],
     templateVariables: [
       { variable: "{user}", description: "Display name of the user" },
+      { variable: "{target}", description: "First word after the trigger — addresses another user" },
       { variable: "{points}", description: "User's current point balance" },
       { variable: "{watchtime}", description: "User's total watch time" },
       { variable: "{random:min:max}", description: "Random number between min and max" },
       { variable: "{count}", description: "Command use count" },
+      { variable: "{counter:name}", description: "Auto-increments the named counter and substitutes the new value" },
+      { variable: "|||", description: "Separator for multiple responses — one is picked at random per invocation" },
     ],
     handbookSection: "#31-custom-commands",
   },
@@ -241,12 +246,14 @@ export const helpContent: Record<string, HelpEntry> = {
   // --- Chat Games ---
   "chat-games": {
     title: "Chat Games",
-    description: "Points-based chat games that boost viewer engagement. Players bet points, compete, and win prizes. Each game can be enabled/disabled and configured independently.",
+    description: "Points-based chat games that boost viewer engagement. Players bet points, compete, and win prizes. Each game can be enabled/disabled and configured independently — including per-user cooldowns that prevent individual viewers from spamming a game.",
     howToUse: [
       "Games are enabled by default — toggle them on/off from this page",
-      "Each game has configurable settings (cooldown, min/max bet, etc.)",
+      "Adjust Global CD (cooldown across the entire game) and User CD (cooldown per individual viewer) directly on each game card",
+      "Slots, Roulette, and Heist expose Min Bet / Max Bet inputs on the card",
       "Players need points to participate — earned from watching and chatting",
       "Trivia questions can be customized via the 'Trivia Questions' button",
+      "Bot messages for each game can be customised via the 'Messages' button",
       "Games can optionally require a minimum community role (from Roles & Ranks)",
     ],
     chatCommands: [

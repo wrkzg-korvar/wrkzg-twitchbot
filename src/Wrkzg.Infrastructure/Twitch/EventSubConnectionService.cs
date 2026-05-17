@@ -314,7 +314,24 @@ public class EventSubConnectionService : IHostedService
     private async Task OnChannelFollow(object? sender, ChannelFollowArgs e)
     {
         string username = e.Payload.Event.UserName;
+        string userId = e.Payload.Event.UserId;
         _logger.LogInformation("New follow: {Username}", username);
+
+        try
+        {
+            using IServiceScope scope = _scopeFactory.CreateScope();
+            IUserRepository users = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+            User user = await users.GetOrCreateAsync(userId, username);
+            if (!user.FollowDate.HasValue)
+            {
+                user.FollowDate = DateTimeOffset.UtcNow;
+                await users.UpdateAsync(user);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to update FollowDate for {Username}", username);
+        }
 
         await SendNotificationAsync("follow", new Dictionary<string, string>
         {
@@ -323,7 +340,7 @@ public class EventSubConnectionService : IHostedService
 
         await _broadcaster.BroadcastFollowEventAsync(username);
 
-        await DispatchToEffectEngineAsync("event.follow", username, null,
+        await DispatchToEffectEngineAsync("event.follow", username, userId,
             new Dictionary<string, string> { { "user", username } });
     }
 

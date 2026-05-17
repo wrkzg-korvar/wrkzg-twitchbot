@@ -47,12 +47,15 @@ public class RouletteGame : IChatGame
     private int _minBet = 10;
     private int _maxBet = 5000;
     private int _cooldown = 60;
+    private int _userCooldown = 30;
+    private readonly ConcurrentDictionary<string, DateTimeOffset> _userCooldowns = new();
 
     private static readonly string[] RedNumbers = { "1", "3", "5", "7", "9", "12", "14", "16", "18", "19", "21", "23", "25", "27", "30", "32", "34", "36" };
 
     private static readonly Dictionary<string, string> DefaultMessages = new()
     {
         ["Cooldown"] = "Roulette is on cooldown! Try again in {remaining}s.",
+        ["UserCooldown"] = "{game} is on cooldown for you! Try again in {remaining}s.",
         ["Usage"] = "Usage: !roulette <amount> <red|black>",
         ["BetRange"] = "Bet must be between {min} and {max} points.",
         ["InvalidColor"] = "Choose red or black! Usage: !roulette <amount> <red|black>",
@@ -86,6 +89,15 @@ public class RouletteGame : IChatGame
     {
         await LoadSettingsAsync(ct);
 
+        // Per-user cooldown check (checked first — more specific message)
+        if (_userCooldowns.TryGetValue(message.UserId, out DateTimeOffset userExpiry)
+            && DateTimeOffset.UtcNow < userExpiry)
+        {
+            int remaining = (int)(userExpiry - DateTimeOffset.UtcNow).TotalSeconds;
+            return _msg.Get("UserCooldown", ("game", Name), ("remaining", remaining.ToString()));
+        }
+
+        // Global cooldown (game-wide, after round ends)
         double secondsSinceLast = (DateTimeOffset.UtcNow - _lastRoundEnd).TotalSeconds;
         if (secondsSinceLast < _cooldown && _activeRound is null)
         {
@@ -121,6 +133,9 @@ public class RouletteGame : IChatGame
 
         user.Points -= bet;
         await users.UpdateAsync(user, ct);
+
+        // Set per-user cooldown
+        _userCooldowns[message.UserId] = DateTimeOffset.UtcNow.AddSeconds(_userCooldown);
 
         if (_activeRound is null)
         {
@@ -255,6 +270,9 @@ public class RouletteGame : IChatGame
 
             val = await settings.GetAsync("Games.Roulette.Cooldown", ct);
             if (val is not null && int.TryParse(val, out int cd)) { _cooldown = cd; }
+
+            val = await settings.GetAsync($"Games.{Name}.UserCooldown", ct);
+            if (val is not null && int.TryParse(val, out int ucd)) { _userCooldown = ucd; }
 
             val = await settings.GetAsync("Games.Roulette.Enabled", ct);
             if (val is not null) { IsEnabled = !string.Equals(val, "false", StringComparison.OrdinalIgnoreCase); }

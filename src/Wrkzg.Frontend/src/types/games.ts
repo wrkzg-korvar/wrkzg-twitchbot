@@ -5,6 +5,7 @@ export interface ChatGame {
   description: string;
   isEnabled: boolean;
   minRolePriority: number;
+  settings?: Record<string, string>;
 }
 
 export interface GameMessages {

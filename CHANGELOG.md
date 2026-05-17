@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.4.3] — 2026-05-09
 
+### Fixed — 2026-05-17
+- **Import:** Command triggers from DeepBot config imports are now lowercased to match the trigger-lookup convention. Imports with mixed-case triggers no longer silently bypass the duplicate check.
+- **Follower Status:** EventSub follow events now write `FollowDate` to the user record. Existing followers without a `FollowDate` are verified once per session via the Helix follower check when they first chat. Commands gated to the `Follower` permission level now correctly recognise actual followers (previously every follower was treated as `Everyone`).
+- **/me Commands:** Custom command responses starting with `/me ` are now sent as IRC ACTION messages (`.me` via TwitchLib) and display as italic/coloured action text in chat instead of literal `/me` text.
+- **Slots Per-User Cooldown:** Slots now honours the `Games.Slots.UserCooldown` setting — previously the configured value was ignored and the cooldown always fell back to the hardcoded 10s default.
+- **Game Cooldown Priority:** Roulette, Duel, Heist and Trivia now check the per-user cooldown *before* the global cooldown. Previously the global cooldown shadowed the per-user one (defaults: Roulette/Duel 60s global vs 30s user, Heist 300s vs 30s, Trivia 30s vs 30s), so the per-user message was never shown.
+- **Slots UI:** Removed the meaningless "Global CD" input for Slots (stateless game with no shared round). The remaining cooldown input is now labelled simply "Cooldown".
+
+### Added — 2026-05-17
+- **Random Command Responses:** Separate multiple responses in a command's response template with `|||` for random selection. Example: `Hello! ||| Hi there! ||| Hey!` rolls a random greeting on each use.
+- **{counter:name} Template Variable:** Custom commands can reference and auto-increment counters. Example: `!deaths` with response `RIP! Death count: {counter:deaths}` bumps the `deaths` counter on every invocation and substitutes the new value into the response.
+- **Resizable Response Field:** The command form's Response input is now a multi-line, vertically resizable textarea spanning the full width of the form. Multi-line responses (using `|||`) are easier to author.
+- **Per-User Game Cooldowns:** All chat games (Slots, Roulette, Duel, Heist, Trivia) now support per-user cooldowns in addition to global cooldowns. Configurable via the Chat Games page.
+- **Inline Game Settings:** The Chat Games page exposes Global Cooldown, User Cooldown, Min Bet, and Max Bet inputs directly on each game card — no need to dig into the messages modal.
+
 ### Added
 - **Bot Requirements Panel:** New section on the Settings page showing whether the bot account meets feature-gated requirements. Displays green/red status indicators for Moderator and Follower status with actionable fix instructions (e.g. "Type /mod YOUR_BOT_NAME in your Twitch chat"). Polls every 30 seconds.
 - **{target} Command Variable:** Custom commands can now address other users. `!hug krinlin` with template `{user} gives {target} a big hug!` produces "Chuck gives krinlin a big hug!". The `@` prefix is stripped automatically. Works in both custom commands and system command overrides.
@@ -16,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Command Trigger Editing:** Triggers and aliases on existing commands are now editable at any time. Previously the trigger input was read-only after creation. Backend validates trigger uniqueness on update to prevent duplicates.
 - **Bot Emote Separation:** Emotes are now tagged with an `owner` field (`bot`, `broadcaster`, or `shared`). The EmotePicker filters available emotes based on the selected "Send as" account — selecting Bot shows only emotes the bot can actually use. Global emotes are available to both accounts.
 
-### Security
+### Security — 2026-05-17
 - Pinned all npm dependencies to exact versions (removed caret/tilde ranges)
 - Updated `vite` to `7.3.3` (fixes GHSA-4w7w-66w2-5vf9, GHSA-v2wj-q39q-566r, GHSA-p9ff-h696-f583)
 - Pinned all GitHub Actions to full commit SHA (prevents mutable tag attacks)
