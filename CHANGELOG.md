@@ -16,6 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Command Trigger Editing:** Triggers and aliases on existing commands are now editable at any time. Previously the trigger input was read-only after creation. Backend validates trigger uniqueness on update to prevent duplicates.
 - **Bot Emote Separation:** Emotes are now tagged with an `owner` field (`bot`, `broadcaster`, or `shared`). The EmotePicker filters available emotes based on the selected "Send as" account — selecting Bot shows only emotes the bot can actually use. Global emotes are available to both accounts.
 
+### Security
+- Pinned all npm dependencies to exact versions (removed caret/tilde ranges)
+- Updated `vite` to `7.3.3` (fixes GHSA-4w7w-66w2-5vf9, GHSA-v2wj-q39q-566r, GHSA-p9ff-h696-f583)
+- Pinned all GitHub Actions to full commit SHA (prevents mutable tag attacks)
+- Added `--ignore-scripts` to all CI/CD `npm ci` calls (blocks lifecycle hook attacks)
+- Added least-privilege `permissions` to all workflow jobs
+
 ## [2.4.2] — 2026-05-09
 
 ### Added
