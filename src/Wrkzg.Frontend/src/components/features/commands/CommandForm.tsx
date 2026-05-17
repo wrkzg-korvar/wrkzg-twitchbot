@@ -72,24 +72,24 @@ export function CommandForm({ onClose, initial }: CommandFormProps) {
             className={inputClass}
           />
         </div>
-        <div>
+        <div className="sm:col-span-2">
           <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Response</label>
-          <input
-            type="text"
+          <textarea
             value={response}
             onChange={(e) => setResponse(e.target.value)}
-            placeholder="Hello {user}! Welcome to the stream."
-            className={inputClass}
+            placeholder={"Hello {user}! Welcome to the stream.\n\nUse ||| to separate multiple random responses."}
+            rows={5}
+            className={`${inputClass} resize-y min-h-[4.5rem]`}
           />
           <div className="flex justify-end mt-1">
             <span className={`text-xs ${
-              response.length > 500
+              response.length > 1000
                 ? "text-red-500 font-semibold"
-                : response.length > 400
+                : response.length > 900
                   ? "text-yellow-500"
                   : "text-[var(--color-text-muted)]"
             }`}>
-              {response.length}/500
+              {response.length}/1000
             </span>
           </div>
         </div>
@@ -145,7 +145,19 @@ export function CommandForm({ onClose, initial }: CommandFormProps) {
       </div>
 
       <p className="text-xs text-[var(--color-text-muted)]">
-        Available variables: {"{user}"}, {"{target}"}, {"{count}"}, {"{points}"}, {"{watchtime}"}, {"{random:min:max}"}
+        Variables: {"{user}"}, {"{target}"}, {"{count}"}, {"{points}"}, {"{watchtime}"}, {"{random:min:max}"}, {"{counter:name}"}
+        <br />
+        Separate multiple responses with <code className="text-[var(--color-brand-text)] bg-[var(--color-elevated)] px-1 rounded">|||</code> for random selection.
+        <br />
+        <span className={`text-xs ${
+          response.length > 500
+            ? "text-red-500 font-semibold"
+            : response.length > 400
+              ? "text-yellow-500"
+              : "text-[var(--color-text-muted)]"
+        }`}>
+              The Character limit for a Twitch Chat Message is 500 Characters, make sure your responses do not exceed this limit. Even when Separated by <code className="text-[var(--color-brand-text)] bg-[var(--color-elevated)] px-1 rounded">|||</code> for random selection, each response should not exceed 500 characters.
+        </span>
       </p>
 
       <div className="flex gap-2">

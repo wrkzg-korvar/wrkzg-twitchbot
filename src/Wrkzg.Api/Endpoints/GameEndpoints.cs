@@ -21,17 +21,35 @@ public static class GameEndpoints
     {
         RouteGroupBuilder group = app.MapGroup("/api/games").WithTags("Games");
 
-        group.MapGet("/", (ChatGameManager manager) =>
+        group.MapGet("/", async (ChatGameManager manager, ISettingsRepository settings, CancellationToken ct) =>
         {
-            List<object> games = manager.GetAllGames().Select(g => new
+            List<object> games = new();
+            string[] settingKeys = { "Cooldown", "UserCooldown", "MinBet", "MaxBet" };
+
+            foreach (IChatGame game in manager.GetAllGames())
             {
-                name = g.Name,
-                trigger = g.Trigger,
-                aliases = g.Aliases,
-                description = g.Description,
-                isEnabled = g.IsEnabled,
-                minRolePriority = g.MinRolePriority
-            }).ToList<object>();
+                Dictionary<string, string> gameSettings = new();
+                foreach (string key in settingKeys)
+                {
+                    string settingsKey = $"Games.{game.Name}.{key}";
+                    string? val = await settings.GetAsync(settingsKey, ct);
+                    if (val is not null)
+                    {
+                        gameSettings[key] = val;
+                    }
+                }
+
+                games.Add(new
+                {
+                    name = game.Name,
+                    trigger = game.Trigger,
+                    aliases = game.Aliases,
+                    description = game.Description,
+                    isEnabled = game.IsEnabled,
+                    minRolePriority = game.MinRolePriority,
+                    settings = gameSettings
+                });
+            }
 
             return Results.Ok(games);
         });

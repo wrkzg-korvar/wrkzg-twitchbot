@@ -109,7 +109,7 @@ Custom commands let you create automated responses to chat triggers. When a view
 2. Click **Create Command**
 3. Fill in:
    - **Trigger** — The command viewers type (must start with `!`)
-   - **Response** — What the bot says. Use variables for dynamic content.
+   - **Response** — What the bot says. Multi-line, resizable. Use variables for dynamic content. Separate alternative responses with `|||` for random selection.
    - **Permission** — Who can use this command (Everyone, Follower, Subscriber, Moderator, Broadcaster)
    - **Cooldown** — Minimum seconds between uses (global and per-user)
    - **Aliases** — Alternative triggers (comma-separated)
@@ -120,10 +120,20 @@ Custom commands let you create automated responses to chat triggers. When a view
 | Variable | What it shows | Example output |
 |---|---|---|
 | `{user}` | Viewer's display name | `NightOwl42` |
+| `{target}` | First word after the trigger — strips a leading `@` | `Krinlin` |
 | `{points}` | Viewer's point balance | `1,250` |
 | `{watchtime}` | Total watch time | `12h 30m` |
 | `{random:1:6}` | Random number between min and max | `4` |
 | `{count}` | Times this command was used | `847` |
+| `{counter:name}` | Auto-increments the named counter and substitutes the new value | `Deaths: 42` |
+
+#### Multiple Random Responses
+
+Separate alternative responses with `|||` in the Response template. Each invocation picks one at random.
+
+```
+Hello {user}! ||| Hi there, {user}! ||| Welcome {user}, glad to see you!
+```
 
 #### Examples
 
@@ -132,12 +142,16 @@ Custom commands let you create automated responses to chat triggers. When a view
 | `!discord` | `Join our Discord: discord.gg/abc` | `Join our Discord: discord.gg/abc` |
 | `!lurk` | `{user} is now lurking!` | `NightOwl42 is now lurking!` |
 | `!roll` | `{user} rolled a {random:1:6}!` | `NightOwl42 rolled a 4!` |
+| `!hug` | `{user} hugs {target}!` (used as `!hug krinlin`) | `NightOwl42 hugs Krinlin!` |
+| `!deaths` | `RIP! Death count: {counter:deaths}` | `RIP! Death count: 8` |
+| `!greet` | `Hi {user}! ||| Hey {user}!` | `Hi NightOwl42!` *(random)* |
 
 #### Tips
 
 - **Aliases are great for shortcuts.** Set `!dc` and `!disc` as aliases for `!discord`.
 - **Per-user cooldowns** prevent individuals from spamming, while **global cooldowns** limit overall usage.
 - **Mods bypass cooldowns** by default.
+- **`/me` works.** A response starting with `/me ` is sent as a Twitch ACTION (italic/coloured text).
 
 ### 3.2 System Commands Reference
 
@@ -303,17 +317,20 @@ Five points-based chat games that drive viewer engagement. Players bet points, c
 
 #### Game Settings
 
-Each game has configurable settings accessible from the **Chat Games** page:
+Each game card on the **Chat Games** page exposes the most-used settings inline (Global CD, User CD, Min Bet, Max Bet). Changes are saved on blur or when you hit Enter.
 
-- **Cooldown** — Seconds between rounds (prevents spam)
-- **Min/Max Bet** — Allowed bet range
-- **Success Rate** — Win probability (Heist)
+- **Global CD** — Seconds between rounds for the *entire game* (shared by all players)
+- **User CD** — Seconds an individual viewer must wait before playing the same game again (per Twitch user)
+- **Min/Max Bet** — Allowed bet range (Slots, Roulette, Heist)
+- **Success Rate** — Win probability (Heist) — configurable via the Messages modal / DB
 - **Multiplier** — Payout multiplier (Heist)
 - **Join Duration** — How long the join phase lasts (Heist, Roulette)
 - **Accept Timeout** — How long the challenged player has to accept (Duel)
 - **Answer Duration** — How long to answer a trivia question
 - **Reward** — Points awarded for correct trivia answers
 - **Min Players** — Minimum players required (Heist)
+
+> **Per-User vs Global Cooldown:** Global CD blocks the next round of a game entirely (e.g. only one Slots spin every 10 s across all viewers). User CD blocks the *same viewer* from immediately retriggering the game (e.g. each viewer can only play Slots once every 10 s). Both apply together.
 
 Toggle games on/off from the dashboard without changing settings.
 

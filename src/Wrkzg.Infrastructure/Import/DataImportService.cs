@@ -382,7 +382,7 @@ public class DataImportService : IDataImportService
         int commandsSkipped = 0;
         foreach (ImportCommandRecord cmd in parsed.Commands)
         {
-            Command? existing = await commands.GetByTriggerOrAliasAsync(cmd.Trigger, ct);
+            Command? existing = await commands.GetByTriggerOrAliasAsync(cmd.Trigger.ToLowerInvariant(), ct);
             if (existing is not null)
             {
                 commandsSkipped++;
@@ -418,7 +418,7 @@ public class DataImportService : IDataImportService
         {
             try
             {
-                Command? existing = await commands.GetByTriggerOrAliasAsync(cmd.Trigger, ct);
+                Command? existing = await commands.GetByTriggerOrAliasAsync(cmd.Trigger.ToLowerInvariant(), ct);
                 if (existing is not null)
                 {
                     result.CommandsSkippedCount++;
@@ -427,7 +427,7 @@ public class DataImportService : IDataImportService
 
                 Command newCommand = new()
                 {
-                    Trigger = cmd.Trigger,
+                    Trigger = cmd.Trigger.ToLowerInvariant(),
                     ResponseTemplate = ConvertDeepbotVariables(cmd.Response),
                     PermissionLevel = MapAccessLevel(cmd.AccessLevel),
                     GlobalCooldownSeconds = cmd.CooldownSeconds,

@@ -172,6 +172,19 @@ public class TwitchChatClient : ITwitchChatClient
 
         // Safety net: Twitch silently drops messages over 500 chars
         string safeMessage = message.Length > 500 ? message[..497] + "..." : message;
+
+        // Handle /me action messages — TwitchLib treats ".me" as the chat command alias and
+        // formats the IRC message as an ACTION, which displays as italic/coloured text.
+        if (safeMessage.StartsWith("/me ", StringComparison.OrdinalIgnoreCase))
+        {
+            string actionText = safeMessage[4..];
+            if (!string.IsNullOrWhiteSpace(actionText))
+            {
+                _client.SendMessage(_joinedChannel, $".me {actionText}");
+                return Task.CompletedTask;
+            }
+        }
+
         _client.SendMessage(_joinedChannel, safeMessage);
         return Task.CompletedTask;
     }

@@ -118,9 +118,9 @@ public static class CommandEndpoints
                 return TypedResults.Problem(detail: "ResponseTemplate is required.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
-            if (request.ResponseTemplate.Length > 500)
+            if (request.ResponseTemplate.Length > 1000)
             {
-                return TypedResults.Problem(detail: "ResponseTemplate must be 500 characters or less.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
+                return TypedResults.Problem(detail: "ResponseTemplate must be 1000 characters or less.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
             }
 
             // Check for duplicate trigger
@@ -179,9 +179,9 @@ public static class CommandEndpoints
 
             if (request.ResponseTemplate is not null)
             {
-                if (request.ResponseTemplate.Length > 500)
+                if (request.ResponseTemplate.Length > 1000)
                 {
-                    return TypedResults.Problem(detail: "ResponseTemplate must be 500 characters or less.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
+                    return TypedResults.Problem(detail: "ResponseTemplate must be 1000 characters or less.", title: "Validation Error", statusCode: StatusCodes.Status400BadRequest, type: "https://wrkzg.app/problems/validation-error");
                 }
 
                 command.ResponseTemplate = request.ResponseTemplate;

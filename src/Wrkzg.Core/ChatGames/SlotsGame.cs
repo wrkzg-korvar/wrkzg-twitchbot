@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -41,12 +42,15 @@ public class SlotsGame : IChatGame
 
     private int _minBet = 10;
     private int _maxBet = 5000;
+    private int _userCooldown = 10;
+    private readonly ConcurrentDictionary<string, DateTimeOffset> _userCooldowns = new();
 
     private static readonly Dictionary<string, string> DefaultMessages = new()
     {
         ["Usage"] = "Usage: !slots <amount> (min: {min}, max: {max})",
         ["BetRange"] = "Bet must be between {min} and {max} points.",
         ["NotEnoughPoints"] = "You don't have enough points!",
+        ["UserCooldown"] = "{game} is on cooldown for you! Try again in {remaining}s.",
         ["Jackpot"] = "🎰 [{s1} {s2} {s3}] — JACKPOT! {multiplier}x — +{payout} points!",
         ["TwoMatch"] = "🎰 [{s1} {s2} {s3}] — Two match! +{payout} points back.",
         ["NoMatch"] = "🎰 [{s1} {s2} {s3}] — No match. -{amount} points.",
@@ -69,6 +73,14 @@ public class SlotsGame : IChatGame
     {
         await LoadSettingsAsync(ct);
 
+        // Per-user cooldown check
+        if (_userCooldowns.TryGetValue(message.UserId, out DateTimeOffset expiry)
+            && DateTimeOffset.UtcNow < expiry)
+        {
+            int remaining = (int)(expiry - DateTimeOffset.UtcNow).TotalSeconds;
+            return _msg.Get("UserCooldown", ("game", Name), ("remaining", remaining.ToString()));
+        }
+
         string[] parts = message.Content.Split(' ', 2);
         if (parts.Length < 2 || !int.TryParse(parts[1], out int bet))
         {
@@ -90,6 +102,9 @@ public class SlotsGame : IChatGame
         }
 
         user.Points -= bet;
+
+        // Set per-user cooldown
+        _userCooldowns[message.UserId] = DateTimeOffset.UtcNow.AddSeconds(_userCooldown);
 
         Random rng = new();
         string s1 = DefaultSymbols[rng.Next(DefaultSymbols.Length)];
@@ -152,6 +167,9 @@ public class SlotsGame : IChatGame
 
             val = await settings.GetAsync("Games.Slots.MaxBet", ct);
             if (val is not null && int.TryParse(val, out int mx)) { _maxBet = mx; }
+
+            val = await settings.GetAsync("Games.Slots.UserCooldown", ct);
+            if (val is not null && int.TryParse(val, out int ucd)) { _userCooldown = ucd; }
 
             val = await settings.GetAsync("Games.Slots.Enabled", ct);
             if (val is not null) { IsEnabled = !string.Equals(val, "false", StringComparison.OrdinalIgnoreCase); }
