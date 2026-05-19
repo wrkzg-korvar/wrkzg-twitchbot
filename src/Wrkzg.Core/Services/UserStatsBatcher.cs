@@ -17,11 +17,12 @@ namespace Wrkzg.Core.Services;
 /// Batches per-message user stat updates (message count, last seen, display name, role sync)
 /// and flushes to the database every 30 seconds instead of per-message.
 ///
-/// Rationale: The ChatMessagePipeline previously created a new IServiceScope + DB write for
-/// every single chat message. At 50+ messages/minute, that's 50+ DB writes/minute just for
-/// user stats. This batcher reduces that to 1 batch write every 30 seconds.
+/// Also implements <see cref="ISessionStatsCollector"/>: accumulates per-session analytics
+/// (unique chatters, total messages, new followers, new subscribers) as a side effect of
+/// the existing Enqueue() call. These counters are read and reset by StreamAnalyticsService
+/// when a stream session closes — no additional per-message call required.
 /// </summary>
-public class UserStatsBatcher : BackgroundService
+public class UserStatsBatcher : BackgroundService, ISessionStatsCollector
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<UserStatsBatcher> _logger;
@@ -37,6 +38,16 @@ public class UserStatsBatcher : BackgroundService
     /// Reset on bot restart. Prevents redundant Helix API calls.
     /// </summary>
     private readonly ConcurrentDictionary<string, bool> _followerChecked = new();
+
+    // ─── Per-session analytics counters ──────────────────────────
+    // Accumulated by Enqueue() (messages/chatters) and RecordFollow/RecordSubscription
+    // (EventSub events). Read and reset by StreamAnalyticsService via GetAndResetStats().
+
+    private readonly object _sessionLock = new();
+    private readonly HashSet<string> _sessionUniqueChatters = new();
+    private int _sessionMessageCount;
+    private int _sessionNewFollowers;
+    private int _sessionNewSubscribers;
 
     /// <summary>
     /// Initializes a new instance of <see cref="UserStatsBatcher"/>.
@@ -81,6 +92,13 @@ public class UserStatsBatcher : BackgroundService
                 existing.LastSeenAt = DateTimeOffset.UtcNow;
                 return existing;
             });
+
+        // Accumulate per-session analytics — same data, no extra call from the pipeline.
+        lock (_sessionLock)
+        {
+            _sessionUniqueChatters.Add(message.UserId);
+            _sessionMessageCount++;
+        }
     }
 
     /// <inheritdoc />
@@ -199,6 +217,52 @@ public class UserStatsBatcher : BackgroundService
         }
 
         _logger.LogDebug("Flushed user stats batch: {Count} users updated", processed);
+    }
+
+    // ─── ISessionStatsCollector ──────────────────────────────────
+
+    /// <inheritdoc />
+    public void RecordChatMessage(string userId)
+    {
+        // Not called externally — session chat stats are accumulated inside Enqueue().
+        // Exists to satisfy the interface contract. Direct callers should use Enqueue(ChatMessage).
+        lock (_sessionLock)
+        {
+            _sessionUniqueChatters.Add(userId);
+            _sessionMessageCount++;
+        }
+    }
+
+    /// <inheritdoc />
+    public void RecordFollow()
+    {
+        Interlocked.Increment(ref _sessionNewFollowers);
+    }
+
+    /// <inheritdoc />
+    public void RecordSubscription(int count = 1)
+    {
+        Interlocked.Add(ref _sessionNewSubscribers, count);
+    }
+
+    /// <inheritdoc />
+    public SessionStats GetAndResetStats()
+    {
+        lock (_sessionLock)
+        {
+            SessionStats stats = new()
+            {
+                UniqueChatters = _sessionUniqueChatters.Count,
+                TotalMessages = _sessionMessageCount,
+                NewFollowers = Interlocked.Exchange(ref _sessionNewFollowers, 0),
+                NewSubscribers = Interlocked.Exchange(ref _sessionNewSubscribers, 0),
+            };
+
+            _sessionUniqueChatters.Clear();
+            _sessionMessageCount = 0;
+
+            return stats;
+        }
     }
 
     /// <summary>Represents accumulated stat updates for a single user within a batch window.</summary>

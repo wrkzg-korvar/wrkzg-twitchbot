@@ -111,6 +111,26 @@ public class UserTrackingService : IUserTrackingService, IDisposable
         }
     }
 
+    /// <inheritdoc />
+    public IReadOnlyList<string> GetActiveUserIds()
+    {
+        DateTimeOffset cutoff = DateTimeOffset.UtcNow.AddMinutes(-5);
+        List<string> active = new();
+
+        lock (_activeUsersLock)
+        {
+            foreach (KeyValuePair<string, DateTimeOffset> kvp in _recentlyActiveUsers)
+            {
+                if (kvp.Value >= cutoff)
+                {
+                    active.Add(kvp.Key);
+                }
+            }
+        }
+
+        return active;
+    }
+
     /// <summary>
     /// Timer callback — runs every 60 seconds.
     /// </summary>

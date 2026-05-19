@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.4] — 2026-05-19
+
+### Fixed
+- **Stream Analytics — Session Lifecycle:** Stream sessions now close reliably when the stream goes offline. Previously, sessions could remain open for days if the Twitch API poll failed during the offline transition (the cached stream status retained the last successful "live" response indefinitely). Four interconnected bugs were fixed:
+  - `StreamStatusProvider` now resets to offline after 3 consecutive API poll failures (previously it served stale "live" data indefinitely on error).
+  - `StreamAnalyticsService` now detects when the Twitch Stream ID changes between polls and closes the old session before opening a new one.
+  - On startup, sessions that have been open for more than 48 hours are automatically closed using the timestamp of the last recorded viewer snapshot as the estimated end time.
+  - On graceful shutdown, any active session is now properly closed instead of being left open with `EndedAt = null`.
+- **Stream Analytics — Shutdown Guard:** The `StopAsync` method now performs a database-level check for any unclosed session in addition to the in-memory reference check. This catches edge cases where the in-memory session reference was lost but the database still had an open session with `EndedAt = null`.
+- **Program.cs:** Eliminated duplicate endpoint registration that existed in both branches of the wwwroot if/else block. Endpoints are now registered exactly once.
+- **Custom Rewards Logging:** Non-affiliate/non-partner streamers no longer produce `Warning`-level log entries when the Channel Points page fetches custom rewards (403 Forbidden is expected and now logged at `Debug` level).
+- **Analytics Repository:** `GetSessionsSinceAsync` no longer loads all stream sessions into memory for client-side filtering. Uses server-side Ticks comparison where supported.
+- **Analytics — Segment Viewer Stats:** Category segments now track average and peak viewers. Previously, `AverageViewers` and `PeakViewers` on `CategorySegment` were never computed — the fields existed in the schema but were always null, causing the Category Breakdown table to show 0 for Avg and Peak columns.
+- **Analytics — Pie Chart Tooltip:** Fixed unreadable tooltip text in dark mode. The Recharts Tooltip defaulted to black text against a dark background. All chart tooltips now use theme-aware text colors.
+- **Moderation — isMod Property Mismatch:** The Users page queried `isModerator` from the bot-requirements API, but the endpoint returns `isMod`. This caused the Twitch Moderation section to always show as disabled even when the bot was a moderator.
+- **Users Table — Viewport Height:** The Users table now fills the remaining viewport height and resizes with the window, matching the Dashboard's Live Chat behavior. Previously it was capped at 600px due to the SmartDataTable default `maxHeight`.
+- **User Detail Modal — Live Updates:** The modal now fetches its own user data via `useQuery` instead of receiving a static snapshot. After any moderation action (ban, unban, exclude), the modal updates in real-time without needing to be closed and reopened.
+
+### Added
+- **Analytics — Category Overlay:** The viewer count chart in Stream History now shows semi-transparent colored background regions for each category segment. Hover any point in the chart to see the viewer count and current category. A matching color legend is displayed below the chart.
+- **Analytics — Category Segment Times:** The category breakdown below the viewer chart now shows exact start and end times for each segment alongside the duration.
+- **Analytics — Session Stats:** Stream sessions now track unique chatters, total messages, new followers, and new subscribers. Chat stats are accumulated inside the existing `UserStatsBatcher.Enqueue()` call (zero additional per-message overhead), EventSub events (follows/subscriptions) are recorded via the same `ISessionStatsCollector` interface. Data is written to the session when it closes. Displayed as KPI cards in both the Overview and Stream History tabs, and included in session list previews.
+- **Analytics — Category Redesign:** The Categories tab now features a horizontal bar chart ranking categories by hours alongside the pie chart, a period selector (7 days to all time), a richer breakdown table with percentage of total time, session count, and a summary footer row. Avg and Peak viewer columns now show actual data from per-segment tracking.
+- **Moderation — User Detail Redesign:** The user detail modal now separates "Bot Access" (internal soft-ban with amber toggle) from "Twitch Moderation" (timeout presets, ban, shoutout with purple/red actions). Twitch moderation is disabled with a hint when the bot lacks moderator status.
+- **Moderation — Activity History:** Every user's detail modal shows a chronological timeline of all events: timeouts, bans, unbans, shoutouts, follows, subscriptions, gift subs, resubs, and raids. Data sourced from the new ModerationEvent log.
+- **Dashboard — Moderation Hub:** The Dashboard is now a two-panel layout: Live Chat (left, ~65%) with per-message quick action menus (Timeout presets, Ban, Shoutout, View Profile) and a Live Viewer List (right, ~35%) showing all current chatters with search, role filters, and quick actions. The Event Feed is compacted into a horizontal ticker. Counters have been removed from the Dashboard (still available on the Counters page).
+- **Moderation — Twitch Ban Tracking:** New `IsTwitchBanned` field on the User model. The ban/unban endpoints set this field after successful Twitch API calls. The Users table shows distinct badges: amber "Bot Excluded" for internal bot bans, red "Twitch Banned" for Twitch bans. Both can appear simultaneously.
+- **Moderation — Dashboard Unban:** Twitch-banned users can be unbanned directly from the Dashboard's Live Viewer List. The quick action menu shows "Unban" (green) instead of "Ban" (red) when a user is Twitch-banned. A red "BAN" badge appears next to banned viewers.
+- **Moderation — Activity History Filters:** The user detail modal's Activity History now has time-based quick filters (30 days, 90 days, 6 months, 1 year, all time) and paginated navigation (15 entries per page) instead of an infinite-growing list.
+- **Moderation — Event Logging:** All Twitch moderation actions (timeout, ban, unban, shoutout) and EventSub events (follow, subscribe, gift sub, resub, raid) are logged to the new `ModerationEvent` table with timestamp, actor, reason, and Twitch API result. The log can be cleaned up via `DELETE /api/moderation/log/cleanup`.
+- **Moderation — REST API:** New endpoint group `/api/moderation/*` with 8 endpoints: timeout, ban, unban, shoutout, global log, per-user log, log cleanup, and live viewers.
+
 ## [2.4.3] — 2026-05-09
 
 ### Fixed — 2026-05-17

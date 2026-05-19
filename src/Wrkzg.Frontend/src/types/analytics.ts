@@ -7,6 +7,10 @@ export interface AnalyticsSession {
   peakViewers: number;
   averageViewers: number | null;
   title: string | null;
+  uniqueChatters: number | null;
+  totalMessages: number | null;
+  newFollowers: number | null;
+  newSubscribers: number | null;
   categories: AnalyticsCategorySegment[];
   snapshots?: AnalyticsSnapshot[];
 }
@@ -33,6 +37,10 @@ export interface AnalyticsSummary {
   averageStreamDurationMinutes: number;
   averageViewers: number;
   peakViewers: number;
+  totalUniqueChatters: number;
+  totalMessages: number;
+  totalNewFollowers: number;
+  totalNewSubscribers: number;
   topCategories: {
     name: string;
     hours: number;

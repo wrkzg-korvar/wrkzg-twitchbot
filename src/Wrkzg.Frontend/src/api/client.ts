@@ -82,6 +82,11 @@ export const api = {
     return handleResponse<void>(res);
   },
 
+  async delete<T>(url: string): Promise<T> {
+    const res = await fetch(url, { method: "DELETE" });
+    return handleResponse<T>(res);
+  },
+
   async upload<T>(url: string, formData: FormData): Promise<T> {
     const res = await fetch(url, { method: "POST", body: formData });
     return handleResponse<T>(res);

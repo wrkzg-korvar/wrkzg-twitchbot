@@ -26,6 +26,9 @@ public class StreamStatusProvider : IStreamStatusProvider, IDisposable
     private volatile StreamInfo? _currentStream;
     private volatile string? _channelLogin;
     private volatile bool _isPolling;
+    private int _consecutiveFailures;
+
+    private const int MaxConsecutiveFailuresBeforeOffline = 3;
 
     /// <inheritdoc />
     public bool IsLive => _currentStream is not null;
@@ -124,6 +127,7 @@ public class StreamStatusProvider : IStreamStatusProvider, IDisposable
             StreamInfo? stream = await helix.GetStreamAsync(_channelLogin!, ct);
             StreamInfo? previous = _currentStream;
             _currentStream = stream;
+            Interlocked.Exchange(ref _consecutiveFailures, 0);
 
             if (stream is not null && previous is null)
             {
@@ -138,7 +142,22 @@ public class StreamStatusProvider : IStreamStatusProvider, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to poll stream status for channel {Channel}", _channelLogin);
+            int failures = Interlocked.Increment(ref _consecutiveFailures);
+
+            if (failures >= MaxConsecutiveFailuresBeforeOffline && _currentStream is not null)
+            {
+                _logger.LogWarning(
+                    "Stream status poll failed {Failures} consecutive times — resetting to offline (fail-safe)",
+                    failures);
+                _currentStream = null;
+            }
+            else
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Failed to poll stream status for channel {Channel} (failure {Failures}/{Max})",
+                    _channelLogin, failures, MaxConsecutiveFailuresBeforeOffline);
+            }
         }
     }
 

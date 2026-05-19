@@ -11,6 +11,7 @@ export interface User {
   isMod: boolean;
   isBroadcaster: boolean;
   isBanned: boolean;
+  isTwitchBanned: boolean;
   followDate: string | null;
   firstSeenAt: string;
   lastSeenAt: string;

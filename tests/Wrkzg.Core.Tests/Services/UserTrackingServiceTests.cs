@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -76,5 +77,42 @@ public class UserTrackingServiceTests
     {
         await _sut.StartAsync(CancellationToken.None);
         await _sut.StopAsync(CancellationToken.None);
+    }
+
+    /// <summary>GetActiveUserIds returns users marked active within the last 5 minutes.</summary>
+    [Fact]
+    public void GetActiveUserIds_ReturnsRecentlyActiveUsers()
+    {
+        _sut.MarkUserActive("user1");
+        _sut.MarkUserActive("user2");
+        _sut.MarkUserActive("user3");
+
+        IReadOnlyList<string> active = _sut.GetActiveUserIds();
+
+        active.Should().HaveCount(3);
+        active.Should().Contain("user1");
+        active.Should().Contain("user2");
+        active.Should().Contain("user3");
+    }
+
+    /// <summary>GetActiveUserIds returns an empty list when no users are active.</summary>
+    [Fact]
+    public void GetActiveUserIds_NoActiveUsers_ReturnsEmpty()
+    {
+        IReadOnlyList<string> active = _sut.GetActiveUserIds();
+        active.Should().BeEmpty();
+    }
+
+    /// <summary>GetActiveUserIds does not modify the internal state (read-only operation).</summary>
+    [Fact]
+    public void GetActiveUserIds_DoesNotClearActiveUsers()
+    {
+        _sut.MarkUserActive("user1");
+
+        IReadOnlyList<string> first = _sut.GetActiveUserIds();
+        IReadOnlyList<string> second = _sut.GetActiveUserIds();
+
+        first.Should().HaveCount(1);
+        second.Should().HaveCount(1, "GetActiveUserIds must not clear the active users list");
     }
 }

@@ -283,4 +283,21 @@ public class SignalRChatBroadcaster : IChatEventBroadcaster
     {
         return BroadcastToAllAsync("ImportError", importError, ct);
     }
+
+    /// <summary>Broadcasts a moderation action to all connected clients.</summary>
+    public Task BroadcastModerationActionAsync(ModerationEvent evt, CancellationToken ct = default)
+    {
+        return BroadcastToAllAsync("ModerationAction", new
+        {
+            id = evt.Id,
+            twitchUserId = evt.TwitchUserId,
+            displayName = evt.DisplayName,
+            eventType = evt.EventType.ToString(),
+            actor = evt.Actor,
+            reason = evt.Reason,
+            durationSeconds = evt.DurationSeconds,
+            twitchSuccess = evt.TwitchSuccess,
+            createdAt = evt.CreatedAt
+        }, ct);
+    }
 }

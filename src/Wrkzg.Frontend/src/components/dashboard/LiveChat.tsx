@@ -2,6 +2,7 @@ import { useRef, useState, useEffect, useMemo } from "react";
 import { renderWithEmotes, renderWithEmoteMap } from "../../lib/emotes";
 import { useEmotes, buildEmoteMap } from "../../hooks/useEmotes";
 import { EmotePicker } from "./EmotePicker";
+import { ChatQuickActions } from "./ChatQuickActions";
 import type { ChatMsg } from "../../types/status";
 
 interface LiveChatProps {
@@ -126,19 +127,29 @@ export function LiveChat({
           </p>
         ) : (
           messages.map((msg, i) => (
-            <div key={i} className="text-sm">
-              <span
-                className="font-semibold"
-                style={{ color: getUserColor(msg) }}
-              >
-                {msg.displayName}
-              </span>
-              <span className="text-[var(--color-text-muted)]">: </span>
-              <span className="text-[var(--color-text)]">
-                {msg.emotes && Object.keys(msg.emotes).length > 0
-                  ? renderWithEmotes(msg.content, msg.emotes, 20)
-                  : renderWithEmoteMap(msg.content, emoteMap, 20)}
-              </span>
+            <div key={i} className="group flex items-start gap-1 text-sm">
+              <div className="flex-1 min-w-0">
+                <span
+                  className="font-semibold"
+                  style={{ color: getUserColor(msg) }}
+                >
+                  {msg.displayName}
+                </span>
+                <span className="text-[var(--color-text-muted)]">: </span>
+                <span className="text-[var(--color-text)]">
+                  {msg.emotes && Object.keys(msg.emotes).length > 0
+                    ? renderWithEmotes(msg.content, msg.emotes, 20)
+                    : renderWithEmoteMap(msg.content, emoteMap, 20)}
+                </span>
+              </div>
+              {msg.userId && !msg.isBroadcaster && (
+                <ChatQuickActions
+                  twitchUserId={msg.userId}
+                  displayName={msg.displayName}
+                  isBroadcaster={msg.isBroadcaster}
+                  isMod={msg.isMod}
+                />
+              )}
             </div>
           ))
         )}

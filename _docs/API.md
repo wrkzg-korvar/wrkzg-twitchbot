@@ -30,6 +30,7 @@ This document describes all REST endpoints and SignalR events exposed by the Wrk
 - [Assets](#assets)
 - [Custom Overlays](#custom-overlays)
 - [Emotes](#emotes)
+- [Moderation](#moderation)
 - [OBS WebSocket](#obs-websocket)
 - [SignalR — Real-Time Events](#signalr--real-time-events)
 
@@ -982,6 +983,150 @@ Forces an immediate refresh of the emote cache from the Twitch Helix API.
 
 ---
 
+## Moderation
+
+Twitch moderation actions, moderation event log, and live viewer data.
+
+All Twitch actions (timeout, ban, unban, shoutout) are executed via the Helix API using the bot's moderator credentials, logged to the `ModerationEvent` table, and broadcast via SignalR (`ModerationAction` event).
+
+### `POST /api/moderation/timeout`
+
+Times out a user on Twitch.
+
+**Request:**
+
+```json
+{
+  "twitchUserId": "123456",
+  "durationSeconds": 600,
+  "displayName": "Username",
+  "reason": "Optional reason"
+}
+```
+
+**Validation:** `durationSeconds` must be between 1 and 1209600 (14 days).
+
+**Response `200 OK`:** `{ "success": true, "eventId": 42 }`
+**Error `400`:** Missing or invalid fields.
+**Error `401`:** Broadcaster token not available.
+**Error `502`:** Twitch API rejected the action (bot may not be a moderator).
+
+---
+
+### `POST /api/moderation/ban`
+
+Permanently bans a user on Twitch and sets `IsTwitchBanned = true` on the local user record.
+
+**Request:**
+
+```json
+{
+  "twitchUserId": "123456",
+  "displayName": "Username",
+  "reason": "Optional reason"
+}
+```
+
+**Response `200 OK`:** `{ "success": true, "eventId": 43 }`
+
+---
+
+### `DELETE /api/moderation/ban/{twitchUserId}`
+
+Unbans a user on Twitch and sets `IsTwitchBanned = false` on the local user record.
+
+**Response `200 OK`:** `{ "success": true, "eventId": 44 }`
+
+---
+
+### `POST /api/moderation/shoutout`
+
+Sends a shoutout to another channel via the Twitch API.
+
+**Request:**
+
+```json
+{
+  "twitchUserId": "123456",
+  "displayName": "Username"
+}
+```
+
+**Response `200 OK`:** `{ "success": true, "eventId": 45 }`
+**Error `429`:** Shoutout rate limited (1 per target per 60 minutes, 3 total per 120 seconds).
+
+---
+
+### `GET /api/moderation/log`
+
+Returns the most recent moderation events across all users.
+
+**Query parameters:**
+
+- `limit` (optional, default `100`) — Maximum number of events to return.
+- `days` (optional) — Only return events from the last N days.
+
+**Response `200 OK`:**
+
+```json
+[
+  {
+    "id": 1,
+    "twitchUserId": "123456",
+    "displayName": "Username",
+    "eventType": "TwitchTimeout",
+    "actor": "Dashboard",
+    "reason": "spam",
+    "durationSeconds": 600,
+    "twitchSuccess": true,
+    "createdAt": "2026-05-19T14:32:00Z"
+  }
+]
+```
+
+**Event types:** `TwitchTimeout`, `TwitchBan`, `TwitchUnban`, `TwitchShoutout`, `BotBan`, `BotUnban`, `Follow`, `Subscribe`, `GiftSub`, `Resub`, `Raid`.
+
+---
+
+### `GET /api/moderation/log/{twitchUserId}`
+
+Returns moderation events for a specific user. Same query parameters (`limit`, `days`) and response format as the global log.
+
+---
+
+### `DELETE /api/moderation/log/cleanup`
+
+Deletes all moderation events older than 1 year.
+
+**Response `200 OK`:** `{ "deleted": 42, "cutoff": "2025-05-19T00:00:00Z" }`
+
+---
+
+### `GET /api/moderation/viewers`
+
+Returns all users currently in the chat room (live viewers).
+
+**Response `200 OK`:**
+
+```json
+[
+  {
+    "twitchId": "123456",
+    "username": "coolviewer",
+    "displayName": "CoolViewer",
+    "isMod": false,
+    "isSubscriber": true,
+    "isBroadcaster": false,
+    "isBanned": false,
+    "isTwitchBanned": false
+  }
+]
+```
+
+Data is sourced from the `UserTrackingService` active users list, refreshed every 60 seconds via the Helix Get Chatters endpoint.
+
+---
+
 ## OBS WebSocket
 
 ### `POST /api/integrations/obs/connect`
@@ -1144,3 +1289,9 @@ connection.on("SubscribeEvent", (event: { username: string; tier: number }) => {
 | Event | Payload | Description |
 |---|---|---|
 | `StreamOnline` | `{ broadcaster, timestamp }` | Stream went live |
+
+#### Moderation Events
+
+| Event | Payload | Description |
+|---|---|---|
+| `ModerationAction` | `{ id, twitchUserId, displayName, eventType, actor, reason, durationSeconds, twitchSuccess, createdAt }` | A moderation action was executed (timeout, ban, unban, shoutout) |

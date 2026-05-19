@@ -95,6 +95,103 @@ public class UserStatsBatcherTests
         await _userRepo.DidNotReceiveWithAnyArgs().UpdateAsync(default!, default);
     }
 
+    // ─── ISessionStatsCollector Tests ─────────────────────────
+
+    /// <summary>Enqueue accumulates unique chatters and message count for session stats.</summary>
+    [Fact]
+    public void GetAndResetStats_AfterEnqueue_ReturnsCorrectCounts()
+    {
+        _sut.Enqueue(BuildMessage("user1"));
+        _sut.Enqueue(BuildMessage("user2"));
+        _sut.Enqueue(BuildMessage("user1")); // duplicate user
+
+        SessionStats stats = _sut.GetAndResetStats();
+
+        stats.UniqueChatters.Should().Be(2, "user1 and user2 are unique");
+        stats.TotalMessages.Should().Be(3, "three messages were enqueued");
+        stats.NewFollowers.Should().Be(0);
+        stats.NewSubscribers.Should().Be(0);
+    }
+
+    /// <summary>GetAndResetStats clears all counters so the next call returns zeros.</summary>
+    [Fact]
+    public void GetAndResetStats_CalledTwice_SecondCallReturnsZeros()
+    {
+        _sut.Enqueue(BuildMessage("user1"));
+        _sut.RecordFollow();
+        _sut.RecordSubscription(3);
+
+        SessionStats first = _sut.GetAndResetStats();
+        SessionStats second = _sut.GetAndResetStats();
+
+        first.UniqueChatters.Should().Be(1);
+        first.TotalMessages.Should().Be(1);
+        first.NewFollowers.Should().Be(1);
+        first.NewSubscribers.Should().Be(3);
+
+        second.UniqueChatters.Should().Be(0);
+        second.TotalMessages.Should().Be(0);
+        second.NewFollowers.Should().Be(0);
+        second.NewSubscribers.Should().Be(0);
+    }
+
+    /// <summary>RecordFollow increments the follower counter.</summary>
+    [Fact]
+    public void RecordFollow_IncrementsCounter()
+    {
+        _sut.RecordFollow();
+        _sut.RecordFollow();
+        _sut.RecordFollow();
+
+        SessionStats stats = _sut.GetAndResetStats();
+        stats.NewFollowers.Should().Be(3);
+    }
+
+    /// <summary>RecordSubscription with count accumulates correctly.</summary>
+    [Fact]
+    public void RecordSubscription_WithCount_Accumulates()
+    {
+        _sut.RecordSubscription();       // 1
+        _sut.RecordSubscription(5);      // gift sub x5
+        _sut.RecordSubscription();       // 1
+
+        SessionStats stats = _sut.GetAndResetStats();
+        stats.NewSubscribers.Should().Be(7);
+    }
+
+    /// <summary>Session stats are independent from the batch flush — flush does not clear session counters.</summary>
+    [Fact]
+    public async Task Flush_DoesNotClearSessionStats()
+    {
+        User user = new() { TwitchId = "user1", Username = "user1", MessageCount = 0 };
+        _userRepo.GetOrCreateAsync("user1", "user1", Arg.Any<CancellationToken>()).Returns(user);
+
+        _sut.Enqueue(BuildMessage("user1"));
+        _sut.RecordFollow();
+
+        // Flush the batch (DB write) — this should NOT reset session stats.
+        await InvokeFlushAsync();
+
+        SessionStats stats = _sut.GetAndResetStats();
+        stats.UniqueChatters.Should().Be(1, "flush must not clear session counters");
+        stats.TotalMessages.Should().Be(1);
+        stats.NewFollowers.Should().Be(1);
+    }
+
+    /// <summary>RecordChatMessage via the ISessionStatsCollector interface works correctly.</summary>
+    [Fact]
+    public void RecordChatMessage_ViaInterface_TracksUniqueUsers()
+    {
+        ISessionStatsCollector collector = _sut;
+        collector.RecordChatMessage("userA");
+        collector.RecordChatMessage("userB");
+        collector.RecordChatMessage("userA");
+
+        SessionStats stats = collector.GetAndResetStats();
+        stats.UniqueChatters.Should().Be(2);
+        stats.TotalMessages.Should().Be(3, "RecordChatMessage via interface counts each call (3 calls)");
+    }
+
     private static ChatMessage BuildMessage(
         string userId,
         string displayName = "User",

@@ -124,6 +124,82 @@ public class BotHelixClient : IBotHelixClient
         }
     }
 
+    /// <summary>Permanently bans a user via Helix (POST /moderation/bans without duration).</summary>
+    public async Task<bool> BanUserAsync(string broadcasterId, string userId, string reason, CancellationToken ct = default)
+    {
+        string? botUserId = await ResolveBotUserIdAsync(ct);
+        if (botUserId is null)
+        {
+            _logger.LogWarning("Cannot ban user — failed to resolve bot user ID");
+            return false;
+        }
+
+        try
+        {
+            HttpResponseMessage response = await _http.PostAsJsonAsync(
+                $"moderation/bans?broadcaster_id={Uri.EscapeDataString(broadcasterId)}&moderator_id={Uri.EscapeDataString(botUserId)}",
+                new
+                {
+                    data = new
+                    {
+                        user_id = userId,
+                        reason
+                    }
+                },
+                ct);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string body = await response.Content.ReadAsStringAsync(ct);
+                _logger.LogWarning("Failed to ban user {UserId} via Helix: {Status} {Body}",
+                    userId, response.StatusCode, body);
+                return false;
+            }
+
+            _logger.LogInformation("Banned user {UserId}: {Reason}", userId, reason);
+            return true;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "Failed to ban user {UserId} via Helix API", userId);
+            return false;
+        }
+    }
+
+    /// <summary>Unbans a user via Helix (DELETE /moderation/bans).</summary>
+    public async Task<bool> UnbanUserAsync(string broadcasterId, string userId, CancellationToken ct = default)
+    {
+        string? botUserId = await ResolveBotUserIdAsync(ct);
+        if (botUserId is null)
+        {
+            _logger.LogWarning("Cannot unban user — failed to resolve bot user ID");
+            return false;
+        }
+
+        try
+        {
+            HttpResponseMessage response = await _http.DeleteAsync(
+                $"moderation/bans?broadcaster_id={Uri.EscapeDataString(broadcasterId)}&moderator_id={Uri.EscapeDataString(botUserId)}&user_id={Uri.EscapeDataString(userId)}",
+                ct);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string body = await response.Content.ReadAsStringAsync(ct);
+                _logger.LogWarning("Failed to unban user {UserId} via Helix: {Status} {Body}",
+                    userId, response.StatusCode, body);
+                return false;
+            }
+
+            _logger.LogInformation("Unbanned user {UserId}", userId);
+            return true;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "Failed to unban user {UserId} via Helix API", userId);
+            return false;
+        }
+    }
+
     /// <summary>
     /// Resolves the bot's Twitch user ID from the Bot OAuth token.
     /// Thread-safe with caching — only validates the token once until invalidated.

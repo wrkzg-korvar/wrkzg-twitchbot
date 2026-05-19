@@ -84,14 +84,26 @@ public class StreamAnalyticsRepository : IStreamAnalyticsRepository
     /// <summary>Gets all stream sessions that started on or after the specified date.</summary>
     public async Task<IReadOnlyList<StreamSession>> GetSessionsSinceAsync(DateTimeOffset since, CancellationToken ct = default)
     {
-        // SQLite cannot translate DateTimeOffset comparisons in WHERE clauses.
-        // Load all sessions and filter in memory, ordered by Id (creation order).
-        List<StreamSession> all = await _db.StreamSessions
-            .Include(s => s.CategorySegments)
-            .OrderByDescending(s => s.Id)
-            .ToListAsync(ct);
+        // Attempt server-side filter using Ticks comparison (SQLite-translatable).
+        // Fallback to client-side filter if the LINQ provider cannot translate.
+        try
+        {
+            long sinceTicks = since.UtcTicks;
+            return await _db.StreamSessions
+                .Include(s => s.CategorySegments)
+                .Where(s => s.StartedAt.UtcTicks >= sinceTicks)
+                .OrderByDescending(s => s.Id)
+                .ToListAsync(ct);
+        }
+        catch (InvalidOperationException)
+        {
+            List<StreamSession> all = await _db.StreamSessions
+                .Include(s => s.CategorySegments)
+                .OrderByDescending(s => s.Id)
+                .ToListAsync(ct);
 
-        return all.Where(s => s.StartedAt >= since).ToList();
+            return all.Where(s => s.StartedAt >= since).ToList();
+        }
     }
 
     /// <summary>Creates a new category segment within a stream session.</summary>

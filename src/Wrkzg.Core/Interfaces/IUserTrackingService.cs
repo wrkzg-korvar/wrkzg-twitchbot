@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
@@ -15,4 +16,12 @@ public interface IUserTrackingService : IHostedService
     /// Called by ChatMessagePipeline when a chat message is processed.
     /// </summary>
     void MarkUserActive(string twitchId);
+
+    /// <summary>
+    /// Returns the Twitch user IDs of all users currently tracked as active
+    /// (chatters from Helix + message senders within the last 5 minutes).
+    /// Used by the Dashboard live viewer list.
+    /// </summary>
+    /// <returns>A read-only list of active Twitch user IDs.</returns>
+    IReadOnlyList<string> GetActiveUserIds();
 }

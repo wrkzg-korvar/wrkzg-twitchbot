@@ -54,7 +54,12 @@ public static class UserEndpoints
         });
 
         // PUT /api/users/{id} — update points or ban status
-        group.MapPut("/{id:int}", async (int id, UpdateUserRequest request, IUserRepository repo, CancellationToken ct) =>
+        group.MapPut("/{id:int}", async (
+            int id,
+            UpdateUserRequest request,
+            IUserRepository repo,
+            IModerationEventRepository moderationRepo,
+            CancellationToken ct) =>
         {
             User? user = await repo.GetByIdAsync(id, ct);
             if (user is null)
@@ -67,9 +72,19 @@ public static class UserEndpoints
                 user.Points = request.Points.Value;
             }
 
-            if (request.IsBanned.HasValue)
+            if (request.IsBanned.HasValue && user.IsBanned != request.IsBanned.Value)
             {
                 user.IsBanned = request.IsBanned.Value;
+
+                await moderationRepo.CreateAsync(new ModerationEvent
+                {
+                    TwitchUserId = user.TwitchId,
+                    DisplayName = user.DisplayName,
+                    EventType = request.IsBanned.Value
+                        ? ModerationEventType.BotBan
+                        : ModerationEventType.BotUnban,
+                    Actor = "Dashboard",
+                }, ct);
             }
 
             await repo.UpdateAsync(user, ct);

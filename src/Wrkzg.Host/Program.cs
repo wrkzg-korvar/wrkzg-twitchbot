@@ -138,86 +138,57 @@ try
     // ─── Static Files ─────────────────────────────────────────────────────
     string? wwwrootPath = ResolveWwwrootPath();
 
+    PhysicalFileProvider? fileProvider = null;
     if (wwwrootPath is not null && Directory.Exists(wwwrootPath))
     {
-        PhysicalFileProvider fileProvider = new(wwwrootPath);
-
+        fileProvider = new PhysicalFileProvider(wwwrootPath);
         app.UseStaticFiles(new StaticFileOptions
         {
             FileProvider = fileProvider
         });
+    }
 
-        app.UseRouting();
+    app.UseRouting();
 
-        app.MapHub<ChatHub>("/hubs/chat");
-        app.MapAuthEndpoints();
-        app.MapCommandEndpoints();
-        app.MapSettingsEndpoints();
-        app.MapUserEndpoints();
-        app.MapStatusEndpoints();
-        app.MapWindowEndpoints();
-        app.MapBotEndpoints();
-        app.MapChatEndpoints();
-        app.MapPollEndpoints();
-        app.MapRaffleEndpoints();
-        app.MapTimerEndpoints();
-        app.MapCounterEndpoints();
-        app.MapSpamFilterEndpoints();
-        app.MapQuoteEndpoints();
-        app.MapNotificationEndpoints();
-        app.MapOverlayEndpoints();
-        app.MapChannelPointEndpoints();
-        app.MapRoleEndpoints();
-        app.MapGameEndpoints();
-        app.MapAnalyticsEndpoints();
-        app.MapHotkeyEndpoints();
-        app.MapEffectEndpoints();
-        app.MapIntegrationEndpoints();
-        app.MapImportEndpoints();
-        app.MapAssetEndpoints();
-        app.MapCustomOverlayEndpoints();
-        app.MapEmoteEndpoints();
-        app.MapDiagnosticsEndpoints();
+    // ─── Endpoint Registration ──────────────────────────────────────────
+    app.MapHub<ChatHub>("/hubs/chat");
+    app.MapAuthEndpoints();
+    app.MapCommandEndpoints();
+    app.MapSettingsEndpoints();
+    app.MapUserEndpoints();
+    app.MapStatusEndpoints();
+    app.MapWindowEndpoints();
+    app.MapBotEndpoints();
+    app.MapChatEndpoints();
+    app.MapPollEndpoints();
+    app.MapRaffleEndpoints();
+    app.MapTimerEndpoints();
+    app.MapCounterEndpoints();
+    app.MapSpamFilterEndpoints();
+    app.MapQuoteEndpoints();
+    app.MapNotificationEndpoints();
+    app.MapOverlayEndpoints();
+    app.MapChannelPointEndpoints();
+    app.MapRoleEndpoints();
+    app.MapGameEndpoints();
+    app.MapAnalyticsEndpoints();
+    app.MapHotkeyEndpoints();
+    app.MapEffectEndpoints();
+    app.MapIntegrationEndpoints();
+    app.MapImportEndpoints();
+    app.MapAssetEndpoints();
+    app.MapCustomOverlayEndpoints();
+    app.MapEmoteEndpoints();
+    app.MapDiagnosticsEndpoints();
+    app.MapModerationEndpoints();
 
-        // SPA fallback: unmatched routes serve index.html for React Router
+    // SPA fallback: unmatched routes serve index.html for React Router
+    if (fileProvider is not null)
+    {
         app.MapFallbackToFile("index.html", new StaticFileOptions
         {
             FileProvider = fileProvider
         });
-    }
-    else
-    {
-        app.UseRouting();
-
-        app.MapHub<ChatHub>("/hubs/chat");
-        app.MapAuthEndpoints();
-        app.MapCommandEndpoints();
-        app.MapSettingsEndpoints();
-        app.MapUserEndpoints();
-        app.MapStatusEndpoints();
-        app.MapWindowEndpoints();
-        app.MapBotEndpoints();
-        app.MapChatEndpoints();
-        app.MapPollEndpoints();
-        app.MapRaffleEndpoints();
-        app.MapTimerEndpoints();
-        app.MapCounterEndpoints();
-        app.MapSpamFilterEndpoints();
-        app.MapQuoteEndpoints();
-        app.MapNotificationEndpoints();
-        app.MapOverlayEndpoints();
-        app.MapChannelPointEndpoints();
-        app.MapRoleEndpoints();
-        app.MapGameEndpoints();
-        app.MapAnalyticsEndpoints();
-        app.MapHotkeyEndpoints();
-        app.MapEffectEndpoints();
-        app.MapIntegrationEndpoints();
-        app.MapImportEndpoints();
-        app.MapAssetEndpoints();
-        app.MapCustomOverlayEndpoints();
-        app.MapEmoteEndpoints();
-        app.MapDiagnosticsEndpoints();
     }
 
     // In test environment, WebApplicationFactory manages the server lifecycle.

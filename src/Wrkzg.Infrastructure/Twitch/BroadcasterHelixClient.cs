@@ -404,10 +404,20 @@ public class BroadcasterHelixClient : IBroadcasterHelixClient
             if (!response.IsSuccessStatusCode)
             {
                 string body = await response.Content.ReadAsStringAsync(ct);
-                _logger.LogWarning(
-                    "Failed to get custom rewards: {Status} — {Body}. " +
-                    "Custom channel point rewards require Affiliate or Partner status.",
-                    response.StatusCode, body);
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    _logger.LogDebug(
+                        "Custom rewards not available: {Status} — streamer may not be Affiliate/Partner",
+                        response.StatusCode);
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Failed to get custom rewards: {Status} — {Body}",
+                        response.StatusCode, body);
+                }
+
                 return Array.Empty<TwitchCustomReward>();
             }
 
@@ -458,6 +468,44 @@ public class BroadcasterHelixClient : IBroadcasterHelixClient
         catch (HttpRequestException ex)
         {
             _logger.LogWarning(ex, "Failed to check follower status for user {UserId}", userId);
+            return false;
+        }
+    }
+
+    /// <summary>Sends a shoutout via Helix (POST /chat/shoutouts).</summary>
+    public async Task<bool> SendShoutoutAsync(string fromBroadcasterId, string targetUserId, CancellationToken ct = default)
+    {
+        try
+        {
+            HttpResponseMessage response = await _http.PostAsync(
+                $"chat/shoutouts?from_broadcaster_id={Uri.EscapeDataString(fromBroadcasterId)}&to_broadcaster_id={Uri.EscapeDataString(targetUserId)}&moderator_id={Uri.EscapeDataString(fromBroadcasterId)}",
+                null,
+                ct);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string body = await response.Content.ReadAsStringAsync(ct);
+                int statusCode = (int)response.StatusCode;
+
+                if (statusCode == 429)
+                {
+                    _logger.LogInformation("Shoutout rate limited for target {TargetId} — cooldown active", targetUserId);
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to send shoutout to {TargetId}: {Status} {Body}",
+                        targetUserId, response.StatusCode, body);
+                }
+
+                return false;
+            }
+
+            _logger.LogInformation("Sent shoutout to {TargetId}", targetUserId);
+            return true;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "Failed to send shoutout to {TargetId}", targetUserId);
             return false;
         }
     }

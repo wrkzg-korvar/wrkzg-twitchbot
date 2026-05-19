@@ -49,7 +49,7 @@ public class ChatMessagePipeline
     /// <param name="chatGameManager">Manages chat game triggers and active rounds.</param>
     /// <param name="effectEngine">Evaluates effect lists against chat message events.</param>
     /// <param name="broadcaster">Broadcasts real-time events to the dashboard via SignalR.</param>
-    /// <param name="statsBatcher">Batches user stat updates for periodic DB flush.</param>
+    /// <param name="statsBatcher">Batches user stat updates for periodic DB flush; also accumulates per-session analytics inside Enqueue().</param>
     /// <param name="scopeFactory">Factory for creating DI scopes to resolve scoped services.</param>
     /// <param name="logger">Logger instance for diagnostics.</param>
     public ChatMessagePipeline(
