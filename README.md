@@ -652,12 +652,102 @@ For questions or ideas, open a **[GitHub Discussion](https://github.com/wrkzg-ko
 
 </details>
 
+<details>
+<summary><strong>v2.4.4 — Stream Analytics Fixes & Moderation Hub ✅</strong></summary>
+
+- Stream session lifecycle fixes — phantom sessions from stale API cache eliminated (4 interconnected bugs)
+- Per-segment viewer stats (AverageViewers, PeakViewers) now computed in real-time
+- Per-session stats tracking (unique chatters, messages, followers, subscribers) via UserStatsBatcher
+- Analytics Categories redesign — horizontal bar chart, period selector, summary footer
+- Category overlay on viewer chart with color-coded background regions
+- **Moderation Hub** — Dashboard redesigned as two-panel layout: Live Chat with quick actions + Live Viewer List with search and role filters
+- Twitch moderation via Helix API: Timeout (presets), Ban, Unban, Shoutout — all with event logging
+- User Detail modal split: Bot Access (amber) vs. Twitch Moderation (purple) with Activity History timeline
+- `IsTwitchBanned` tracking with distinct badges in Users table (amber "Bot Excluded" / red "Twitch Banned")
+- ModerationEvent log with time-based filters, pagination, and 1-year cleanup
+- 19 new tests (session stats, moderation endpoints)
+
+</details>
+
 ### Future
 
-| Version | Features |
-|---|---|
-| **v2.5.0** | Linux Support |
-| **v2.6.0** | Automatic Updater — GitHub Releases download + install |
+<details>
+<summary><strong>v2.5.0 — Linux Support</strong></summary>
+
+- Photino.NET Linux support (GTK/WebKitGTK)
+- Linux-specific Secure Storage (libsecret/GNOME Keyring)
+- Docker deployment option
+- CI/CD pipeline for Linux builds
+
+</details>
+
+<details>
+<summary><strong>v2.6.0 — Auto-Updater</strong></summary>
+
+- GitHub Releases API version check on startup
+- Background download of new builds
+- Standalone `Wrkzg.Updater` process for extract → replace → restart
+- Dashboard notification with "Update Now" / "Later" options
+
+</details>
+
+<details>
+<summary><strong>v2.7.0 — Song Requests Redesign</strong></summary>
+
+- Rebuilt from scratch with yt-dlp backend (replaces removed v1.8.0 YouTube IFrame approach)
+- Queue management with skip, clear, open/close
+- Configurable points cost per request
+- OBS Browser Source overlay for the player
+- System commands: `!sr`, `!skip`, `!queue`, `!currentsong`, `!wrongsong`
+- Spotify metadata integration (track info display, no streaming)
+
+</details>
+
+<details>
+<summary><strong>v2.8.0 — Stream Deck & Extended Integrations</strong></summary>
+
+- Elgato Stream Deck plugin (native SDK, not hotkey workaround)
+- Stream Deck buttons: scene switch, sound play, command execute, counter, chat message
+- Streamlabs integration (donation alerts → Effect System trigger)
+- StreamElements integration (tip events → Effect System trigger)
+- Twitch Native Polls fix (resolve 501 endpoint issue)
+
+</details>
+
+<details>
+<summary><strong>v2.9.0 — Multi-Currency & Points Expansion</strong></summary>
+
+- Multiple currencies per channel (e.g. "Gold", "Gems", "Raid Points")
+- Per-currency earn rate, sub multiplier, offline earning
+- Currency selector in Chat Games and Raffles
+- Separate leaderboards per currency
+- Analytics retention policy — compress old ViewerSnapshots to hourly averages
+
+</details>
+
+<details>
+<summary><strong>v3.0.0 — Plugin / Extension System</strong></summary>
+
+- C#-based plugins with defined API contract
+- Plugin lifecycle: Load → Initialize → Start → Stop → Unload
+- Plugin API: access to Chat, Events, Points, Overlays, Settings
+- Sandboxed execution (Assembly Load Context)
+- Plugin Manager in the dashboard (install, enable/disable, configure)
+- Marketplace preparation (plugin manifest, versioning)
+
+</details>
+
+<details>
+<summary><strong>v3.1.0 — TTS / Text-to-Speech</strong></summary>
+
+- TTS engine abstraction (local voices + cloud APIs)
+- ElevenLabs integration (API key stored in OS Keychain)
+- Channel Points / Custom Command trigger → TTS playback
+- Rate limiting and cost overview for cloud TTS providers
+- OBS audio routing via Browser Source
+- Potential first community plugin on the v3.0.0 extension system
+
+</details>
 
 ---
 
