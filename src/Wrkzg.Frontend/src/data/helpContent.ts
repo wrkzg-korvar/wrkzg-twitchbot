@@ -23,13 +23,14 @@ export const helpContent: Record<string, HelpEntry> = {
   // --- Dashboard ---
   "dashboard": {
     title: "Dashboard",
-    description: "Your command center. See live chat, bot connection status, viewer count, and recent events at a glance. Messages appear in real-time via SignalR.",
+    description: "Your live moderation hub. Two panels side by side: Live Chat (~65%) and Live Viewer List (~35%). Status cards and an event ticker on top. Messages and viewers update in real-time via SignalR.",
     howToUse: [
-      "The chat feed shows messages as they come in — no refresh needed",
+      "Hover any chat message to reveal the quick action menu (timeout presets, ban, shoutout, view profile)",
+      "The Live Viewer List shows everyone currently in chat — refreshed every 60 seconds",
+      "Search and filter viewers by role (All / Subscribers / Moderators)",
       "Use the message input to send messages as your bot or broadcaster account",
-      "The status bar shows whether the bot is connected to IRC and EventSub",
-      "Viewer count updates automatically while the stream is live",
-      "Click the smiley icon to open the emote picker",
+      "The event ticker shows recent follows, subs, gifts, resubs, and raids",
+      "On smaller screens (<lg) the viewer list collapses; rotate or widen to bring it back",
     ],
     handbookSection: "#2-dashboard-overview",
   },
@@ -86,16 +87,18 @@ export const helpContent: Record<string, HelpEntry> = {
 
   // --- Users ---
   "users": {
-    title: "Users & Points",
-    description: "Track your community. Every viewer who chats earns points and watch time automatically. Points are awarded per minute while the stream is live.",
+    title: "Users & Moderation",
+    description: "Track your community and manage moderation. Every viewer who chats earns points and watch time automatically. Click any user to see their full profile, moderation history, and execute actions.",
     howToUse: [
-      "Points are earned automatically — no setup required",
-      "Configure earn rates in Settings (points per minute, sub multiplier)",
-      "Sort the table by any column (points, watch time, messages)",
-      "Click on a user to see their details and manage their roles",
-      "Points are used as currency in games, song requests, and other features",
+      "Points are earned automatically while the stream is live — configure rates in Settings",
+      "Sort the table by any column (points, watch time, messages) and search by name",
+      "Click a user to open their detail modal with statistics, moderation tools, and activity history",
+      "Bot Access (amber): exclude users from bot features without affecting their Twitch chat",
+      "Twitch Moderation (purple): timeout, ban, unban, and shoutout via the Twitch API — requires the bot to be a moderator",
+      "Activity History shows all events per user: timeouts, bans, follows, subs, raids — filterable by time period",
+      "Badges in the table show role and ban status: amber 'Bot Excluded', red 'Twitch Banned'",
     ],
-    handbookSection: "#41-points-system",
+    handbookSection: "#6-moderation",
   },
 
   // --- Polls ---
@@ -327,6 +330,8 @@ export const helpContent: Record<string, HelpEntry> = {
       "The Categories tab shows time distribution across games/categories",
       "The Stream History tab lets you explore individual sessions",
       "Select a session to see minute-by-minute viewer charts",
+      "In Stream History, the viewer chart shows colored background regions for each category — hover to see both viewer count and the current game",
+      "Unique chatters, total messages, new followers, and new subscribers are tracked per session and shown as KPI cards",
       "Data builds up over time — the more you stream, the more useful it gets",
     ],
     handbookSection: "#stream-analytics",

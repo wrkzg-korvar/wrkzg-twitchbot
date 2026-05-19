@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { usersApi } from "../api/users";
+import { api } from "../api/client";
 import { PageHeader } from "../components/ui/PageHeader";
 import { SmartDataTable } from "../components/ui/DataTable";
 import { Pagination } from "../components/ui/Pagination";
@@ -22,7 +23,12 @@ const SORT_KEY_MAP: Record<string, string> = {
 
 export function UsersPage() {
   const { isLocked, lockReason } = useModuleLock("/users");
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+
+  const { data: botReqs } = useQuery<{ isMod: boolean; isFollower: boolean }>({
+    queryKey: ["bot-requirements"],
+    queryFn: () => api.get("/auth/bot-requirements"),
+  });
 
   // Server-side pagination state
   const [page, setPage] = useState(1);
@@ -81,9 +87,14 @@ export function UsersPage() {
               SUB
             </span>
           )}
+          {row.isTwitchBanned && (
+            <span className="ml-2 rounded bg-red-600/20 px-1.5 py-0.5 text-[10px] text-red-400">
+              TWITCH BANNED
+            </span>
+          )}
           {row.isBanned && (
-            <span className="ml-2 rounded bg-red-900/30 px-1.5 py-0.5 text-[10px] text-red-400">
-              BANNED
+            <span className="ml-2 rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] text-amber-400">
+              BOT EXCLUDED
             </span>
           )}
         </span>
@@ -141,24 +152,26 @@ export function UsersPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {lockReason && <LockBanner message={lockReason} />}
-      <PageHeader
-        title="Users"
-        description="Tracked viewers, their points, watch time, and activity."
-        helpKey="users"
-        badge={
-          data && data.totalCount > 0 ? (
-            <span className="rounded-full bg-[var(--color-elevated)] px-2.5 py-0.5 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)]">
-              {data.totalCount.toLocaleString()}
-            </span>
-          ) : undefined
-        }
-      />
+    <div className="flex h-full flex-col overflow-hidden p-6 gap-6">
+      <div className="shrink-0 space-y-6">
+        {lockReason && <LockBanner message={lockReason} />}
+        <PageHeader
+          title="Users"
+          description="Tracked viewers, their points, watch time, and activity."
+          helpKey="users"
+          badge={
+            data && data.totalCount > 0 ? (
+              <span className="rounded-full bg-[var(--color-elevated)] px-2.5 py-0.5 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)]">
+                {data.totalCount.toLocaleString()}
+              </span>
+            ) : undefined
+          }
+        />
+      </div>
 
-      <div className="rounded-lg border border-[var(--color-border)] overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col rounded-lg border border-[var(--color-border)] overflow-hidden">
         {/* Server-driven search */}
-        <div className="flex items-center gap-3 border-b border-[var(--color-border)] px-4 py-3">
+        <div className="shrink-0 flex items-center gap-3 border-b border-[var(--color-border)] px-4 py-3">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
             <input
@@ -171,42 +184,48 @@ export function UsersPage() {
           </div>
         </div>
 
-        <SmartDataTable<User>
-          data={users}
-          columns={columns}
-          pageSize={0}
-          isLoading={isLoading && !data}
-          getRowKey={(row) => row.id}
-          onRowClick={isLocked ? undefined : (row) => setSelectedUser(row)}
-          onSortChange={(key, dir) => {
-            setSortBy(key);
-            setSortDir(dir);
-          }}
-          emptyMessage={
-            debouncedSearch
-              ? `No users matching "${debouncedSearch}".`
-              : "No users tracked yet. Users appear here when they send messages in your chat."
-          }
-          containerClassName=""
-        />
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <SmartDataTable<User>
+            data={users}
+            columns={columns}
+            pageSize={0}
+            maxHeight="none"
+            isLoading={isLoading && !data}
+            getRowKey={(row) => row.id}
+            onRowClick={isLocked ? undefined : (row) => setSelectedUserId(row.id)}
+            onSortChange={(key, dir) => {
+              setSortBy(key);
+              setSortDir(dir);
+            }}
+            emptyMessage={
+              debouncedSearch
+                ? `No users matching "${debouncedSearch}".`
+                : "No users tracked yet. Users appear here when they send messages in your chat."
+            }
+            containerClassName=""
+          />
+        </div>
 
         {data && data.totalCount > 0 && (
-          <Pagination
-            currentPage={page}
-            totalPages={data.totalPages}
-            totalItems={data.totalCount}
-            pageSize={pageSize}
-            onPageChange={setPage}
-            onPageSizeChange={setPageSize}
-          />
+          <div className="shrink-0">
+            <Pagination
+              currentPage={page}
+              totalPages={data.totalPages}
+              totalItems={data.totalCount}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+            />
+          </div>
         )}
       </div>
 
-      {selectedUser && (
+      {selectedUserId !== null && (
         <UserDetailModal
-          user={selectedUser}
-          onClose={() => setSelectedUser(null)}
+          userId={selectedUserId}
+          onClose={() => setSelectedUserId(null)}
           readOnly={isLocked}
+          botIsModerator={botReqs?.isMod ?? false}
         />
       )}
     </div>

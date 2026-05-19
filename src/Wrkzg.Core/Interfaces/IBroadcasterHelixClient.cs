@@ -78,4 +78,15 @@ public interface IBroadcasterHelixClient
     /// <param name="ct">Cancellation token.</param>
     /// <returns>True if the user follows the broadcaster; false otherwise (or on error).</returns>
     Task<bool> IsUserFollowingAsync(string broadcasterId, string userId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Sends a shoutout to another channel via Helix API (POST /chat/shoutouts).
+    /// Requires moderator:manage:shoutouts scope on the Broadcaster token.
+    /// Rate limit: 1 per target per 60 minutes, 3 total per 120 seconds.
+    /// </summary>
+    /// <param name="fromBroadcasterId">The broadcaster's own Twitch user ID.</param>
+    /// <param name="targetUserId">The Twitch user ID of the channel to shout out.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>True if the shoutout was sent successfully.</returns>
+    Task<bool> SendShoutoutAsync(string fromBroadcasterId, string targetUserId, CancellationToken ct = default);
 }

@@ -1,4 +1,5 @@
 export interface ChatMsg {
+  userId: string;
   username: string;
   displayName: string;
   content: string;

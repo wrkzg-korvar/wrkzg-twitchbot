@@ -86,14 +86,21 @@ Now when anyone types `!hello` in chat, the bot responds with their name.
 
 ## 2. Dashboard Overview
 
-Your command center. The dashboard shows:
+Your live moderation hub during streams. The dashboard is a two-panel layout that combines three sections:
 
-- **Bot Status** — Whether the bot is connected to Twitch IRC
-- **Stream Status** — Live/offline, viewer count, stream title, current game
-- **Live Chat** — Messages appear in real-time with emote rendering and role badges
-- **Event Feed** — Recent follows, subscriptions, raids, and gift subs
+**Status Bar** — Bot connection, stream status (live/offline, viewers, title, game), and a compact event ticker showing recent follows, subs, raids, and gift subs in chronological order.
 
-Use the chat input at the bottom to send messages as your bot account. Click the smiley icon to open the emote picker.
+**Live Chat** (~65% of the available width) — Full chat feed with emote rendering and role-colored names. Hover over any message to reveal a quick action menu (`[⋯]`):
+- **Timeout** with preset durations (1m / 5m / 10m / 30m / 1h)
+- **Ban** on Twitch (with confirm)
+- **Shoutout** via the Twitch API
+- **View Profile** to open the user detail modal
+
+Broadcaster and moderator messages only show Shoutout and View Profile — Twitch does not allow timing out or banning moderators. Use the chat input at the bottom to send messages as your bot or broadcaster account. Click the smiley icon to open the emote picker.
+
+**Live Viewer List** (~35% of the width, on screens ≥ `lg`) — All users currently in your chat room, refreshed every 60 seconds. Search by name, filter by role (All / Subscribers / Moderators). Each viewer row has the same quick action menu as chat messages. Sort order: broadcaster → moderators → subscribers → alphabetical. Twitch-banned viewers show a red "BAN" badge. Their quick action menu shows "Unban" instead of "Ban", allowing direct unban from the viewer list.
+
+The Counters widget has moved to the dedicated Counters page.
 
 ---
 
@@ -669,6 +676,39 @@ Each filter can be configured independently:
 - **Thresholds** — Caps percentage, max emotes, etc.
 - **Whitelist** — Allowed domains for the link filter (e.g. `clips.twitch.tv`)
 
+### 6.2 User Detail — Bot Access vs. Twitch Moderation
+
+The user detail modal (Users page → click on a row) has two separate moderation sections:
+
+**Bot Access** — Internal to Wrkzg. Excluding a user blocks them from earning points, using commands, playing games, and gaining watchtime. It does NOT affect their Twitch chat access. Use this for users who abuse bot features.
+
+**Twitch Moderation** — Executes real actions on Twitch via the Helix API. Requires the bot to have moderator status in the channel. Available actions:
+- **Timeout** — preset durations: 1 minute, 5 minutes, 10 minutes, 30 minutes, 1 hour
+- **Ban** — permanent Twitch ban with optional reason
+- **Shoutout** — sends a `/shoutout` via the API (rate limited: 1 per user per 60 minutes)
+
+When the bot is not a moderator, the Twitch Moderation section shows a hint to `/mod` the bot. Moderation actions are also disabled for the broadcaster and other moderators (Twitch rejects these).
+
+### 6.3 Activity History
+
+Every user's detail modal includes a timeline of all recorded events: moderation actions (timeouts, bans, unbans, shoutouts) and user events (follows, subscriptions, gift subs, resubs, raids). Events are logged automatically and cannot be edited.
+
+**Time filters** — Use the dropdown to filter by period: Last 30 days, 90 days, 6 months, 1 year, or all time. Default: 90 days.
+
+**Pagination** — 15 events per page with Prev/Next navigation. The total event count is shown in the footer.
+
+**Cleanup** — To delete old entries, use `DELETE /api/moderation/log/cleanup` which removes all events older than 1 year.
+
+### 6.4 Twitch Ban Tracking
+
+When a user is banned on Twitch via the bot (either from the Dashboard quick actions or the User Detail modal), their `IsTwitchBanned` status is tracked in the local database. This allows:
+
+- The Users table to show a red **"Twitch Banned"** badge (distinct from the amber "Bot Excluded" badge)
+- The User Detail modal to show an **"Unban from Twitch"** button instead of "Ban"
+- The Dashboard's Live Viewer List to show a red **"BAN"** badge and offer an **"Unban"** quick action
+
+Both statuses (Bot Excluded and Twitch Banned) are independent — a user can have one, both, or neither.
+
 ---
 
 ## 7. Stream Analytics
@@ -681,17 +721,19 @@ The bot automatically polls the Twitch API every 60 seconds while your stream is
 - **Viewer count** is recorded as a snapshot (for minute-by-minute charts)
 - **Category changes** are detected and tracked as segments with exact durations
 - **Stream sessions** are opened when you go live and closed when you go offline
+- **Chat activity** is counted per session — unique chatters and total messages
+- **Follows and subscriptions** during the session are tracked via EventSub events
 
 ### Dashboard Tabs
 
 **Overview** — KPI cards (total streams, hours streamed, avg/peak viewers), viewer trend line chart, stream hours bar chart for the last 30 days.
 
-**Categories** — Pie chart showing time distribution across games/categories, breakdown table with hours, avg viewers, and peak viewers per category.
+**Categories** — Donut chart showing time distribution across games/categories, horizontal bar chart ranking categories by hours streamed, and a full breakdown table with hours, percentage of total time, average viewers, peak viewers, and session count. Use the period selector to view data from the last 7 days up to all time.
 
 **Stream History** — Browse individual stream sessions. Select a session to see:
-- Minute-by-minute viewer count chart (area chart)
-- Category timeline showing which games you played and when
-- Session KPIs (duration, peak, average, categories played)
+- Minute-by-minute viewer count chart with **category overlay** — colored background regions show which game was active at each point, with a matching legend below the chart. Hover any point to see the viewer count and current category.
+- Category segment breakdown with exact start/end times and durations
+- Session KPIs: duration, peak/average viewers, unique chatters, messages, new followers, new subscribers, categories played
 
 ### Tips
 

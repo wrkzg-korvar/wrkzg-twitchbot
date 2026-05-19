@@ -37,6 +37,28 @@ public interface IBotHelixClient
     Task<bool> TimeoutUserAsync(string broadcasterId, string userId, int durationSeconds, string reason, CancellationToken ct = default);
 
     /// <summary>
+    /// Permanently bans a user from the channel via Helix API (POST /moderation/bans).
+    /// Same endpoint as TimeoutUserAsync but without the duration field.
+    /// Requires moderator:manage:banned_users scope on the Bot token.
+    /// </summary>
+    /// <param name="broadcasterId">The broadcaster's Twitch user ID.</param>
+    /// <param name="userId">The Twitch user ID of the user to ban.</param>
+    /// <param name="reason">Reason for the ban.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>True if the ban was applied successfully.</returns>
+    Task<bool> BanUserAsync(string broadcasterId, string userId, string reason, CancellationToken ct = default);
+
+    /// <summary>
+    /// Unbans a user from the channel via Helix API (DELETE /moderation/bans).
+    /// Requires moderator:manage:banned_users scope on the Bot token.
+    /// </summary>
+    /// <param name="broadcasterId">The broadcaster's Twitch user ID.</param>
+    /// <param name="userId">The Twitch user ID of the user to unban.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>True if the unban was applied successfully.</returns>
+    Task<bool> UnbanUserAsync(string broadcasterId, string userId, CancellationToken ct = default);
+
+    /// <summary>
     /// Gets all users currently in the broadcaster's chat room.
     /// Requires the moderator:read:chatters scope on the Bot token.
     /// Helix API: GET /chat/chatters?broadcaster_id={id}&amp;moderator_id={botId}

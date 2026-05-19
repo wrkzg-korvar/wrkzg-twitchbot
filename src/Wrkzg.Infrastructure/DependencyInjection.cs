@@ -55,6 +55,7 @@ public static class DependencyInjection
         services.AddScoped<IEffectListRepository, EffectListRepository>();
         services.AddScoped<IDataImportService, DataImportService>();
         services.AddScoped<ICustomOverlayRepository, CustomOverlayRepository>();
+        services.AddScoped<IModerationEventRepository, ModerationEventRepository>();
 
         // Background import job service (Singleton — manages in-memory job state)
         services.AddSingleton<IImportJobService, ImportJobService>();

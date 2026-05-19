@@ -123,8 +123,11 @@ public static class DependencyInjection
 
         // User Stats Batcher (Singleton + BackgroundService — batches per-message DB writes)
         // Replaces per-message DB write in ChatMessagePipeline with a 30s flush interval.
+        // Also serves as ISessionStatsCollector — accumulates per-session analytics counters
+        // inside the same Enqueue() call, eliminating a separate per-message service.
         services.AddSingleton<UserStatsBatcher>();
         services.AddHostedService(sp => sp.GetRequiredService<UserStatsBatcher>());
+        services.AddSingleton<ISessionStatsCollector>(sp => sp.GetRequiredService<UserStatsBatcher>());
 
         return services;
     }

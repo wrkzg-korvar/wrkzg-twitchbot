@@ -46,6 +46,9 @@ public class User
     /// <summary>Whether this user is banned from the bot (excluded from points, commands, etc.).</summary>
     public bool IsBanned { get; set; }
 
+    /// <summary>Whether this user is currently banned on Twitch (via bot moderation action).</summary>
+    public bool IsTwitchBanned { get; set; }
+
     /// <summary>Whether this user is a moderator in the channel.</summary>
     public bool IsMod { get; set; }
 

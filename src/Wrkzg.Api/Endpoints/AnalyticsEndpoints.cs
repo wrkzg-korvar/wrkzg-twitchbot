@@ -37,6 +37,10 @@ public static class AnalyticsEndpoints
                 peakViewers = s.PeakViewers,
                 averageViewers = s.AverageViewers,
                 title = s.Title,
+                uniqueChatters = s.UniqueChatters,
+                totalMessages = s.TotalMessages,
+                newFollowers = s.NewFollowers,
+                newSubscribers = s.NewSubscribers,
                 categories = s.CategorySegments.Select(c => new
                 {
                     categoryName = c.CategoryName,
@@ -86,6 +90,10 @@ public static class AnalyticsEndpoints
                     averageStreamDurationMinutes = 0,
                     averageViewers = 0.0,
                     peakViewers = 0,
+                    totalUniqueChatters = 0,
+                    totalMessages = 0,
+                    totalNewFollowers = 0,
+                    totalNewSubscribers = 0,
                     topCategories = Array.Empty<object>()
                 });
             }
@@ -124,6 +132,10 @@ public static class AnalyticsEndpoints
                 averageStreamDurationMinutes = (int)avgDuration,
                 averageViewers = Math.Round(avgViewers, 1),
                 peakViewers,
+                totalUniqueChatters = sessions.Sum(s => s.UniqueChatters ?? 0),
+                totalMessages = sessions.Sum(s => s.TotalMessages ?? 0),
+                totalNewFollowers = sessions.Sum(s => s.NewFollowers ?? 0),
+                totalNewSubscribers = sessions.Sum(s => s.NewSubscribers ?? 0),
                 topCategories
             });
         });
@@ -169,6 +181,10 @@ public static class AnalyticsEndpoints
             peakViewers = session.PeakViewers,
             averageViewers = session.AverageViewers,
             title = session.Title,
+            uniqueChatters = session.UniqueChatters,
+            totalMessages = session.TotalMessages,
+            newFollowers = session.NewFollowers,
+            newSubscribers = session.NewSubscribers,
             categories = session.CategorySegments.Select(c => new
             {
                 categoryName = c.CategoryName,

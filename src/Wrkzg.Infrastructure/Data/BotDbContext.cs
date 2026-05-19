@@ -79,6 +79,9 @@ public class BotDbContext : DbContext
     /// <summary>Gets the set of custom overlays.</summary>
     public DbSet<CustomOverlay> CustomOverlays => Set<CustomOverlay>();
 
+    /// <summary>Gets the append-only moderation event log.</summary>
+    public DbSet<ModerationEvent> ModerationEvents => Set<ModerationEvent>();
+
     /// <summary>
     /// Initializes a new instance of the <see cref="BotDbContext"/> class.
     /// </summary>

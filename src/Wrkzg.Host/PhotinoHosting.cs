@@ -58,7 +58,7 @@ public static class PhotinoHosting
             PhotinoWindow window = new PhotinoWindow()
                 .SetTitle("Wrkzg")
                 .SetSize(1280, 820)
-                .SetMinSize(900, 600)
+                .SetMinSize(1280, 820)
                 .SetResizable(true)
                 .SetContextMenuEnabled(false);
 

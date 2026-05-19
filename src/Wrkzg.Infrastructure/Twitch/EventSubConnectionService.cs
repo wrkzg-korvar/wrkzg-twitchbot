@@ -33,6 +33,7 @@ public class EventSubConnectionService : IHostedService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IChatEventBroadcaster _broadcaster;
     private readonly EffectEngine _effectEngine;
+    private readonly ISessionStatsCollector _sessionStats;
     private readonly ILogger<EventSubConnectionService> _logger;
     private readonly HttpClient _http;
 
@@ -50,6 +51,7 @@ public class EventSubConnectionService : IHostedService
         IServiceScopeFactory scopeFactory,
         IChatEventBroadcaster broadcaster,
         EffectEngine effectEngine,
+        ISessionStatsCollector sessionStats,
         IHttpClientFactory httpClientFactory,
         ILogger<EventSubConnectionService> logger)
     {
@@ -59,6 +61,7 @@ public class EventSubConnectionService : IHostedService
         _scopeFactory = scopeFactory;
         _broadcaster = broadcaster;
         _effectEngine = effectEngine;
+        _sessionStats = sessionStats;
         _http = httpClientFactory.CreateClient();
         _logger = logger;
     }
@@ -316,6 +319,7 @@ public class EventSubConnectionService : IHostedService
         string username = e.Payload.Event.UserName;
         string userId = e.Payload.Event.UserId;
         _logger.LogInformation("New follow: {Username}", username);
+        _sessionStats.RecordFollow();
 
         try
         {
@@ -342,6 +346,8 @@ public class EventSubConnectionService : IHostedService
 
         await DispatchToEffectEngineAsync("event.follow", username, userId,
             new Dictionary<string, string> { { "user", username } });
+
+        await LogModerationEventAsync(userId, username, ModerationEventType.Follow, "system");
     }
 
     private async Task OnChannelSubscribe(object? sender, ChannelSubscribeArgs e)
@@ -351,6 +357,7 @@ public class EventSubConnectionService : IHostedService
         int tierNumber = ParseTier(tier);
 
         _logger.LogInformation("New sub: {Username} (Tier {Tier})", username, tierNumber);
+        _sessionStats.RecordSubscription();
 
         await SendNotificationAsync("subscribe", new Dictionary<string, string>
         {
@@ -366,6 +373,8 @@ public class EventSubConnectionService : IHostedService
                 { "user", username },
                 { "tier", tierNumber.ToString() }
             });
+
+        await LogModerationEventAsync(e.Payload.Event.UserId, username, ModerationEventType.Subscribe, "system", $"Tier {tierNumber}");
     }
 
     private async Task OnChannelSubscriptionGift(object? sender, ChannelSubscriptionGiftArgs e)
@@ -377,6 +386,7 @@ public class EventSubConnectionService : IHostedService
 
         _logger.LogInformation("Gift subs: {Gifter} gifted {Count} Tier {Tier} subs",
             gifter, total, tierNumber);
+        _sessionStats.RecordSubscription(total);
 
         await SendNotificationAsync("gift", new Dictionary<string, string>
         {
@@ -394,6 +404,8 @@ public class EventSubConnectionService : IHostedService
                 { "count", total.ToString() },
                 { "tier", tierNumber.ToString() }
             });
+
+        await LogModerationEventAsync(e.Payload.Event.UserId ?? "anonymous", gifter, ModerationEventType.GiftSub, "system", $"{total}x Tier {tierNumber}");
     }
 
     private async Task OnChannelSubscriptionMessage(object? sender, ChannelSubscriptionMessageArgs e)
@@ -425,6 +437,8 @@ public class EventSubConnectionService : IHostedService
                 { "tier", tierNumber.ToString() },
                 { "message", message ?? "" }
             });
+
+        await LogModerationEventAsync(e.Payload.Event.UserId, username, ModerationEventType.Resub, "system", $"{months} months, Tier {tierNumber}");
     }
 
     private async Task OnChannelRaid(object? sender, ChannelRaidArgs e)
@@ -448,6 +462,8 @@ public class EventSubConnectionService : IHostedService
                 { "user", raider },
                 { "viewers", viewers.ToString() }
             });
+
+        await LogModerationEventAsync(e.Payload.Event.FromBroadcasterUserId, raider, ModerationEventType.Raid, "system", $"{viewers} viewers");
 
         // Auto-Shoutout check
         try
@@ -699,4 +715,29 @@ public class EventSubConnectionService : IHostedService
         "3000" => 3,
         _ => 1
     };
+
+    /// <summary>Logs a moderation event to the database. Uses a scoped repository.</summary>
+    private async Task LogModerationEventAsync(
+        string twitchUserId, string displayName, ModerationEventType eventType,
+        string actor, string? reason = null)
+    {
+        try
+        {
+            using IServiceScope scope = _scopeFactory.CreateScope();
+            IModerationEventRepository repo = scope.ServiceProvider.GetRequiredService<IModerationEventRepository>();
+            await repo.CreateAsync(new ModerationEvent
+            {
+                TwitchUserId = twitchUserId,
+                DisplayName = displayName,
+                EventType = eventType,
+                Actor = actor,
+                Reason = reason,
+                CreatedAt = DateTimeOffset.UtcNow,
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Failed to log moderation event {Type} for {UserId}", eventType, twitchUserId);
+        }
+    }
 }

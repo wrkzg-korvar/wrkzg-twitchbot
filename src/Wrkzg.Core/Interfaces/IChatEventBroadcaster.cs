@@ -103,4 +103,7 @@ public interface IChatEventBroadcaster
 
     /// <summary>Broadcasts import job error to all connected clients.</summary>
     Task BroadcastImportErrorAsync(object importError, CancellationToken ct = default);
+
+    /// <summary>Broadcasts a moderation action to all connected dashboard clients.</summary>
+    Task BroadcastModerationActionAsync(ModerationEvent evt, CancellationToken ct = default);
 }
