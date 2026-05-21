@@ -340,7 +340,7 @@ export function VisualAutomationBuilder({
               onClick={addCondition}
               className="flex items-center gap-1 rounded-lg border border-dashed border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-text-muted)] hover:border-[var(--color-brand)] hover:text-[var(--color-brand)] transition-colors"
             >
-              <Plus className="h-3 w-3" /> Bedingung
+              <Plus className="h-3 w-3" /> Condition
             </button>
           </div>
           </div>
@@ -426,7 +426,7 @@ export function VisualAutomationBuilder({
               onClick={addEffect}
               className="flex items-center gap-1 rounded-lg border border-dashed border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-text-muted)] hover:border-[var(--color-brand)] hover:text-[var(--color-brand)] transition-colors"
             >
-              <Plus className="h-3 w-3" /> Aktion
+              <Plus className="h-3 w-3" /> Action
             </button>
           </div>
           </div>
