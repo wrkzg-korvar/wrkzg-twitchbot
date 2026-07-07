@@ -326,11 +326,11 @@ public class EventSubConnectionService : IHostedService
             using IServiceScope scope = _scopeFactory.CreateScope();
             IUserRepository users = scope.ServiceProvider.GetRequiredService<IUserRepository>();
             User user = await users.GetOrCreateAsync(userId, username);
-            if (!user.FollowDate.HasValue)
-            {
-                user.FollowDate = DateTimeOffset.UtcNow;
-                await users.UpdateAsync(user);
-            }
+
+            // The channel.follow (v2) payload carries the authoritative follow timestamp.
+            // Persist it unconditionally so any previously stored approximate value is corrected.
+            user.FollowDate = e.Payload.Event.FollowedAt;
+            await users.UpdateAsync(user);
         }
         catch (Exception ex)
         {

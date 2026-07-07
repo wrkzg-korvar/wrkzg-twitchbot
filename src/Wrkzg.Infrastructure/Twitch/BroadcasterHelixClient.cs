@@ -446,15 +446,12 @@ public class BroadcasterHelixClient : IBroadcasterHelixClient
         }
     }
 
-    /// <summary>
-    /// Generic Helix API response wrapper. Twitch wraps all responses in { "data": [...] }.
-    /// </summary>
     /// <inheritdoc />
-    public async Task<bool> IsUserFollowingAsync(string broadcasterId, string userId, CancellationToken ct = default)
+    public async Task<DateTimeOffset?> GetFollowedAtAsync(string broadcasterId, string userId, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(broadcasterId) || string.IsNullOrWhiteSpace(userId))
         {
-            return false;
+            return null;
         }
 
         try
@@ -463,13 +460,24 @@ public class BroadcasterHelixClient : IBroadcasterHelixClient
             HelixResponse<FollowerEntry>? response = await _http.GetFromJsonAsync<HelixResponse<FollowerEntry>>(
                 url, _jsonOptions, ct);
 
-            return response?.Data is not null && response.Data.Length > 0;
+            if (response?.Data is { Length: > 0 } data)
+            {
+                return data[0].FollowedAt;
+            }
+
+            return null;
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogWarning(ex, "Failed to check follower status for user {UserId}", userId);
-            return false;
+            _logger.LogWarning(ex, "Failed to fetch follow date for user {UserId}", userId);
+            return null;
         }
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> IsUserFollowingAsync(string broadcasterId, string userId, CancellationToken ct = default)
+    {
+        return await GetFollowedAtAsync(broadcasterId, userId, ct).ConfigureAwait(false) is not null;
     }
 
     /// <summary>Sends a shoutout via Helix (POST /chat/shoutouts).</summary>
@@ -514,8 +522,14 @@ public class BroadcasterHelixClient : IBroadcasterHelixClient
     {
         [JsonPropertyName("user_id")]
         public string? UserId { get; init; }
+
+        [JsonPropertyName("followed_at")]
+        public DateTimeOffset? FollowedAt { get; init; }
     }
 
+    /// <summary>
+    /// Generic Helix API response wrapper. Twitch wraps all responses in { "data": [...] }.
+    /// </summary>
     private sealed class HelixResponse<T>
     {
         [JsonPropertyName("data")]
