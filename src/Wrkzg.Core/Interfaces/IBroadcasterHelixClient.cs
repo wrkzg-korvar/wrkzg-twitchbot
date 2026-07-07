@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -78,6 +79,18 @@ public interface IBroadcasterHelixClient
     /// <param name="ct">Cancellation token.</param>
     /// <returns>True if the user follows the broadcaster; false otherwise (or on error).</returns>
     Task<bool> IsUserFollowingAsync(string broadcasterId, string userId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns the date on which the specified user started following the broadcaster,
+    /// or null if the user does not follow the channel (or the request was not authorized).
+    /// Helix API: GET /channels/followers?broadcaster_id={broadcasterId}&amp;user_id={userId}
+    /// Requires the moderator:read:followers scope on the Broadcaster token.
+    /// </summary>
+    /// <param name="broadcasterId">The broadcaster's Twitch user ID.</param>
+    /// <param name="userId">The user ID whose follow date should be retrieved.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The follow date, or null if not following / not authorized.</returns>
+    Task<DateTimeOffset?> GetFollowedAtAsync(string broadcasterId, string userId, CancellationToken ct = default);
 
     /// <summary>
     /// Sends a shoutout to another channel via Helix API (POST /chat/shoutouts).

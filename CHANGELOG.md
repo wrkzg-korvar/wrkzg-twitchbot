@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.5] — 2026-07-07
+
+### Fixed
+- **`!followage` — Real Twitch Follow Date:** `!followage` now reports the actual date a viewer followed the channel instead of the moment the bot first observed the follow. `FollowDate` was previously stored as `DateTimeOffset.UtcNow` at both write sites, which discarded the authoritative `followed_at` value that Twitch already returns:
+  - **Helix path:** The `channels/followers` response now deserializes `followed_at`. The broadcaster Helix client exposes a new `GetFollowedAtAsync`, and `IsUserFollowingAsync` delegates to it (its `bool` contract is unchanged).
+  - **EventSub path:** `channel.follow` (v2) events now persist the payload's `FollowedAt` timestamp, correcting any previously stored approximate value on re-follow.
+  - **Scope guard:** `UserStatsBatcher` verifies the broadcaster token carries `moderator:read:followers` before querying and logs a clear warning when it is missing, instead of silently falling back to a wrong date.
+  - **Migration (`ResetFollowDatesForRefetch`):** All existing `FollowDate` values (written as `UtcNow`) are reset to `NULL` so the corrected code re-fetches the true Twitch date lazily (batcher on next chat activity, EventSub for new follows). Follow dates now fall back to `NULL` when unavailable — never `UtcNow`.
+
 ## [2.4.4] — 2026-05-19
 
 ### Fixed

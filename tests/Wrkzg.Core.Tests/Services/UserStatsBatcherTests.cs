@@ -16,6 +16,9 @@ namespace Wrkzg.Core.Tests.Services;
 public class UserStatsBatcherTests
 {
     private readonly IUserRepository _userRepo;
+    private readonly IBroadcasterHelixClient _broadcasterHelix;
+    private readonly ISecureStorage _storage;
+    private readonly ITwitchOAuthService _oauth;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly UserStatsBatcher _sut;
 
@@ -23,9 +26,15 @@ public class UserStatsBatcherTests
     public UserStatsBatcherTests()
     {
         _userRepo = Substitute.For<IUserRepository>();
+        _broadcasterHelix = Substitute.For<IBroadcasterHelixClient>();
+        _storage = Substitute.For<ISecureStorage>();
+        _oauth = Substitute.For<ITwitchOAuthService>();
 
         ServiceCollection services = new();
         services.AddScoped(_ => _userRepo);
+        services.AddScoped(_ => _broadcasterHelix);
+        services.AddScoped(_ => _storage);
+        services.AddScoped(_ => _oauth);
         ServiceProvider provider = services.BuildServiceProvider();
         _scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
 
@@ -93,6 +102,81 @@ public class UserStatsBatcherTests
 
         await _userRepo.DidNotReceiveWithAnyArgs().GetOrCreateAsync(default!, default!, default);
         await _userRepo.DidNotReceiveWithAnyArgs().UpdateAsync(default!, default);
+    }
+
+    // ─── Follower Check Tests ─────────────────────────────────
+
+    /// <summary>A user without a stored FollowDate gets the real Twitch follow date, not UtcNow.</summary>
+    [Fact]
+    public async Task Flush_UserWithoutFollowDate_PersistsRealTwitchFollowDate()
+    {
+        DateTimeOffset realFollowDate = new(2022, 5, 24, 22, 22, 8, TimeSpan.Zero);
+        User user = new() { TwitchId = "user1", Username = "user1" };
+
+        _userRepo.GetOrCreateAsync("user1", "user1", Arg.Any<CancellationToken>()).Returns(user);
+        _storage.LoadTokensAsync(TokenType.Broadcaster, Arg.Any<CancellationToken>())
+            .Returns(new TwitchTokens { AccessToken = "broadcaster-token" });
+        _oauth.ValidateTokenAsync("broadcaster-token", Arg.Any<CancellationToken>())
+            .Returns(new TwitchTokenValidation
+            {
+                UserId = "broadcaster1",
+                Scopes = new[] { "moderator:read:followers" }
+            });
+        _broadcasterHelix.GetFollowedAtAsync("broadcaster1", "user1", Arg.Any<CancellationToken>())
+            .Returns(realFollowDate);
+
+        _sut.Enqueue(BuildMessage("user1"));
+        await InvokeFlushAsync();
+
+        user.FollowDate.Should().Be(realFollowDate);
+    }
+
+    /// <summary>A user who is not following keeps a null FollowDate (never UtcNow).</summary>
+    [Fact]
+    public async Task Flush_UserNotFollowing_LeavesFollowDateNull()
+    {
+        User user = new() { TwitchId = "user1", Username = "user1" };
+
+        _userRepo.GetOrCreateAsync("user1", "user1", Arg.Any<CancellationToken>()).Returns(user);
+        _storage.LoadTokensAsync(TokenType.Broadcaster, Arg.Any<CancellationToken>())
+            .Returns(new TwitchTokens { AccessToken = "broadcaster-token" });
+        _oauth.ValidateTokenAsync("broadcaster-token", Arg.Any<CancellationToken>())
+            .Returns(new TwitchTokenValidation
+            {
+                UserId = "broadcaster1",
+                Scopes = new[] { "moderator:read:followers" }
+            });
+        _broadcasterHelix.GetFollowedAtAsync("broadcaster1", "user1", Arg.Any<CancellationToken>())
+            .Returns((DateTimeOffset?)null);
+
+        _sut.Enqueue(BuildMessage("user1"));
+        await InvokeFlushAsync();
+
+        user.FollowDate.Should().BeNull();
+    }
+
+    /// <summary>When the broadcaster token lacks moderator:read:followers, no follow-date query is made.</summary>
+    [Fact]
+    public async Task Flush_BroadcasterTokenMissingScope_DoesNotQueryFollowDate()
+    {
+        User user = new() { TwitchId = "user1", Username = "user1" };
+
+        _userRepo.GetOrCreateAsync("user1", "user1", Arg.Any<CancellationToken>()).Returns(user);
+        _storage.LoadTokensAsync(TokenType.Broadcaster, Arg.Any<CancellationToken>())
+            .Returns(new TwitchTokens { AccessToken = "broadcaster-token" });
+        _oauth.ValidateTokenAsync("broadcaster-token", Arg.Any<CancellationToken>())
+            .Returns(new TwitchTokenValidation
+            {
+                UserId = "broadcaster1",
+                Scopes = Array.Empty<string>()
+            });
+
+        _sut.Enqueue(BuildMessage("user1"));
+        await InvokeFlushAsync();
+
+        await _broadcasterHelix.DidNotReceiveWithAnyArgs()
+            .GetFollowedAtAsync(default!, default!, default);
+        user.FollowDate.Should().BeNull();
     }
 
     // ─── ISessionStatsCollector Tests ─────────────────────────

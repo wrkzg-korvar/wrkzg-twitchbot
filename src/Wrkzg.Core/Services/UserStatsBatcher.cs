@@ -194,12 +194,21 @@ public class UserStatsBatcher : BackgroundService, ISessionStatsCollector
                                 broadcasterTokens.AccessToken, ct);
                             if (validation is not null)
                             {
-                                bool isFollowing = await broadcasterHelix.IsUserFollowingAsync(
-                                    validation.UserId, user.TwitchId, ct);
-                                if (isFollowing)
+                                if (!Array.Exists(validation.Scopes, s => string.Equals(s, "moderator:read:followers", StringComparison.Ordinal)))
                                 {
-                                    user.FollowDate = DateTimeOffset.UtcNow;
-                                    await users.UpdateAsync(user, ct);
+                                    _logger.LogWarning(
+                                        "Broadcaster token is missing the moderator:read:followers scope — follow dates cannot be retrieved. Re-authorize the broadcaster account.");
+                                }
+                                else
+                                {
+                                    DateTimeOffset? followedAt = await broadcasterHelix.GetFollowedAtAsync(
+                                        validation.UserId, user.TwitchId, ct);
+
+                                    if (followedAt.HasValue)
+                                    {
+                                        user.FollowDate = followedAt.Value;
+                                        await users.UpdateAsync(user, ct);
+                                    }
                                 }
                             }
                         }

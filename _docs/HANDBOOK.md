@@ -190,6 +190,8 @@ Built-in commands that come with Wrkzg. You can customize their response text an
 | `!queue` | `!songlist` | Everyone | Show the next songs in the queue |
 | `!currentsong` | `!song`, `!nowplaying` | Everyone | Show what's currently playing |
 
+> **Note on `!followage`:** The follow date reported by `!followage` is the **real** Twitch follow date, sourced directly from Twitch — via the `channel.follow` event (EventSub) for new follows and the `channels/followers` Helix endpoint (which requires the `moderator:read:followers` scope on your broadcaster account) for existing viewers. If Twitch cannot provide the date (e.g. the viewer does not follow, or the broadcaster token is missing the scope), the follow date stays empty rather than showing an approximate value.
+
 ### 3.3 Quotes
 
 Save memorable chat moments. Quotes are numbered sequentially and can be recalled randomly or by number.
