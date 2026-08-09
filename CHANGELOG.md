@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.6] — 2026-08-09
+
+### Security
+- **`System.Security.Cryptography.Xml` — High-Severity Advisories (NU1903):** The build failed because the pinned `System.Security.Cryptography.Xml` 10.0.7 is affected by five high-severity advisories (`GHSA-mmjf-rqrv-855v` / CVE-2026-50527, `GHSA-23rf-6693-g89p`, `GHSA-8q5v-6pqq-x66h`, `GHSA-cvvh-rhrc-wg4q`, `GHSA-g8r8-53c2-pm3f`), which `TreatWarningsAsErrors` escalates to a hard `NU1903` error. Root cause: the package is **not referenced by our own code** — it is only pulled transitively by the EF Core Design toolchain (`Microsoft.Build.Tasks.Core`, `Microsoft.CodeAnalysis.Workspaces.MSBuild`) at vulnerable versions (7.0.1 / 9.0.0), while an **unused direct `PackageReference`** in `Wrkzg.Infrastructure` forced the whole graph to the vulnerable 10.0.7.
+  - Removed the unused direct `System.Security.Cryptography.Xml` reference from `Wrkzg.Infrastructure.csproj`.
+  - Bumped the central version to the patched **10.0.10** (10.x is affected up to 10.0.9), which — with `CentralPackageTransitivePinningEnabled=true` — transitively pins the EF Core Design toolchain to the fixed build. No `NoWarn` suppression (per the project's security policy).
+
 ## [2.4.5] — 2026-07-07
 
 ### Fixed
