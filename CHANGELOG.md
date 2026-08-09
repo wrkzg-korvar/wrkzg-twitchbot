@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed the unused direct `System.Security.Cryptography.Xml` reference from `Wrkzg.Infrastructure.csproj`.
   - Bumped the central version to the patched **10.0.10** (10.x is affected up to 10.0.9), which — with `CentralPackageTransitivePinningEnabled=true` — transitively pins the EF Core Design toolchain to the fixed build. No `NoWarn` suppression (per the project's security policy).
 
+### Fixed
+- **Timers — Simultaneous Firing at Stream Start:** Multiple timers no longer all fire at once when the stream goes live. Root cause: online-only timers never advanced their `LastFiredAt` while the stream was offline, so the entire offline gap made every timer overdue the instant the stream went live; `TimedMessageService` then fired them in a single pass and stamped them with an identical timestamp, permanently phase-aligning their schedules. The service now anchors each timer to the start of the current live session (the offline→online transition, or startup while already live): a timer's first fire happens one interval after going live and then repeats on its own interval. This also prevents the same burst after a bot restart mid-stream.
+- **Timers — `MinChatLines` Semantics:** The minimum-chat-lines gate now counts the chat messages posted **since the timer last fired** (a monotonic counter with a per-timer baseline). Previously it compared only against the messages seen within the last 30-second poll window (the counter was reset every tick), so a timer could be held back even when the chat had been active between checks.
+- **Timers — Testability:** `TimedMessageService` now receives an injected `TimeProvider` (registered as `TimeProvider.System`) instead of reading `DateTimeOffset.UtcNow` directly, so its scheduling is deterministic and covered by regression tests.
+
 ## [2.4.5] — 2026-07-07
 
 ### Fixed
