@@ -20,8 +20,21 @@ public class TimedMessageService : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IStreamStatusProvider _streamStatus;
     private readonly ITwitchChatClient _chat;
+    private readonly TimeProvider _timeProvider;
     private readonly ILogger<TimedMessageService> _logger;
-    private int _chatLinesSinceLastCheck;
+
+    // Monotonic count of chat lines since the service started (never reset). Combined with a
+    // per-timer baseline (_chatLinesAtLastFire) to gate on "chat lines since this timer last
+    // fired" — not merely "chat lines within the last poll window".
+    private long _totalChatLines;
+    private readonly Dictionary<int, long> _chatLinesAtLastFire = new();
+
+    // Live-session tracking. _liveSince is the start of the current live session (the
+    // offline→online edge, or the first tick when the bot starts up already live). It is used
+    // as the schedule anchor so that overdue timers do not all fire at once when the stream
+    // goes live.
+    private bool _wasLive;
+    private DateTimeOffset? _liveSince;
 
     private string? _cachedBroadcasterId;
     private readonly SemaphoreSlim _broadcasterIdLock = new(1, 1);
@@ -32,23 +45,26 @@ public class TimedMessageService : BackgroundService
     /// <param name="scopeFactory">Factory for creating DI scopes to resolve scoped repositories.</param>
     /// <param name="streamStatus">Cached stream live status provider — replaces direct Helix polling.</param>
     /// <param name="chat">The Twitch IRC chat client for sending timed messages.</param>
+    /// <param name="timeProvider">Clock abstraction — injected so scheduling is deterministic and testable.</param>
     /// <param name="logger">Logger instance for diagnostics.</param>
     public TimedMessageService(
         IServiceScopeFactory scopeFactory,
         IStreamStatusProvider streamStatus,
         ITwitchChatClient chat,
+        TimeProvider timeProvider,
         ILogger<TimedMessageService> logger)
     {
         _scopeFactory = scopeFactory;
         _streamStatus = streamStatus;
         _chat = chat;
+        _timeProvider = timeProvider;
         _logger = logger;
     }
 
     /// <summary>Called by ChatMessagePipeline for every chat message to track activity.</summary>
     public void IncrementChatLineCounter()
     {
-        Interlocked.Increment(ref _chatLinesSinceLastCheck);
+        Interlocked.Increment(ref _totalChatLines);
     }
 
     /// <inheritdoc />
@@ -74,13 +90,29 @@ public class TimedMessageService : BackgroundService
         }
     }
 
-    private async Task CheckAndFireTimersAsync(CancellationToken ct)
+    /// <summary>
+    /// Evaluates all enabled timers once and fires those that are due. Internal for unit testing;
+    /// invoked on a fixed cadence by <see cref="ExecuteAsync"/> in production.
+    /// </summary>
+    internal async Task CheckAndFireTimersAsync(CancellationToken ct)
     {
         using IServiceScope scope = _scopeFactory.CreateScope();
         ITimedMessageRepository repo = scope.ServiceProvider.GetRequiredService<ITimedMessageRepository>();
         IBotHelixClient botHelix = scope.ServiceProvider.GetRequiredService<IBotHelixClient>();
 
         bool isLive = _streamStatus.IsLive;
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+
+        // Track the start of the current live session: the offline→online edge, and also the
+        // first tick when the bot starts up while already live (_wasLive defaults to false).
+        // Anchoring timers to this moment prevents the whole set from becoming overdue — and
+        // firing together — the instant the stream goes live.
+        if (isLive && !_wasLive)
+        {
+            _liveSince = now;
+        }
+        _wasLive = isLive;
+
         string? broadcasterId = null;
 
         // Resolve broadcaster ID from token (cached, thread-safe) — only needed for announcements
@@ -94,8 +126,7 @@ public class TimedMessageService : BackgroundService
         }
 
         IReadOnlyList<TimedMessage> timers = await repo.GetEnabledAsync(ct);
-        DateTimeOffset now = DateTimeOffset.UtcNow;
-        int chatLines = Interlocked.Exchange(ref _chatLinesSinceLastCheck, 0);
+        long totalChatLines = Interlocked.Read(ref _totalChatLines);
 
         foreach (TimedMessage timer in timers)
         {
@@ -108,18 +139,32 @@ public class TimedMessageService : BackgroundService
                 continue;
             }
 
-            if (timer.LastFiredAt.HasValue)
+            // Schedule anchor. When live, never let an offline gap — or a LastFiredAt left over
+            // from a previous stream — count as backlog: otherwise every timer becomes overdue
+            // at the same moment the stream goes live and they all fire together. Anchoring to
+            // the start of the live session means each timer's first fire is one interval after
+            // going live, then spaced by its own interval.
+            DateTimeOffset? anchor = timer.LastFiredAt;
+            if (isLive && _liveSince.HasValue && (anchor is null || _liveSince.Value > anchor.Value))
             {
-                double minutesSinceLastFire = (now - timer.LastFiredAt.Value).TotalMinutes;
-                if (minutesSinceLastFire < timer.IntervalMinutes)
+                anchor = _liveSince.Value;
+            }
+
+            if (anchor.HasValue && (now - anchor.Value).TotalMinutes < timer.IntervalMinutes)
+            {
+                continue;
+            }
+
+            // Require a minimum amount of chat activity SINCE this timer last fired (not merely
+            // within the last poll window), so a quiet chat is not spammed and the bot does not
+            // repeat itself without intervening conversation.
+            if (timer.MinChatLines > 0)
+            {
+                long baselineChatLines = _chatLinesAtLastFire.TryGetValue(timer.Id, out long lastFireChatLines) ? lastFireChatLines : 0;
+                if (totalChatLines - baselineChatLines < timer.MinChatLines)
                 {
                     continue;
                 }
-            }
-
-            if (timer.MinChatLines > 0 && chatLines < timer.MinChatLines)
-            {
-                continue;
             }
 
             if (timer.Messages.Length == 0)
@@ -159,6 +204,7 @@ public class TimedMessageService : BackgroundService
                 await _chat.SendMessageAsync(message, ct);
             }
 
+            _chatLinesAtLastFire[timer.Id] = totalChatLines;
             timer.NextMessageIndex = (timer.NextMessageIndex + 1) % timer.Messages.Length;
             timer.LastFiredAt = now;
             await repo.UpdateAsync(timer, ct);

@@ -443,6 +443,11 @@ Automated recurring messages that only fire when enough chat activity is happeni
 - Use multiple messages per timer to keep things varied
 - Toggle timers on/off without deleting them
 
+**How timing works:**
+- When the stream goes live, timers do **not** all fire at once. Each timer starts counting from the moment the stream goes live and first fires one interval later — a 15-minute timer first fires 15 minutes into the stream.
+- The interval is measured from each timer's own last message, so timers with different intervals stay independent.
+- "Minimum chat lines" counts the messages posted **since that timer last fired** — not just within the last check — so a quiet chat is never spammed.
+
 ### 5.2 Event Notifications
 
 Automatic chat announcements for Twitch events.

@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Extensions.DependencyInjection;
 using Wrkzg.Core.ChatGames;
 using Wrkzg.Core.Effects;
@@ -20,6 +21,9 @@ public static class DependencyInjection
     /// <returns>The same <see cref="IServiceCollection"/> for chaining.</returns>
     public static IServiceCollection AddCoreServices(this IServiceCollection services)
     {
+        // Clock abstraction (injectable so time-dependent services like TimedMessageService are testable).
+        services.AddSingleton(TimeProvider.System);
+
         // System Commands (Singleton — stateless, use IServiceScopeFactory internally)
         services.AddSingleton<ISystemCommand, CommandsListCommand>();
         services.AddSingleton<ISystemCommand, PointsCommand>();

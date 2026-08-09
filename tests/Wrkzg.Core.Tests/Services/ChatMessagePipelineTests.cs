@@ -53,7 +53,7 @@ public class ChatMessagePipelineTests
         ServiceProvider provider = services.BuildServiceProvider();
         IServiceScopeFactory scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
 
-        TimedMessageService timedService = new(scopeFactory, streamStatus, chatClient, Substitute.For<ILogger<TimedMessageService>>());
+        TimedMessageService timedService = new(scopeFactory, streamStatus, chatClient, TimeProvider.System, Substitute.For<ILogger<TimedMessageService>>());
 
         ChatGameManager gameManager = new(
             System.Array.Empty<IChatGame>(),

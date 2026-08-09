@@ -76,3 +76,8 @@ CLAUDE.md
 .mcp.json
 .swarm
 schema.sql
+
+# --- Impeccable (Design skill artifacts) ---
+.impeccable/
+/PRODUCT.md
+/DESIGN.md

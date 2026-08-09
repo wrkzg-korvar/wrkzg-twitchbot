@@ -58,6 +58,11 @@
         </PackageReference>
     </ItemGroup>
 
+    <ItemGroup Label="Test Visibility">
+        <!-- Expose internal members (e.g. TimedMessageService.CheckAndFireTimersAsync) to the unit test project. -->
+        <InternalsVisibleTo Include="Wrkzg.Core.Tests" />
+    </ItemGroup>
+
     <!--
       Implicitly available via the .NET 10 SDK (no explicit PackageReference needed):
         - Microsoft.Extensions.DependencyInjection.Abstractions
