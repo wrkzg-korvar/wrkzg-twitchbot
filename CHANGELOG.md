@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.7] — 2026-09-27
+
+### Security
+- **`Microsoft.Build.Tasks.Git` — Information Disclosure (NU1902):** The build failed at restore because `Microsoft.SourceLink.GitHub` 10.0.203 pulls `Microsoft.Build.Tasks.Git` 10.0.203 transitively, which is affected by `GHSA-23fw-v26w-5fgq` / CVE-2026-62900 (improper removal of sensitive information before storage or transfer, allowing information disclosure over a network, CVSS 5.9). `TreatWarningsAsErrors` escalates the resulting `NU1902` to a hard error. Root cause: the **entire 10.0.2xx feature band** (10.0.200 – 10.0.204) is affected and is **no longer serviced**, so no in-band patch exists — the version had to leave the band.
+  - Bumped `Microsoft.SourceLink.GitHub` to **10.0.401**, the actively serviced band. The advisory's named patches are 10.0.111 and 10.0.303, both superseded by 10.0.401.
+  - Bumped the direct reference rather than transitively pinning `Microsoft.Build.Tasks.Git`: the two packages ship in lockstep, so pinning the transitive alone would pair a patched task assembly with a mismatched SourceLink version. No `NoWarn` suppression (per the project's security policy).
+- **Frontend Dependencies — 12 Advisories Cleared (npm audit: 0 vulnerabilities):** A full audit of the frontend dependency tree surfaced 12 advisories, 7 of them in the production tree. All are resolved without `--force` and without breaking changes:
+  - **`react-router-dom` 7.13.1 → 7.18.4** — clears 12 advisories in the shipped bundle, including arbitrary constructor invocation via vendored `turbo-stream` deserialization (`GHSA-49rj-9fvp-4h2h`), open redirects via backslash and protocol-relative paths (`GHSA-wrjc-x8rr-h8h6`, `GHSA-2j2x-hqr9-3h42`), XSS in redirect handling (`GHSA-8646-j5j9-6r62`, `GHSA-h8fp-f39c-q6mh`), CSRF (`GHSA-84g9-w2xq-vcv6`) and several DoS vectors.
+  - **`vite` 7.3.3 → 7.3.6** — clears `server.fs.deny` bypass on Windows alternate paths (`GHSA-fx2h-pf6j-xcff`) and NTLMv2 hash disclosure via `launch-editor` UNC path handling (`GHSA-v6wh-96g9-6wx3`).
+  - **Transitive build-tooling chain** — `postcss`, `browserslist`, `nanoid`, `brace-expansion`, `js-yaml`, `esbuild`, `@babel/core`, `baseline-browser-mapping` updated to patched releases, plus `ws` (memory-exhaustion DoS, `GHSA-96hv-2xvq-fx4p`) pulled in via `@microsoft/signalr`.
+  - **Removed the unused `@shadcn/ui` 0.0.4 dependency.** It was declared in `package.json` but never imported anywhere in the frontend — a supply-chain surface with no consumer.
+
+### Changed
+- **BREAKING — `!game` Renamed to `!category`:** The stream-category system command is now `!category` with the alias `!ctgy`. **`!game` has been removed entirely** and no longer responds — panels, mod notes, and Stream Deck buttons referencing it must be updated. Previously the command was `!game` with `!category` as its alias, which inverted the naming Twitch itself uses ("Category") and left the clearer term as the secondary trigger.
+  - `GameCommand` renamed to `CategoryCommand` (`Wrkzg.Core/SystemCommands/CategoryCommand.cs`); trigger, alias, description, and usage hint all updated. The dashboard's system command list and `!commands` output pick the new names up automatically from `ISystemCommand`.
+  - **Migration (`RenameGameCommandOverrideToCategory`):** `SystemCommandOverrides.Trigger` is the table's primary key, so the rename would otherwise orphan every existing user override and silently revert the command to its defaults. The migration moves the `!game` row to the `!category` key, preserving the enable/disable state and any custom response template. A `NOT EXISTS` guard keeps the update from violating the primary key and makes the migration idempotent; `Down()` reverses the rename for downgrades.
+  - Added 13 unit tests covering the trigger/alias contract (including a regression guard that `!game` cannot reappear), moderator and broadcaster gating, argument parsing via both triggers, and the unknown-category and Helix-failure paths.
+
 ## [2.4.6] — 2026-08-09
 
 ### Security

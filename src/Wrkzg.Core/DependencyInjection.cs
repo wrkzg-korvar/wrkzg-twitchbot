@@ -42,7 +42,7 @@ public static class DependencyInjection
         services.AddSingleton<ISystemCommand, ShoutoutCommand>();
         services.AddSingleton<ISystemCommand, QuoteCommand>();
         services.AddSingleton<ISystemCommand, TitleCommand>();
-        services.AddSingleton<ISystemCommand, GameCommand>();
+        services.AddSingleton<ISystemCommand, CategoryCommand>();
 
         // Poll System
         services.AddScoped<PollService>();

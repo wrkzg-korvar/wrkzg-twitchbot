@@ -8,20 +8,20 @@ using Wrkzg.Core.Models;
 namespace Wrkzg.Core.SystemCommands;
 
 /// <summary>
-/// Changes the stream category/game via Twitch Helix API.
-/// Usage: !game Crimson Desert
+/// Changes the stream category via Twitch Helix API.
+/// Usage: !category Crimson Desert
 /// Requires: channel:manage:broadcast scope on Broadcaster token.
 /// </summary>
-public class GameCommand : ISystemCommand
+public class CategoryCommand : ISystemCommand
 {
     /// <inheritdoc />
-    public string Trigger => "!game";
+    public string Trigger => "!category";
 
     /// <inheritdoc />
-    public string[] Aliases => new[] { "!category" };
+    public string[] Aliases => new[] { "!ctgy" };
 
     /// <inheritdoc />
-    public string Description => "Changes the stream category. Usage: !game Category Name";
+    public string Description => "Changes the stream category. Usage: !category Category Name";
 
     /// <inheritdoc />
     public string? DefaultResponseTemplate => null;
@@ -29,10 +29,10 @@ public class GameCommand : ISystemCommand
     private readonly IServiceScopeFactory _scopeFactory;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="GameCommand"/> class.
+    /// Initializes a new instance of the <see cref="CategoryCommand"/> class.
     /// </summary>
     /// <param name="scopeFactory">Factory for creating scoped service providers.</param>
-    public GameCommand(IServiceScopeFactory scopeFactory)
+    public CategoryCommand(IServiceScopeFactory scopeFactory)
     {
         _scopeFactory = scopeFactory;
     }
@@ -52,7 +52,7 @@ public class GameCommand : ISystemCommand
 
         if (string.IsNullOrWhiteSpace(args))
         {
-            return "Usage: !game Category Name";
+            return "Usage: !category Category Name";
         }
 
         using IServiceScope scope = _scopeFactory.CreateScope();
@@ -66,7 +66,7 @@ public class GameCommand : ISystemCommand
             return "Broadcaster not connected.";
         }
 
-        // Resolve game name to game ID
+        // Resolve category name to game ID
         TwitchGameInfo? game = await helix.GetGameByNameAsync(args, ct);
         if (game is null)
         {

@@ -107,7 +107,7 @@ Wrkzg requests specific OAuth scopes for each connected account. These are requi
 | `user:write:chat` | Sending messages as broadcaster |
 | `channel:read:redemptions` | Reading channel point redemptions |
 | `channel:manage:redemptions` | Managing channel point rewards |
-| `channel:manage:broadcast` | `!title` and `!game` mod commands |
+| `channel:manage:broadcast` | `!title` and `!category` mod commands |
 | `user:read:emotes` | Loading broadcaster's available emotes |
 
 ### Moderator Requirement
@@ -205,7 +205,7 @@ Some features require the **Bot Account** to be a **Moderator** in the Broadcast
 
 **Chat & Commands**
 - **Custom Commands** — Create commands like `!discord`, `!socials` with variables: `{user}`, `{target}`, `{points}`, `{watchtime}`, `{random:1:6}`. Triggers and aliases can be edited at any time — even while live.
-- **18 System Commands** — Built-in `!poll`, `!vote`, `!raffle`, `!join`, `!draw`, `!editcmd`, `!quote`, `!so`, `!uptime`, `!title`, `!game` and more — all with enable/disable toggle and custom response templates
+- **18 System Commands** — Built-in `!poll`, `!vote`, `!raffle`, `!join`, `!draw`, `!editcmd`, `!quote`, `!so`, `!uptime`, `!title`, `!category` and more — all with enable/disable toggle and custom response templates
 - **Command Aliases** — Multiple triggers per command with badge display
 
 **Community Engagement**
@@ -237,7 +237,7 @@ Some features require the **Bot Account** to be a **Moderator** in the Broadcast
 - **OBS WebSocket 5.x** — Switch scenes and toggle sources via hotkeys and automations. Password stored securely in OS keychain.
 - **Discord Integration** — Send messages and rich embeds to Discord via webhooks — no bot token needed
 - **Stream Online Events** — All EventSub events (follow, sub, raid, stream online) are routed through the Effect System for custom automations
-- **Mod Commands** — `!title`/`!titel` and `!game`/`!category` for live stream management (requires Moderator role)
+- **Mod Commands** — `!title`/`!titel` and `!category`/`!ctgy` for live stream management (requires Moderator role)
 
 **Dashboard & UX**
 - **Live Dashboard** — Real-time chat feed, bot status, viewer count, activity feed, command management

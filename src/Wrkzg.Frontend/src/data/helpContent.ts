@@ -52,6 +52,7 @@ export const helpContent: Record<string, HelpEntry> = {
     chatCommands: [
       { command: "!commands", description: "Lists all available commands in chat" },
       { command: "!editcmd !trigger New response", description: "Edit a command's response on the fly", permission: "Mod" },
+      { command: "!category Category name", description: "Changes the stream category (alias: !ctgy)", permission: "Mod" },
     ],
     templateVariables: [
       { variable: "{user}", description: "Display name of the user" },
