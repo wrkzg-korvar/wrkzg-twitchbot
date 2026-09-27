@@ -73,7 +73,17 @@
   </ItemGroup>
 
   <ItemGroup Label="Source Link">
-    <PackageVersion Include="Microsoft.SourceLink.GitHub"              Version="10.0.203" />
+    <!-- SECURITY OVERRIDE: Microsoft.SourceLink.GitHub 10.0.203 pulls Microsoft.Build.Tasks.Git
+         10.0.203 transitively, which is flagged by GHSA-23fw-v26w-5fgq / CVE-2026-62900
+         (improper removal of sensitive information before storage or transfer, network
+         information disclosure, CVSS 5.9). The whole 10.0.2xx feature band is affected
+         (10.0.200 - 10.0.204) and is no longer serviced, so no in-band patch exists.
+         Moved to the actively serviced 10.0.4xx band; the advisory's named patches are
+         10.0.111 and 10.0.303, both of which 10.0.401 supersedes. SourceLink.GitHub and
+         Build.Tasks.Git ship in lockstep, so bumping the direct reference is preferred over
+         transitively pinning Build.Tasks.Git against a mismatched SourceLink version.
+         Tracking: https://github.com/advisories/GHSA-23fw-v26w-5fgq. -->
+    <PackageVersion Include="Microsoft.SourceLink.GitHub"              Version="10.0.401" />
   </ItemGroup>
 
   <ItemGroup Label="Logging">

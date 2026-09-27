@@ -657,9 +657,14 @@ Chat commands for moderators and the broadcaster to control the stream directly 
 | Command | Aliases | Description | Minimum Role |
 |---|---|---|---|
 | `!title New title` | `!titel` | Changes the stream title | Moderator |
-| `!game Category name` | `!category` | Changes the stream category | Moderator |
+| `!category Category name` | `!ctgy` | Changes the stream category | Moderator |
 
 **Requirement:** The broadcaster account must be connected with the `channel:manage:broadcast` scope. Scope changes require a re-authorization.
+
+> **Renamed:** This command was previously `!game` with the alias `!category`. It is now `!category` with
+> the alias `!ctgy`, and **`!game` no longer works** — update any panels, mod notes, or Stream Deck
+> buttons that still reference it. Your enable/disable state and custom response template are carried
+> over automatically on first start after the update.
 
 ---
 
@@ -1174,7 +1179,7 @@ Imported users don't have a Twitch ID yet (Deepbot CSV/JSON only stores username
 | `!cancelraffle` | Moderator | Cancels the raffle |
 | `!editcmd` | Moderator | Edits custom commands |
 | `!titel` / `!title` | Moderator | Changes the stream title |
-| `!game` / `!category` | Moderator | Changes the stream category |
+| `!category` / `!ctgy` | Moderator | Changes the stream category |
 | `!shoutout` / `!so` | Moderator | Shouts out another user |
 
 ### Custom Commands
